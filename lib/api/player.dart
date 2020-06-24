@@ -57,15 +57,15 @@ class PlayerHelper {
       }
     });
     //Start audio_service
-    _startService();
+    startService();
   }
 
-  Future _startService() async {
+  Future startService() async {
     if (AudioService.running) return;
     await AudioService.start(
       backgroundTaskEntrypoint: backgroundTaskEntrypoint,
       androidEnableQueue: true,
-      androidStopForegroundOnPause: true,
+      androidStopForegroundOnPause: false,
       androidNotificationOngoing: false,
       androidNotificationClickStartsActivity: true,
       androidNotificationChannelDescription: 'Freezer',
@@ -73,6 +73,7 @@ class PlayerHelper {
       androidNotificationIcon: 'drawable/ic_logo'
     );
   }
+
 
   //Repeat toggle
   Future changeRepeat() async {
@@ -97,7 +98,7 @@ class PlayerHelper {
 
   //Replace queue, play specified track id
   Future _loadQueuePlay(List<MediaItem> queue, String trackId) async {
-    await _startService();
+    await startService();
     await settings.updateAudioServiceQuality();
     await AudioService.updateQueue(queue);
     await AudioService.playFromMediaId(trackId);
@@ -128,7 +129,7 @@ class PlayerHelper {
   }
   //Load tracks as queue, play track id, set queue source
   Future playFromTrackList(List<Track> tracks, String trackId, QueueSource queueSource) async {
-    await _startService();
+    await startService();
 
     List<MediaItem> queue = tracks.map<MediaItem>((track) => track.toMediaItem()).toList();
     await setQueueSource(queueSource);
@@ -164,7 +165,7 @@ class PlayerHelper {
   }
   
   Future setQueueSource(QueueSource queueSource) async {
-    await _startService();
+    await startService();
 
     this.queueSource = queueSource;
     await AudioService.customAction('queueSource', queueSource.toJson());
@@ -276,10 +277,10 @@ class AudioPlayerTask extends BackgroundAudioTask {
   }
 
   @override
-  Future onSkipToNext() {
+  Future onSkipToNext() async {
     //If repeating allowed
     if (repeatType == 2) {
-      _skip(0);
+      await _skip(0);
       return null;
     }
     _skip(1);
@@ -405,6 +406,12 @@ class AudioPlayerTask extends BackgroundAudioTask {
     onSeekTo(_audioPlayer.playbackEvent.position + offset);
   }
 
+  @override
+  Future onUpdateMediaItem(MediaItem mediaItem) async {
+    _queue[_queueIndex] = mediaItem;
+    AudioServiceBackground.setMediaItem(mediaItem);
+  }
+
   //Audio interruptions
   @override
   void onAudioFocusLost(AudioInterruption interruption) {
@@ -492,7 +499,7 @@ class AudioPlayerTask extends BackgroundAudioTask {
     return url;
   }
 
-  Future<String> _getTrackUri(MediaItem mi) async {
+  Future<String> _getTrackUri(MediaItem mi, {int quality}) async {
     String prefix = 'DEEZER|${mi.id}|';
 
     //Check if song is available offline
@@ -505,12 +512,27 @@ class AudioPlayerTask extends BackgroundAudioTask {
       id: mi.id,
       playbackDetails: jsonDecode(mi.extras['playbackDetails']) //JSON Because of audio_service bug
     );
-    ConnectivityResult conn = await Connectivity().checkConnectivity();
-    if (conn == ConnectivityResult.wifi) {
-      return prefix + t.getUrl(wifiQuality);
+
+    //Check connection
+    if (quality == null) {
+      ConnectivityResult conn = await Connectivity().checkConnectivity();
+      quality = mobileQuality;
+      if (conn == ConnectivityResult.wifi) quality = wifiQuality;
     }
-    return prefix + t.getUrl(mobileQuality);
+    String url = t.getUrl(quality);
+
+    //Quality fallback
+    Dio dio = Dio();
+    try {
+      await dio.head(url);
+      return prefix + url;
+    } catch (e) {
+      if (quality == 9) return _getTrackUri(mi, quality: 3);
+      if (quality == 3) return _getTrackUri(mi, quality: 1);
+      throw Exception('No available quality!');
+    }
   }
+
 
   Future<String> _getQualityString(String uri, Duration duration) async {
     //Get url/path

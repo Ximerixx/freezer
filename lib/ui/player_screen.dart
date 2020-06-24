@@ -7,10 +7,12 @@ import 'package:freezer/api/deezer.dart';
 import 'package:freezer/api/player.dart';
 import 'package:freezer/ui/menu.dart';
 import 'package:freezer/ui/tiles.dart';
+import 'package:async/async.dart';
 
 import 'cached_image.dart';
 import '../api/definitions.dart';
 import 'player_bar.dart';
+
 
 
 
@@ -29,25 +31,151 @@ class _PlayerScreenState extends State<PlayerScreen> {
     return Scaffold(
       body: SafeArea(
         child: StreamBuilder(
-          stream: AudioService.playbackStateStream,
+          stream: StreamZip([AudioService.playbackStateStream, AudioService.currentMediaItemStream]),
           builder: (BuildContext context, AsyncSnapshot snapshot) {
 
             //Disable lyrics when skipping songs, loading
-            PlaybackState s = snapshot.data;
-            if (s != null && s.processingState != AudioProcessingState.ready && s.processingState != AudioProcessingState.buffering) _lyrics = false;
+            if (snapshot.data is PlaybackState &&
+              snapshot.data.processingState != AudioProcessingState.ready &&
+              snapshot.data.processingState != AudioProcessingState.buffering) _lyrics = false;
 
-            return OrientationBuilder(
-              builder: (context, orientation) {
-                //Landscape
-                if (orientation == Orientation.landscape) {
-                  return Row(
+            //When disconnected
+            if (AudioService.currentMediaItem == null) {
+              playerHelper.startService();
+              return Center(child: CircularProgressIndicator(),);
+            }
+
+              return OrientationBuilder(
+                builder: (context, orientation) {
+                  //Landscape
+                  if (orientation == Orientation.landscape) {
+                    return Row(
+                      mainAxisSize: MainAxisSize.max,
+                      mainAxisAlignment: MainAxisAlignment.spaceAround,
+                      children: <Widget>[
+                        Padding(
+                            padding: EdgeInsets.fromLTRB(16, 0, 16, 8),
+                            child: Container(
+                              width: 320,
+                              child: Stack(
+                                children: <Widget>[
+                                  CachedImage(
+                                    url: AudioService.currentMediaItem.artUri,
+                                  ),
+                                  if (_lyrics) LyricsWidget(
+                                    artUri: AudioService.currentMediaItem.artUri,
+                                    trackId: AudioService.currentMediaItem.id,
+                                    lyrics: Track.fromMediaItem(AudioService.currentMediaItem).lyrics,
+                                    height: 320.0,
+                                  ),
+                                ],
+                              ),
+                            )
+                        ),
+                        SizedBox(
+                          width: MediaQuery.of(context).size.width / 2 - 32,
+                          child: Column(
+                            mainAxisSize: MainAxisSize.max,
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: <Widget>[
+                              Padding(
+                                  padding: EdgeInsets.fromLTRB(8, 16, 8, 0),
+                                  child: Container(
+                                    width: 300,
+                                    child: PlayerScreenTopRow(),
+                                  )
+                              ),
+                              Column(
+                                mainAxisSize: MainAxisSize.min,
+                                children: <Widget>[
+                                  Text(
+                                    AudioService.currentMediaItem.displayTitle,
+                                    maxLines: 1,
+                                    textAlign: TextAlign.center,
+                                    overflow: TextOverflow.clip,
+                                    style: TextStyle(
+                                        fontSize: 24.0,
+                                        fontWeight: FontWeight.bold
+                                    ),
+                                  ),
+                                  Container(height: 4,),
+                                  Text(
+                                    AudioService.currentMediaItem.displaySubtitle,
+                                    maxLines: 1,
+                                    textAlign: TextAlign.center,
+                                    overflow: TextOverflow.clip,
+                                    style: TextStyle(
+                                      fontSize: 18.0,
+                                      color: Theme.of(context).primaryColor,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                              Container(
+                                width: 320,
+                                child: SeekBar(),
+                              ),
+                              Container(
+                                width: 320,
+                                child: Row(
+                                  mainAxisAlignment: MainAxisAlignment.spaceAround,
+                                  mainAxisSize: MainAxisSize.max,
+                                  children: <Widget>[
+                                    PrevNextButton(iconSize, prev: true,),
+                                    PlayPauseButton(iconSize),
+                                    PrevNextButton(iconSize)
+                                  ],
+                                ),
+                              ),
+                              Padding(
+                                  padding: EdgeInsets.fromLTRB(8, 0, 8, 16),
+                                  child: Container(
+                                    width: 300,
+                                    child: Row(
+                                      mainAxisSize: MainAxisSize.max,
+                                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                      children: <Widget>[
+                                        IconButton(
+                                          icon: Icon(Icons.subtitles),
+                                          onPressed: () {
+                                            setState(() => _lyrics = !_lyrics);
+                                          },
+                                        ),
+                                        Text(
+                                            AudioService.currentMediaItem.extras['qualityString']
+                                        ),
+                                        IconButton(
+                                          icon: Icon(Icons.more_vert),
+                                          onPressed: () {
+                                            Track t = Track.fromMediaItem(AudioService.currentMediaItem);
+                                            MenuSheet m = MenuSheet(context);
+                                            m.defaultTrackMenu(t);
+                                          },
+                                        )
+                                      ],
+                                    ),
+                                  )
+                              )
+                            ],
+                          ),
+                        )
+                      ],
+                    );
+                  }
+
+                  //Portrait
+                  return Column(
                     mainAxisSize: MainAxisSize.max,
-                    mainAxisAlignment: MainAxisAlignment.spaceAround,
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: <Widget>[
                       Padding(
-                          padding: EdgeInsets.fromLTRB(16, 0, 16, 8),
+                          padding: EdgeInsets.fromLTRB(28, 16, 28, 0),
+                          child: PlayerScreenTopRow()
+                      ),
+                      Padding(
+                          padding: EdgeInsets.fromLTRB(16, 8, 16, 8),
                           child: Container(
-                            width: 320,
+                            height: 360,
                             child: Stack(
                               children: <Widget>[
                                 CachedImage(
@@ -57,199 +185,80 @@ class _PlayerScreenState extends State<PlayerScreen> {
                                   artUri: AudioService.currentMediaItem.artUri,
                                   trackId: AudioService.currentMediaItem.id,
                                   lyrics: Track.fromMediaItem(AudioService.currentMediaItem).lyrics,
-                                  height: 320.0,
+                                  height: 360.0,
                                 ),
                               ],
                             ),
                           )
                       ),
-                      SizedBox(
-                        width: MediaQuery.of(context).size.width / 2 - 32,
-                        child: Column(
+                      Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: <Widget>[
+                          Text(
+                            AudioService.currentMediaItem.displayTitle,
+                            maxLines: 1,
+                            textAlign: TextAlign.center,
+                            overflow: TextOverflow.clip,
+                            style: TextStyle(
+                                fontSize: 24.0,
+                                fontWeight: FontWeight.bold
+                            ),
+                          ),
+                          Container(height: 4,),
+                          Text(
+                            AudioService.currentMediaItem.displaySubtitle,
+                            maxLines: 1,
+                            textAlign: TextAlign.center,
+                            overflow: TextOverflow.clip,
+                            style: TextStyle(
+                              fontSize: 18.0,
+                              color: Theme.of(context).primaryColor,
+                            ),
+                          ),
+                        ],
+                      ),
+                      SeekBar(),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceAround,
+                        mainAxisSize: MainAxisSize.max,
+                        children: <Widget>[
+                          PrevNextButton(iconSize, prev: true,),
+                          PlayPauseButton(iconSize),
+                          PrevNextButton(iconSize)
+                        ],
+                      ),
+                      //Container(height: 8.0,),
+                      Padding(
+                        padding: EdgeInsets.symmetric(vertical: 4.0, horizontal: 16.0),
+                        child: Row(
                           mainAxisSize: MainAxisSize.max,
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: <Widget>[
-                            Padding(
-                                padding: EdgeInsets.fromLTRB(8, 16, 8, 0),
-                                child: Container(
-                                  width: 300,
-                                  child: PlayerScreenTopRow(),
-                                )
+                            IconButton(
+                              icon: Icon(Icons.subtitles),
+                              onPressed: () {
+                                setState(() => _lyrics = !_lyrics);
+                              },
                             ),
-                            Column(
-                              mainAxisSize: MainAxisSize.min,
-                              children: <Widget>[
-                                Text(
-                                  AudioService.currentMediaItem.displayTitle,
-                                  maxLines: 1,
-                                  textAlign: TextAlign.center,
-                                  overflow: TextOverflow.clip,
-                                  style: TextStyle(
-                                      fontSize: 24.0,
-                                      fontWeight: FontWeight.bold
-                                  ),
-                                ),
-                                Container(height: 4,),
-                                Text(
-                                  AudioService.currentMediaItem.displaySubtitle,
-                                  maxLines: 1,
-                                  textAlign: TextAlign.center,
-                                  overflow: TextOverflow.clip,
-                                  style: TextStyle(
-                                    fontSize: 18.0,
-                                    color: Theme.of(context).primaryColor,
-                                  ),
-                                ),
-                              ],
+                            Text(
+                                AudioService.currentMediaItem.extras['qualityString']
                             ),
-                            Container(
-                              width: 320,
-                              child: SeekBar(),
-                            ),
-                            Container(
-                              width: 320,
-                              child: Row(
-                                mainAxisAlignment: MainAxisAlignment.spaceAround,
-                                mainAxisSize: MainAxisSize.max,
-                                children: <Widget>[
-                                  PrevNextButton(iconSize, prev: true,),
-                                  PlayPauseButton(iconSize),
-                                  PrevNextButton(iconSize)
-                                ],
-                              ),
-                            ),
-                            Padding(
-                                padding: EdgeInsets.fromLTRB(8, 0, 8, 16),
-                                child: Container(
-                                  width: 300,
-                                  child: Row(
-                                    mainAxisSize: MainAxisSize.max,
-                                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                                    children: <Widget>[
-                                      IconButton(
-                                        icon: Icon(Icons.subtitles),
-                                        onPressed: () {
-                                          setState(() => _lyrics = !_lyrics);
-                                        },
-                                      ),
-                                      Text(
-                                          AudioService.currentMediaItem.extras['qualityString']
-                                      ),
-                                      IconButton(
-                                        icon: Icon(Icons.more_vert),
-                                        onPressed: () {
-                                          Track t = Track.fromMediaItem(AudioService.currentMediaItem);
-                                          MenuSheet m = MenuSheet(context);
-                                          m.defaultTrackMenu(t);
-                                        },
-                                      )
-                                    ],
-                                  ),
-                                )
+                            IconButton(
+                              icon: Icon(Icons.more_vert),
+                              onPressed: () {
+                                Track t = Track.fromMediaItem(AudioService.currentMediaItem);
+                                MenuSheet m = MenuSheet(context);
+                                m.defaultTrackMenu(t);
+                              },
                             )
                           ],
                         ),
                       )
                     ],
                   );
-                }
 
-                //Portrait
-                return Column(
-                  mainAxisSize: MainAxisSize.max,
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: <Widget>[
-                    Padding(
-                        padding: EdgeInsets.fromLTRB(28, 16, 28, 0),
-                        child: PlayerScreenTopRow()
-                    ),
-                    Padding(
-                        padding: EdgeInsets.fromLTRB(16, 8, 16, 8),
-                        child: Container(
-                          height: 360,
-                          child: Stack(
-                            children: <Widget>[
-                              CachedImage(
-                                url: AudioService.currentMediaItem.artUri,
-                              ),
-                              if (_lyrics) LyricsWidget(
-                                artUri: AudioService.currentMediaItem.artUri,
-                                trackId: AudioService.currentMediaItem.id,
-                                lyrics: Track.fromMediaItem(AudioService.currentMediaItem).lyrics,
-                                height: 360.0,
-                              ),
-                            ],
-                          ),
-                        )
-                    ),
-                    Column(
-                      mainAxisSize: MainAxisSize.min,
-                      children: <Widget>[
-                        Text(
-                          AudioService.currentMediaItem.displayTitle,
-                          maxLines: 1,
-                          textAlign: TextAlign.center,
-                          overflow: TextOverflow.clip,
-                          style: TextStyle(
-                              fontSize: 24.0,
-                              fontWeight: FontWeight.bold
-                          ),
-                        ),
-                        Container(height: 4,),
-                        Text(
-                          AudioService.currentMediaItem.displaySubtitle,
-                          maxLines: 1,
-                          textAlign: TextAlign.center,
-                          overflow: TextOverflow.clip,
-                          style: TextStyle(
-                            fontSize: 18.0,
-                            color: Theme.of(context).primaryColor,
-                          ),
-                        ),
-                      ],
-                    ),
-                    SeekBar(),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceAround,
-                      mainAxisSize: MainAxisSize.max,
-                      children: <Widget>[
-                        PrevNextButton(iconSize, prev: true,),
-                        PlayPauseButton(iconSize),
-                        PrevNextButton(iconSize)
-                      ],
-                    ),
-                    //Container(height: 8.0,),
-                    Padding(
-                      padding: EdgeInsets.symmetric(vertical: 4.0, horizontal: 16.0),
-                      child: Row(
-                        mainAxisSize: MainAxisSize.max,
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: <Widget>[
-                          IconButton(
-                            icon: Icon(Icons.subtitles),
-                            onPressed: () {
-                              setState(() => _lyrics = !_lyrics);
-                            },
-                          ),
-                          Text(
-                              AudioService.currentMediaItem.extras['qualityString']
-                          ),
-                          IconButton(
-                            icon: Icon(Icons.more_vert),
-                            onPressed: () {
-                              Track t = Track.fromMediaItem(AudioService.currentMediaItem);
-                              MenuSheet m = MenuSheet(context);
-                              m.defaultTrackMenu(t);
-                            },
-                          )
-                        ],
-                      ),
-                    )
-                  ],
-                );
-
-              },
-            );
+                },
+              );
           },
         ),
       )
