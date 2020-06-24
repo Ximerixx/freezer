@@ -126,99 +126,108 @@ class _HomePageScreenState extends State<HomePageScreen> {
       return ErrorScreen();
     return SingleChildScrollView(
       child: Column(
-        children: <Widget>[
-          ...List.generate(_homePage.sections.length, (i) {
-            HomePageSection section = _homePage.sections[i];
-            return Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: <Widget>[
-                Padding(
-                    child: Text(
-                      section.title,
-                      textAlign: TextAlign.left,
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
-                      style: TextStyle(fontSize: 24.0),
-                    ),
-                    padding: EdgeInsets.symmetric(horizontal: 8.0, vertical: 8.0)
-                ),
-                SingleChildScrollView(
-                  scrollDirection: Axis.horizontal,
-                  child: Row(
-                    children: List<Widget>.generate(section.items.length, (i) {
-                      HomePageItem item = section.items[i];
-
-                      switch (item.type) {
-                        case HomePageItemType.SMARTTRACKLIST:
-                          return SmartTrackListTile(
-                            item.value,
-                            onTap: () {
-                              playerHelper.playFromSmartTrackList(item.value);
-                            },
-                          );
-                        case HomePageItemType.ALBUM:
-                          return AlbumCard(
-                            item.value,
-                            onTap: () {
-                              Navigator.of(context).push(MaterialPageRoute(
-                                  builder: (context) => AlbumDetails(item.value)
-                              ));
-                            },
-                            onHold: () {
-                              MenuSheet m = MenuSheet(context);
-                              m.defaultAlbumMenu(item.value);
-                            },
-                          );
-                        case HomePageItemType.ARTIST:
-                          return ArtistTile(
-                            item.value,
-                            onTap: () {
-                              Navigator.of(context).push(MaterialPageRoute(
-                                  builder: (context) => ArtistDetails(item.value)
-                              ));
-                            },
-                            onHold: () {
-                              MenuSheet m = MenuSheet(context);
-                              m.defaultArtistMenu(item.value);
-                            },
-                          );
-                        case HomePageItemType.PLAYLIST:
-                          return PlaylistCardTile(
-                            item.value,
-                            onTap: () {
-                              Navigator.of(context).push(MaterialPageRoute(
-                                  builder: (context) => PlaylistDetails(item.value)
-                              ));
-                            },
-                            onHold: () {
-                              MenuSheet m = MenuSheet(context);
-                              m.defaultPlaylistMenu(item.value);
-                            },
-                          );
-                        case HomePageItemType.CHANNEL:
-                          return ChannelTile(
-                            item.value,
-                            onTap: () {
-                              Navigator.of(context).push(MaterialPageRoute(
-                                builder: (context) => Scaffold(
-                                  appBar: AppBar(title: Text(item.value.title.toString()),),
-                                  body: HomePageScreen(channel: item.value,),
-                                )
-                              ));
-                            },
-                          );
-                      }
-                      return Container(height: 0, width: 0);
-                    }),
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: List.generate(_homePage.sections.length, (i) {
+          HomePageSection section = _homePage.sections[i];
+          return Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Padding(
+                  child: Text(
+                    section.title,
+                    textAlign: TextAlign.left,
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(fontSize: 24.0),
                   ),
+                  padding: EdgeInsets.symmetric(horizontal: 8.0, vertical: 8.0)
+              ),
+              SingleChildScrollView(
+                scrollDirection: Axis.horizontal,
+                child: Row(
+                  children: List.generate(section.items.length, (i) {
+                    HomePageItem item = section.items[i];
+                    return HomePageItemWidget(item);
+                  }),
                 ),
-                Container(height: 16.0,)
-              ],
-            );
-          })
-        ],
+              ),
+            ],
+          );
+        }),
       ),
     );
+  }
+}
+
+
+class HomePageItemWidget extends StatelessWidget {
+
+  HomePageItem item;
+  HomePageItemWidget(this.item);
+
+  @override
+  Widget build(BuildContext context) {
+    switch (item.type) {
+      case HomePageItemType.SMARTTRACKLIST:
+        return SmartTrackListTile(
+          item.value,
+          onTap: () {
+            playerHelper.playFromSmartTrackList(item.value);
+          },
+        );
+      case HomePageItemType.ALBUM:
+        return AlbumCard(
+          item.value,
+          onTap: () {
+            Navigator.of(context).push(MaterialPageRoute(
+                builder: (context) => AlbumDetails(item.value)
+            ));
+          },
+          onHold: () {
+            MenuSheet m = MenuSheet(context);
+            m.defaultAlbumMenu(item.value);
+          },
+        );
+      case HomePageItemType.ARTIST:
+        return ArtistTile(
+          item.value,
+          onTap: () {
+            Navigator.of(context).push(MaterialPageRoute(
+                builder: (context) => ArtistDetails(item.value)
+            ));
+          },
+          onHold: () {
+            MenuSheet m = MenuSheet(context);
+            m.defaultArtistMenu(item.value);
+          },
+        );
+      case HomePageItemType.PLAYLIST:
+        return PlaylistCardTile(
+          item.value,
+          onTap: () {
+            Navigator.of(context).push(MaterialPageRoute(
+                builder: (context) => PlaylistDetails(item.value)
+            ));
+          },
+          onHold: () {
+            MenuSheet m = MenuSheet(context);
+            m.defaultPlaylistMenu(item.value);
+          },
+        );
+      case HomePageItemType.CHANNEL:
+        return ChannelTile(
+          item.value,
+          onTap: () {
+            Navigator.of(context).push(MaterialPageRoute(
+                builder: (context) => Scaffold(
+                  appBar: AppBar(title: Text(item.value.title.toString()),),
+                  body: HomePageScreen(channel: item.value,),
+                )
+            ));
+          },
+        );
+    }
+    return Container(height: 0, width: 0);
   }
 }

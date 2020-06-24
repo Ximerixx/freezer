@@ -230,7 +230,8 @@ class PlaylistCardTile extends StatelessWidget {
                 overflow: TextOverflow.ellipsis,
                 style: TextStyle(fontSize: 16.0),
               ),
-            )
+            ),
+            Container(height: 8.0,)
           ],
         ),
       )
@@ -272,7 +273,8 @@ class SmartTrackListTile extends StatelessWidget {
                   fontSize: 16.0
                 ),
               ),
-            )
+            ),
+            Container(height: 8.0,)
           ],
         ),
       ),
@@ -315,7 +317,8 @@ class AlbumCard extends StatelessWidget {
                     fontSize: 16.0
                 ),
               ),
-            )
+            ),
+            Container(height: 8.0,)
           ],
         ),
       )
@@ -350,9 +353,9 @@ class ChannelTile extends StatelessWidget {
               maxLines: 2,
               overflow: TextOverflow.ellipsis,
               style: TextStyle(
-                  fontSize: 18.0,
-                  fontWeight: FontWeight.bold,
-                  color: _textColor()
+                fontSize: 18.0,
+                fontWeight: FontWeight.bold,
+                color: _textColor()
               ),
             ),
           ),

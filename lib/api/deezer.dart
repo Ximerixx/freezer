@@ -61,7 +61,7 @@ class DeezerAPI {
           'gateway_input': gatewayInput
       },
       data: jsonEncode(params??{}),
-      options: Options(responseType: ResponseType.json, sendTimeout: 7000, receiveTimeout: 7000)
+      options: Options(responseType: ResponseType.json, sendTimeout: 5000, receiveTimeout: 5000)
     );
     return response.data;
   }

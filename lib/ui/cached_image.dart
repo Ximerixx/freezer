@@ -124,6 +124,7 @@ class _CachedImageState extends State<CachedImage> {
   ImageProvider _image = AssetImage('assets/cover.jpg');
   double _opacity = 0.0;
   bool _disposed = false;
+  String _prevUrl;
 
   Future<ImageProvider> _getImage() async {
     //Image already path
@@ -146,6 +147,7 @@ class _CachedImageState extends State<CachedImage> {
       _image = image;
       _opacity = 1.0;
     });
+    _prevUrl = widget.url;
   }
 
   @override
@@ -162,6 +164,7 @@ class _CachedImageState extends State<CachedImage> {
 
   @override
   void didUpdateWidget(CachedImage oldWidget) {
+    if (_prevUrl == widget.url) return;
     _load();
     super.didUpdateWidget(oldWidget);
   }

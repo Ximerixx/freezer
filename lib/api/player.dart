@@ -545,8 +545,15 @@ class AudioPlayerTask extends BackgroundAudioTask {
       source = 'Stream';
     }
     //Calculate
-    int bitrate = ((size / 125) / duration.inSeconds).floor();
-    return '$format ${bitrate}kbps ($source)';
+    return '$format ${_bitrateString(size, duration.inSeconds)} ($source)';
+  }
+
+  String _bitrateString(int size, int duration) {
+    int bitrate = ((size / 125) / duration).floor();
+    //Prettify
+    if (bitrate > 315 && bitrate < 325) return '320kbps';
+    if (bitrate > 125 && bitrate < 135) return '128kbps';
+    return '${bitrate}kbps';
   }
 
   //Magic number to string, source: https://en.wikipedia.org/wiki/List_of_file_signatures
@@ -564,17 +571,15 @@ class AudioPlayerTask extends BackgroundAudioTask {
 
   @override
   void onTaskRemoved() async {
-    await _saveQueue();
-    onStop();
+    await onStop();
   }
 
   @override
   Future onStop() async {
-    await _saveQueue();
-
-    if (_playing != null) _audioPlayer.stop();
+    _audioPlayer.stop();
     if (_playerStateSub != null) _playerStateSub.cancel();
     if (_eventSub != null) _eventSub.cancel();
+    await _saveQueue();
 
     await super.onStop();
   }
