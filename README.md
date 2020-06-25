@@ -17,10 +17,16 @@ Compile:
 flutter pub get
 flutter build apk
 ```
-
 ## just_audio
 This app depends on modified just_audio plugin with Deezer support. Repo: https://notabug.org/exttex/just_audio
 
+## Telegram
+https://t.me/freezerandroid
+
+## Credits
+Tobs: Beta tester  
+Deemix: https://notabug.org/RemixDev/deemix  
+just_audio: https://github.com/ryanheise/just_audio  
 
 ## Disclaimer
 ```
@@ -29,10 +35,6 @@ It may be illegal to use this in your country!
 I am not responsible in any way for the usage of this app.
 ```
 
-## Credits
-Tobs: Beta tester  
-Deemix: https://notabug.org/RemixDev/deemix  
-just_audio: https://github.com/ryanheise/just_audio  
 
 ## Support me
 BTC: `14hcr4PGbgqeXd3SoXY9QyJFNpyurgrL9y`  
