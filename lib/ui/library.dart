@@ -8,11 +8,12 @@ import 'package:freezer/settings.dart';
 import 'package:freezer/ui/details_screens.dart';
 import 'package:freezer/ui/downloads_screen.dart';
 import 'package:freezer/ui/error.dart';
+import 'package:freezer/ui/importer_screen.dart';
 import 'package:freezer/ui/tiles.dart';
 
 import 'menu.dart';
 import 'settings_screen.dart';
-import 'player_bar.dart';
+import '../api/spotify.dart';
 import '../api/download.dart';
 
 class LibraryAppBar extends StatelessWidget implements PreferredSizeWidget {
@@ -104,6 +105,25 @@ class LibraryScreen extends StatelessWidget {
             onTap: () {
               Navigator.of(context).push(
                   MaterialPageRoute(builder: (context) => LibraryPlaylists())
+              );
+            },
+          ),
+          Divider(),
+          ListTile(
+            title: Text('Import'),
+            leading: Icon(Icons.import_export),
+            subtitle: Text('Import playlists from Spotify'),
+            onTap: () {
+              if (spotify.doneImporting != null) {
+                Navigator.of(context).push(
+                  MaterialPageRoute(builder: (context) => CurrentlyImportingScreen())
+                );
+                if (spotify.doneImporting) spotify.doneImporting = null;
+                return;
+              }
+
+              Navigator.of(context).push(
+                MaterialPageRoute(builder: (context) => ImporterScreen())
               );
             },
           ),

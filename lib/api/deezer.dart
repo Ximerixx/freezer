@@ -66,6 +66,15 @@ class DeezerAPI {
     return response.data;
   }
 
+  Future<Map> callPublicApi(String path) async {
+    Dio dio = Dio();
+    Response response = await dio.get(
+      'https://api.deezer.com/' + path,
+      options: Options(responseType: ResponseType.json, sendTimeout: 5000, receiveTimeout: 5000)
+    );
+    return response.data;
+  }
+
   //Authorize, bool = success
   Future<bool> authorize() async {
     try {
@@ -341,7 +350,7 @@ class DeezerAPI {
 
   //Create playlist
   //Status 1 - private, 2 - collaborative
-  Future createPlaylist(String title, {String description = "", int status = 1, List<String> trackIds = const []}) async {
+  Future<String> createPlaylist(String title, {String description = "", int status = 1, List<String> trackIds = const []}) async {
     Map data = await callApi('playlist.create', params: {
       'title': title,
       'description': description,
@@ -349,7 +358,7 @@ class DeezerAPI {
       'status': status
     });
     //Return playlistId
-    return data['results'];
+    return data['results'].toString();
   }
   
 }
