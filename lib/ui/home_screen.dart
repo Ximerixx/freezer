@@ -11,14 +11,31 @@ import '../settings.dart';
 class HomeScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
+    //TODO: SingleChildScrollView vs ListView speed/perf
+    return SingleChildScrollView(
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: <Widget>[
+          Padding(
+            padding: EdgeInsets.symmetric(vertical: 16.0),
+            child: FreezerTitle(),
+          ),
+          Flexible(child: HomePageScreen(),)
+        ],
+      ),
+    );
+    /*
     return ListView(
       children: <Widget>[
-        Container(height: 16.0,),
-        FreezerTitle(),
-        Container(height: 16.0,),
+        Padding(
+          padding: EdgeInsets.symmetric(vertical: 16.0),
+          child: FreezerTitle(),
+        ),
         HomePageScreen()
       ],
     );
+
+     */
   }
 }
 
@@ -124,38 +141,40 @@ class _HomePageScreenState extends State<HomePageScreen> {
       return Center(child: CircularProgressIndicator(),);
     if (_error)
       return ErrorScreen();
-    return SingleChildScrollView(
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: List.generate(_homePage.sections.length, (i) {
-          HomePageSection section = _homePage.sections[i];
-          return Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Padding(
-                  child: Text(
-                    section.title,
-                    textAlign: TextAlign.left,
-                    maxLines: 2,
-                    overflow: TextOverflow.ellipsis,
-                    style: TextStyle(fontSize: 24.0),
-                  ),
-                  padding: EdgeInsets.symmetric(horizontal: 8.0, vertical: 8.0)
+    return ListView.builder(
+      shrinkWrap: true,
+      addAutomaticKeepAlives: true,
+      physics: NeverScrollableScrollPhysics(),
+      itemCount: _homePage.sections.length,
+      itemBuilder: (context, i) {
+        HomePageSection section = _homePage.sections[i];
+        return Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Padding(
+              child: Text(
+                section.title,
+                textAlign: TextAlign.left,
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+                style: TextStyle(fontSize: 24.0),
               ),
-              SingleChildScrollView(
-                scrollDirection: Axis.horizontal,
-                child: Row(
-                  children: List.generate(section.items.length, (i) {
-                    HomePageItem item = section.items[i];
-                    return HomePageItemWidget(item);
-                  }),
-                ),
+              padding: EdgeInsets.symmetric(horizontal: 8.0, vertical: 8.0)
+            ),
+
+            SingleChildScrollView(
+              scrollDirection: Axis.horizontal,
+              child: Row(
+                children: List.generate(section.items.length, (i) {
+                  HomePageItem item = section.items[i];
+                  return HomePageItemWidget(item);
+                }),
               ),
-            ],
-          );
-        }),
-      ),
+            ),
+          ],
+        );
+      },
     );
   }
 }
@@ -168,6 +187,7 @@ class HomePageItemWidget extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+
     switch (item.type) {
       case HomePageItemType.SMARTTRACKLIST:
         return SmartTrackListTile(

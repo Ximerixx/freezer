@@ -239,6 +239,7 @@ class PlaylistCardTile extends StatelessWidget {
   }
 }
 
+
 class SmartTrackListTile extends StatelessWidget {
 
   final SmartTrackList smartTrackList;

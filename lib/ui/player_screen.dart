@@ -169,11 +169,11 @@ class _PlayerScreenState extends State<PlayerScreen> {
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: <Widget>[
                       Padding(
-                          padding: EdgeInsets.fromLTRB(28, 16, 28, 0),
+                          padding: EdgeInsets.fromLTRB(28, 12, 28, 4),
                           child: PlayerScreenTopRow()
                       ),
                       Padding(
-                          padding: EdgeInsets.fromLTRB(16, 8, 16, 8),
+                          padding: EdgeInsets.fromLTRB(16, 0, 16, 0),
                           child: Container(
                             height: 360,
                             child: Stack(
@@ -229,7 +229,7 @@ class _PlayerScreenState extends State<PlayerScreen> {
                       ),
                       //Container(height: 8.0,),
                       Padding(
-                        padding: EdgeInsets.symmetric(vertical: 4.0, horizontal: 16.0),
+                        padding: EdgeInsets.symmetric(vertical: 0, horizontal: 16.0),
                         child: Row(
                           mainAxisSize: MainAxisSize.max,
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,

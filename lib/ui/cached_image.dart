@@ -141,6 +141,8 @@ class _CachedImageState extends State<CachedImage> {
 
   //Load image and fade
   void _load() async {
+    if (_prevUrl == widget.url) return;
+
     ImageProvider image = await _getImage();
     if (_disposed) return;
     setState(() {
@@ -164,7 +166,6 @@ class _CachedImageState extends State<CachedImage> {
 
   @override
   void didUpdateWidget(CachedImage oldWidget) {
-    if (_prevUrl == widget.url) return;
     _load();
     super.didUpdateWidget(oldWidget);
   }
@@ -183,6 +184,7 @@ class _CachedImageState extends State<CachedImage> {
           height: widget.height,
           width: widget.width,
         ),
+
         AnimatedOpacity(
           duration: Duration(milliseconds: 250),
           opacity: _opacity,

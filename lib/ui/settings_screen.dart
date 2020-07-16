@@ -1,13 +1,14 @@
+import 'package:audio_service/audio_service.dart';
 import 'package:country_pickers/country.dart';
 import 'package:country_pickers/country_picker_dialog.dart';
 import 'package:filesize/filesize.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_material_color_picker/flutter_material_color_picker.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import 'package:freezer/api/deezer.dart';
 import 'package:freezer/ui/error.dart';
-import 'package:freezer/ui/player_bar.dart';
 import 'package:language_pickers/language_pickers.dart';
 import 'package:language_pickers/languages.dart';
 import 'package:package_info/package_info.dart';
@@ -501,6 +502,42 @@ class _GeneralSettingsState extends State<GeneralSettings> {
                 settings.save();
               },
             ),
+          ),
+          ListTile(
+            title: Text('Log out', style: TextStyle(color: Colors.red),),
+            leading: Icon(Icons.exit_to_app),
+            onTap: () {
+              showDialog(
+                context: context,
+                builder: (context) {
+                  return AlertDialog(
+                    title: Text('Log out'),
+                    content: Text('Due to plugin incompatibility, login using browser is unavailable without restart.'),
+                    actions: <Widget>[
+                      FlatButton(
+                        child: Text('Cancel'),
+                        onPressed: () => Navigator.of(context).pop(),
+                      ),
+                      FlatButton(
+                        child: Text('(ARL ONLY) Continue'),
+                        onPressed: () {
+                          logOut();
+                          Navigator.of(context).pop();
+                        },
+                      ),
+                      FlatButton(
+                        child: Text('Log out & Exit'),
+                        onPressed: () async {
+                          try {AudioService.stop();} catch (e) {}
+                          await logOut();
+                          SystemNavigator.pop();
+                        },
+                      )
+                    ],
+                  );
+                }
+              );
+            }
           )
         ],
       ),

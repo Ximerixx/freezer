@@ -1,6 +1,7 @@
 import 'package:custom_navigator/custom_navigator.dart';
 import 'package:audio_service/audio_service.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/rendering.dart';
 import 'package:freezer/ui/library.dart';
 import 'package:freezer/ui/login_screen.dart';
 import 'package:freezer/ui/search.dart';
@@ -14,7 +15,9 @@ import 'api/download.dart';
 import 'api/player.dart';
 import 'ui/home_screen.dart';
 
+
 Function updateTheme;
+Function logOut;
 GlobalKey<NavigatorState> mainNavigatorKey = GlobalKey<NavigatorState>();
 GlobalKey<NavigatorState> navigatorKey;
 
@@ -90,7 +93,19 @@ class _LoginMainWrapperState extends State<LoginMainWrapper> {
         if (b) setState(() => settings.offlineMode = false);
       });
     }
+    //Global logOut function
+    logOut = _logOut;
+
     super.initState();
+  }
+
+  Future _logOut() async {
+    setState(() {
+      settings.arl = null;
+      settings.offlineMode = true;
+      deezerAPI = new DeezerAPI();
+    });
+    await settings.save();
   }
 
   @override
