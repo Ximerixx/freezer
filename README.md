@@ -25,7 +25,7 @@ https://t.me/freezerandroid
 
 ## Credits
 Tobs: Beta tester  
-Bas Curtiz: Icon, Logo, Banner, Design suggestions
+Bas Curtiz: Icon, Logo, Banner, Design suggestions  
 Deemix: https://notabug.org/RemixDev/deemix  
 just_audio: https://github.com/ryanheise/just_audio  
 
