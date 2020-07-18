@@ -126,7 +126,8 @@ class SearchResultsScreen extends StatelessWidget {
                 'Tracks',
                 textAlign: TextAlign.center,
                 style: TextStyle(
-                    fontSize: 26.0
+                  fontSize: 26.0,
+                  fontWeight: FontWeight.bold
                 ),
               ),
               ...List.generate(3, (i) {
@@ -170,7 +171,8 @@ class SearchResultsScreen extends StatelessWidget {
                 'Albums',
                 textAlign: TextAlign.center,
                 style: TextStyle(
-                  fontSize: 26.0
+                  fontSize: 26.0,
+                  fontWeight: FontWeight.bold
                 ),
               ),
               ...List.generate(3, (i) {
@@ -208,7 +210,8 @@ class SearchResultsScreen extends StatelessWidget {
                 'Artists',
                 textAlign: TextAlign.center,
                 style: TextStyle(
-                    fontSize: 26.0
+                  fontSize: 26.0,
+                  fontWeight: FontWeight.bold
                 ),
               ),
               Container(height: 4),
@@ -243,7 +246,8 @@ class SearchResultsScreen extends StatelessWidget {
                 'Playlists',
                 textAlign: TextAlign.center,
                 style: TextStyle(
-                    fontSize: 26.0
+                  fontSize: 26.0,
+                  fontWeight: FontWeight.bold
                 ),
               ),
               ...List.generate(3, (i) {

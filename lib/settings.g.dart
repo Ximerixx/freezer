@@ -99,5 +99,6 @@ const _$DownloadNamingEnumMap = {
 const _$ThemesEnumMap = {
   Themes.Light: 'Light',
   Themes.Dark: 'Dark',
+  Themes.Deezer: 'Deezer',
   Themes.Black: 'Black',
 };

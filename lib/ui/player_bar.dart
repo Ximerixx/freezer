@@ -121,40 +121,45 @@ class PlayPauseButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
 
-    //Playing
-    if (AudioService.playbackState?.playing??false) {
-      return IconButton(
-        iconSize: this.size,
-        icon: Icon(Icons.pause),
-        onPressed: () => AudioService.pause()
-      );
-    }
+    return StreamBuilder(
+      stream: AudioService.playbackStateStream,
+      builder: (context, snapshot) {
+        //Playing
+        if (AudioService.playbackState?.playing??false) {
+          return IconButton(
+              iconSize: this.size,
+              icon: Icon(Icons.pause),
+              onPressed: () => AudioService.pause()
+          );
+        }
 
-    //Paused
-    if ((!AudioService.playbackState.playing &&
-        AudioService.playbackState.processingState == AudioProcessingState.ready) ||
-        //None state (stopped)
-        AudioService.playbackState.processingState == AudioProcessingState.none) {
-      return IconButton(
-        iconSize: this.size,
-        icon: Icon(Icons.play_arrow),
-        onPressed: () => AudioService.play()
-      );
-    }
+        //Paused
+        if ((!AudioService.playbackState.playing &&
+            AudioService.playbackState.processingState == AudioProcessingState.ready) ||
+            //None state (stopped)
+            AudioService.playbackState.processingState == AudioProcessingState.none) {
+          return IconButton(
+              iconSize: this.size,
+              icon: Icon(Icons.play_arrow),
+              onPressed: () => AudioService.play()
+          );
+        }
 
-    switch (AudioService.playbackState.processingState) {
-      //Stopped/Error
-      case AudioProcessingState.error:
-      case AudioProcessingState.none:
-      case AudioProcessingState.stopped:
-        return Container(width: this.size, height: this.size);
-      //Loading, connecting, rewinding...
-      default:
-        return Container(
-          width: this.size,
-          height: this.size,
-          child: CircularProgressIndicator(),
-        );
-    }
+        switch (AudioService.playbackState.processingState) {
+        //Stopped/Error
+          case AudioProcessingState.error:
+          case AudioProcessingState.none:
+          case AudioProcessingState.stopped:
+            return Container(width: this.size, height: this.size);
+        //Loading, connecting, rewinding...
+          default:
+            return Container(
+              width: this.size,
+              height: this.size,
+              child: CircularProgressIndicator(),
+            );
+        }
+      },
+    );
   }
 }

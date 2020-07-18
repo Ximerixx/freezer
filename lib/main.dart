@@ -43,6 +43,10 @@ class _FreezerAppState extends State<FreezerApp> {
   void initState() {
     //Make update theme global
     updateTheme = _updateTheme;
+
+    //Precache placeholder
+    precacheImage(imagesDatabase.placeholderThumb, context);
+
     super.initState();
   }
 

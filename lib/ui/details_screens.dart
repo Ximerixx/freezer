@@ -48,7 +48,7 @@ class AlbumDetails extends StatelessWidget {
                     Container(height: 8.0,),
                     CachedImage(
                       url: album.art.full,
-                      height: 256.0,
+                      width: MediaQuery.of(context).size.width / 2
                     ),
                     Container(height: 8,),
                     Text(
@@ -259,11 +259,10 @@ class ArtistDetails extends StatelessWidget {
                   children: <Widget>[
                     CachedImage(
                       url: artist.picture.full,
-                      height: 200,
+                      width: MediaQuery.of(context).size.width / 2 - 8,
                     ),
                     Container(
-                      width: 200.0,
-                      height: 220,
+                      width: MediaQuery.of(context).size.width / 2 - 8,
                       child: Column(
                         mainAxisSize: MainAxisSize.min,
                         mainAxisAlignment: MainAxisAlignment.center,
@@ -500,11 +499,10 @@ class _PlaylistDetailsState extends State<PlaylistDetails> {
               children: <Widget>[
                 CachedImage(
                   url: playlist.image.full,
-                  height: 180.0,
+                  height: MediaQuery.of(context).size.width / 2 - 8,
                 ),
                 Container(
-                  width: 180,
-                  height: 200, //Card padding
+                  width: MediaQuery.of(context).size.width / 2 - 8,
                   child: Column(
                     mainAxisSize: MainAxisSize.min,
                     mainAxisAlignment: MainAxisAlignment.center,

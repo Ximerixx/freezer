@@ -27,6 +27,8 @@ class ImagesDatabase {
   Database db;
   String imagesPath;
 
+  ImageProvider placeholderThumb = new AssetImage('assets/cover_thumb.jpg');
+
   //Prepare database
   Future init() async {
     String dir = await getDatabasesPath();
@@ -82,7 +84,7 @@ class ImagesDatabase {
   Future<PaletteGenerator> getPaletteGenerator(String url) async {
     String path = await getImage(url);
     //Get image provider
-    ImageProvider provider = AssetImage('assets/cover.jpg');
+    ImageProvider provider = placeholderThumb;
     if (path != null) {
       provider = FileImage(File(path));
     }
@@ -120,8 +122,7 @@ class CachedImage extends StatefulWidget {
 
 class _CachedImageState extends State<CachedImage> {
 
-  final ImageProvider _placeholder = AssetImage('assets/cover.jpg');
-  ImageProvider _image = AssetImage('assets/cover.jpg');
+  ImageProvider _image = imagesDatabase.placeholderThumb;
   double _opacity = 0.0;
   bool _disposed = false;
   String _prevUrl;
@@ -135,7 +136,7 @@ class _CachedImageState extends State<CachedImage> {
     }
     //Load image from db
     String path = await imagesDatabase.getImage(widget.url);
-    if (path == null) return _placeholder;
+    if (path == null) return imagesDatabase.placeholderThumb;
     return FileImage(File(path));
   }
 
@@ -177,10 +178,10 @@ class _CachedImageState extends State<CachedImage> {
         widget.circular ?
         CircleAvatar(
           radius: (widget.width??widget.height),
-          backgroundImage: _placeholder,
+          backgroundImage: imagesDatabase.placeholderThumb,
         ):
         Image(
-          image: _placeholder,
+          image: imagesDatabase.placeholderThumb,
           height: widget.height,
           width: widget.width,
         ),

@@ -136,7 +136,16 @@ class _AppearanceSettingsState extends State<AppearanceSettings> {
                           updateTheme();
                           Navigator.of(context).pop();
                         },
-                      )
+                      ),
+                      SimpleDialogOption(
+                        child: Text('Deezer (Dark)'),
+                        onPressed: () {
+                          setState(() => settings.theme = Themes.Deezer);
+                          settings.save();
+                          updateTheme();
+                          Navigator.of(context).pop();
+                        },
+                      ),
                     ],
                   );
                 }
@@ -274,9 +283,13 @@ class _QualityPickerState extends State<QualityPicker> {
     });
     switch (widget.field) {
       case 'mobile':
-        settings.mobileQuality = _quality; break;
+        settings.mobileQuality = _quality;
+        settings.updateAudioServiceQuality();
+        break;
       case 'wifi':
-        settings.wifiQuality = _quality; break;
+        settings.wifiQuality = _quality;
+        settings.updateAudioServiceQuality();
+        break;
       case 'download':
         settings.downloadQuality = _quality; break;
       case 'offline':

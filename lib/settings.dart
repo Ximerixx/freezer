@@ -67,11 +67,13 @@ class Settings {
 
   Settings({this.downloadPath, this.arl});
 
+  static const deezerBg = Color(0xFF1F1A16);
+  static const font = 'MabryPro';
   ThemeData get themeData {
     switch (theme??Themes.Light) {
       case Themes.Light:
         return ThemeData(
-          fontFamily: 'Montserrat',
+          fontFamily: font,
           primaryColor: primaryColor,
           accentColor: primaryColor,
           sliderTheme: _sliderTheme,
@@ -79,16 +81,33 @@ class Settings {
         );
       case Themes.Dark:
         return ThemeData(
-          fontFamily: 'Montserrat',
+          fontFamily: font,
           brightness: Brightness.dark,
           primaryColor: primaryColor,
           accentColor: primaryColor,
           sliderTheme: _sliderTheme,
           toggleableActiveColor: primaryColor,
         );
+      case Themes.Deezer:
+        return ThemeData(
+          fontFamily: font,
+          brightness: Brightness.dark,
+          primaryColor: primaryColor,
+          accentColor: primaryColor,
+          sliderTheme: _sliderTheme,
+          toggleableActiveColor: primaryColor,
+          backgroundColor: deezerBg,
+          scaffoldBackgroundColor: deezerBg,
+          bottomAppBarColor: deezerBg,
+          dialogBackgroundColor: deezerBg,
+          bottomSheetTheme: BottomSheetThemeData(
+            backgroundColor: deezerBg
+          ),
+          cardColor: deezerBg
+        );
       case Themes.Black:
         return ThemeData(
-          fontFamily: 'Montserrat',
+          fontFamily: font,
           brightness: Brightness.dark,
           primaryColor: primaryColor,
           accentColor: primaryColor,
@@ -185,10 +204,12 @@ enum AudioQuality {
 enum Themes {
   Light,
   Dark,
+  Deezer,
   Black
 }
 
 enum DownloadNaming {
   DEFAULT,
-  STANDALONE
+  STANDALONE,
+
 }

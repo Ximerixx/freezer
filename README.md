@@ -1,6 +1,8 @@
 # freezer
 
-A music streaming app written from scratch, which uses Deezer as backend.
+![Icon](https://notabug.org/exttex/freezer/raw/master/android/app/src/main/res/mipmap-hdpi/ic_launcher.png)
+
+Free, unlimited, without DRM music streaming app, which uses Deezer as backend.
 This app is still in BETA, so it is missing features and contains bugs.  
 If you want to report bug or request feature, please open an issue.  
 
@@ -17,16 +19,23 @@ Compile:
 flutter pub get
 flutter build apk
 ```
-## just_audio
-This app depends on modified just_audio plugin with Deezer support. Repo: https://notabug.org/exttex/just_audio
 
 ## Telegram
 https://t.me/freezerandroid
 
 ## Credits
 Tobs: Beta tester  
+Bas Curtiz: Icon, Logo, Banner, Design suggestions
 Deemix: https://notabug.org/RemixDev/deemix  
 just_audio: https://github.com/ryanheise/just_audio  
+
+
+## Support me
+BTC: `14hcr4PGbgqeXd3SoXY9QyJFNpyurgrL9y`  
+ETH: `0xb4D1893195404E1F4b45e5BDA77F202Ac4012288`  
+
+## just_audio
+This app depends on modified just_audio plugin with Deezer support. Repo: https://notabug.org/exttex/just_audio
 
 ## Disclaimer
 ```
@@ -34,8 +43,3 @@ Freezer was not developed for piracy, but educational and private usage.
 It may be illegal to use this in your country!
 I am not responsible in any way for the usage of this app.
 ```
-
-
-## Support me
-BTC: `14hcr4PGbgqeXd3SoXY9QyJFNpyurgrL9y`  
-ETH: `0xb4D1893195404E1F4b45e5BDA77F202Ac4012288`  

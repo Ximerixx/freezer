@@ -11,19 +11,18 @@ import '../settings.dart';
 class HomeScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
-    //TODO: SingleChildScrollView vs ListView speed/perf
     return SingleChildScrollView(
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: <Widget>[
-          Padding(
-            padding: EdgeInsets.symmetric(vertical: 16.0),
+          SafeArea(
             child: FreezerTitle(),
           ),
           Flexible(child: HomePageScreen(),)
         ],
       ),
     );
+
     /*
     return ListView(
       children: <Widget>[
@@ -34,22 +33,33 @@ class HomeScreen extends StatelessWidget {
         HomePageScreen()
       ],
     );
-
-     */
+    */
   }
 }
 
 class FreezerTitle extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
-    return Text(
-      'freezer',
-      textAlign: TextAlign.center,
-      style: TextStyle(
-        fontFamily: 'Jost',
-        fontSize: 75,
-        fontStyle: FontStyle.italic,
-        letterSpacing: 7
+    return Padding(
+      padding: EdgeInsets.fromLTRB(0, 24, 0, 8),
+      child: Row(
+        mainAxisSize: MainAxisSize.max,
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: <Widget>[
+          Row(
+            mainAxisSize: MainAxisSize.min,
+            children: <Widget>[
+              Image.asset('assets/icon.png', width: 64, height: 64),
+              Text(
+                'freezer',
+                style: TextStyle(
+                    fontSize: 56,
+                    fontWeight: FontWeight.w900
+                ),
+              )
+            ],
+          )
+        ],
       ),
     );
   }
@@ -158,7 +168,10 @@ class _HomePageScreenState extends State<HomePageScreen> {
                 textAlign: TextAlign.left,
                 maxLines: 2,
                 overflow: TextOverflow.ellipsis,
-                style: TextStyle(fontSize: 24.0),
+                style: TextStyle(
+                  fontSize: 20.0,
+                  fontWeight: FontWeight.bold
+                ),
               ),
               padding: EdgeInsets.symmetric(horizontal: 8.0, vertical: 8.0)
             ),
