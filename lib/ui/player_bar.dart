@@ -25,31 +25,34 @@ class PlayerBar extends StatelessWidget {
         return Column(
           mainAxisSize: MainAxisSize.min,
           children: <Widget>[
-            ListTile(
-                onTap: () => Navigator.of(context).push(MaterialPageRoute(builder: (BuildContext context) => PlayerScreen())),
-                leading: CachedImage(
-                  width: 50,
-                  height: 50,
-                  url: AudioService.currentMediaItem.artUri,
-                ),
-                title: Text(
-                  AudioService.currentMediaItem.displayTitle,
-                  overflow: TextOverflow.clip,
-                  maxLines: 1,
-                ),
-                subtitle: Text(
-                  AudioService.currentMediaItem.displaySubtitle,
-                  overflow: TextOverflow.clip,
-                  maxLines: 1,
-                ),
-                trailing: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: <Widget>[
-                    PrevNextButton(iconSize, prev: true, hidePrev: true,),
-                    PlayPauseButton(iconSize),
-                    PrevNextButton(iconSize)
-                  ],
-                )
+            Container(
+              color: Theme.of(context).bottomAppBarColor,
+              child: ListTile(
+                  onTap: () => Navigator.of(context).push(MaterialPageRoute(builder: (BuildContext context) => PlayerScreen())),
+                  leading: CachedImage(
+                    width: 50,
+                    height: 50,
+                    url: AudioService.currentMediaItem.artUri,
+                  ),
+                  title: Text(
+                    AudioService.currentMediaItem.displayTitle,
+                    overflow: TextOverflow.clip,
+                    maxLines: 1,
+                  ),
+                  subtitle: Text(
+                    AudioService.currentMediaItem.displaySubtitle,
+                    overflow: TextOverflow.clip,
+                    maxLines: 1,
+                  ),
+                  trailing: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: <Widget>[
+                      PrevNextButton(iconSize, prev: true, hidePrev: true,),
+                      PlayPauseButton(iconSize),
+                      PrevNextButton(iconSize)
+                    ],
+                  )
+              ),
             ),
             Container(
               height: 3.0,

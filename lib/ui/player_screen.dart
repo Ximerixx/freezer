@@ -10,6 +10,7 @@ import 'package:freezer/ui/menu.dart';
 import 'package:freezer/ui/settings_screen.dart';
 import 'package:freezer/ui/tiles.dart';
 import 'package:async/async.dart';
+import 'package:marquee/marquee.dart';
 
 import 'cached_image.dart';
 import '../api/definitions.dart';
@@ -115,15 +116,29 @@ class _PlayerScreenHorizontalState extends State<PlayerScreenHorizontal> {
               Column(
                 mainAxisSize: MainAxisSize.min,
                 children: <Widget>[
-                  Text(
-                    AudioService.currentMediaItem.displayTitle,
-                    maxLines: 1,
-                    textAlign: TextAlign.center,
-                    overflow: TextOverflow.clip,
-                    style: TextStyle(
-                        fontSize: ScreenUtil().setSp(40),
-                        fontWeight: FontWeight.bold
-                    ),
+                  Container(
+                    height: ScreenUtil().setSp(40),
+                    child: AudioService.currentMediaItem.displayTitle.length >= 22 ?
+                    Marquee(
+                      text: AudioService.currentMediaItem.displayTitle,
+                      style: TextStyle(
+                          fontSize: ScreenUtil().setSp(40),
+                          fontWeight: FontWeight.bold
+                      ),
+                      blankSpace: 32.0,
+                      startPadding: 10.0,
+                      accelerationDuration: Duration(seconds: 1),
+                      pauseAfterRound: Duration(seconds: 2),
+                    ):
+                    Text(
+                      AudioService.currentMediaItem.displayTitle,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(
+                          fontSize: ScreenUtil().setSp(40),
+                          fontWeight: FontWeight.bold
+                      ),
+                    )
                   ),
                   Container(height: 4,),
                   Text(
@@ -241,15 +256,29 @@ class _PlayerScreenVerticalState extends State<PlayerScreenVertical> {
         Column(
           mainAxisSize: MainAxisSize.min,
           children: <Widget>[
-            Text(
-              AudioService.currentMediaItem.displayTitle,
-              maxLines: 1,
-              textAlign: TextAlign.center,
-              overflow: TextOverflow.clip,
-              style: TextStyle(
+            Container(
+              height: ScreenUtil().setSp(64),
+              child: AudioService.currentMediaItem.displayTitle.length >= 24 ?
+              Marquee(
+                text: AudioService.currentMediaItem.displayTitle,
+                style: TextStyle(
                   fontSize: ScreenUtil().setSp(64),
                   fontWeight: FontWeight.bold
-              ),
+                ),
+                blankSpace: 32.0,
+                startPadding: 10.0,
+                accelerationDuration: Duration(seconds: 1),
+                pauseAfterRound: Duration(seconds: 2),
+              ):
+              Text(
+                AudioService.currentMediaItem.displayTitle,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: TextStyle(
+                  fontSize: ScreenUtil().setSp(64),
+                  fontWeight: FontWeight.bold
+                ),
+              )
             ),
             Container(height: 4,),
             Text(
@@ -338,6 +367,7 @@ class _LyricsWidgetState extends State<LyricsWidget> {
   Timer _timer;
   int _currentIndex;
   double _boxHeight;
+  double _lyricHeight = 128;
   String _trackId;
 
   Future _load() async {
@@ -380,7 +410,7 @@ class _LyricsWidgetState extends State<LyricsWidget> {
       //Scroll to current lyric
       if (_currentIndex <= 0) return;
       _scrollController.animateTo(
-        (_boxHeight * _currentIndex),
+        (_lyricHeight * _currentIndex) + (_lyricHeight / 2) - (_boxHeight / 2),
         duration: Duration(milliseconds: 250),
         curve: Curves.ease
       );
@@ -425,7 +455,7 @@ class _LyricsWidgetState extends State<LyricsWidget> {
               child: Column(
                 children: List.generate(_l.lyrics.length, (i) {
                   return Container(
-                      height: _boxHeight,
+                      height: _lyricHeight,
                       child: Center(
                         child: Stack(
                           children: <Widget>[
@@ -433,7 +463,7 @@ class _LyricsWidgetState extends State<LyricsWidget> {
                               _l.lyrics[i].text,
                               textAlign: TextAlign.center,
                               style: TextStyle(
-                                fontSize: 36.0,
+                                fontSize: 28.0,
                                 fontWeight: (_currentIndex == i)?FontWeight.bold:FontWeight.normal,
                                 foreground: Paint()
                                   ..strokeWidth = 6
@@ -446,7 +476,7 @@ class _LyricsWidgetState extends State<LyricsWidget> {
                               textAlign: TextAlign.center,
                               style: TextStyle(
                                   color: _textColor,
-                                  fontSize: 36.0,
+                                  fontSize: 28.0,
                                   fontWeight: (_currentIndex == i)?FontWeight.bold:FontWeight.normal
                               ),
                             ),

@@ -78,6 +78,7 @@ class Settings {
           accentColor: primaryColor,
           sliderTheme: _sliderTheme,
           toggleableActiveColor: primaryColor,
+          bottomAppBarColor: Color(0xfff7f7f7)
         );
       case Themes.Dark:
         return ThemeData(

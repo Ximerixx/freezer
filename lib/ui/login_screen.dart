@@ -129,7 +129,7 @@ class _LoginWidgetState extends State<LoginWidget> {
                 "Please login using your Deezer account.",
                 textAlign: TextAlign.center,
                 style: TextStyle(
-                    fontSize: 18.0
+                    fontSize: 16.0
                 ),
               ),
               Container(height: 16.0,),
@@ -183,7 +183,7 @@ class _LoginWidgetState extends State<LoginWidget> {
                 "If you don't have account, you can register on deezer.com for free.",
                 textAlign: TextAlign.center,
                 style: TextStyle(
-                  fontSize: 18.0
+                  fontSize: 16.0
                 ),
               ),
               Padding(
@@ -202,7 +202,7 @@ class _LoginWidgetState extends State<LoginWidget> {
                 "By using this app, you don't agree with the Deezer ToS",
                 textAlign: TextAlign.center,
                 style: TextStyle(
-                  fontSize: 18.0
+                  fontSize: 16.0
                 ),
               )
             ],

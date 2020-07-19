@@ -57,6 +57,7 @@ dependencies:
   async: ^2.4.1
   html: ^0.14.0+3
   flutter_screenutil: ^2.3.0
+  marquee: ^1.5.2
 
   just_audio:
     git: https://notabug.org/exttex/just_audio.git

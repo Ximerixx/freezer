@@ -543,6 +543,10 @@ class Download {
         'cover': _cover,
         'trackNumber': track.trackNumber
       });
+      //Rescan android library
+      await platformChannel.invokeMethod('rescanLibrary', {
+        'path': path
+      });
     }
     //Remove encrypted
     await File(path + '.ENC').delete();

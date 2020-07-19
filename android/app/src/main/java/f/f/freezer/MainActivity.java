@@ -1,5 +1,7 @@
 package f.f.freezer;
 
+import android.content.Intent;
+import android.net.Uri;
 import android.util.Log;
 
 import androidx.annotation.NonNull;
@@ -45,6 +47,13 @@ public class MainActivity extends FlutterActivity {
                     String tid = call.argument("id").toString();
                     String path = call.argument("path");
                     decryptTrack(path, tid);
+                    result.success(0);
+                }
+                //Android media scanner
+                if (call.method.equals("rescanLibrary")) {
+                    String path = call.argument("path");
+                    Uri uri = Uri.fromFile(new File(path));
+                    sendBroadcast(new Intent(Intent.ACTION_MEDIA_SCANNER_SCAN_FILE, uri));
                     result.success(0);
                 }
                 //Add tags to track
