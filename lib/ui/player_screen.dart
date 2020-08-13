@@ -6,10 +6,12 @@ import 'package:audio_service/audio_service.dart';
 import 'package:flutter_screenutil/screenutil.dart';
 import 'package:freezer/api/deezer.dart';
 import 'package:freezer/api/player.dart';
+import 'package:freezer/settings.dart';
 import 'package:freezer/ui/menu.dart';
 import 'package:freezer/ui/settings_screen.dart';
 import 'package:freezer/ui/tiles.dart';
 import 'package:async/async.dart';
+import 'package:just_audio/just_audio.dart';
 import 'package:marquee/marquee.dart';
 
 import 'cached_image.dart';
@@ -84,9 +86,10 @@ class _PlayerScreenHorizontalState extends State<PlayerScreenHorizontal> {
                 children: <Widget>[
                   CachedImage(
                     url: AudioService.currentMediaItem.artUri,
+                    fullThumb: true,
                   ),
                   if (_lyrics) LyricsWidget(
-                    artUri: AudioService.currentMediaItem.artUri,
+                    artUri: AudioService.currentMediaItem.extras['thumb'],
                     trackId: AudioService.currentMediaItem.id,
                     lyrics: Track.fromMediaItem(AudioService.currentMediaItem).lyrics,
                     height: ScreenUtil().setWidth(500),
@@ -188,7 +191,7 @@ class _PlayerScreenHorizontalState extends State<PlayerScreenHorizontal> {
                             MaterialPageRoute(builder: (context) => QualitySettings())
                           ),
                           child: Text(
-                            AudioService.currentMediaItem.extras['qualityString'],
+                            AudioService.currentMediaItem.extras['qualityString'] ?? '',
                             style: TextStyle(fontSize: ScreenUtil().setSp(24)),
                           ),
                         ),
@@ -242,9 +245,10 @@ class _PlayerScreenVerticalState extends State<PlayerScreenVertical> {
                 children: <Widget>[
                   CachedImage(
                     url: AudioService.currentMediaItem.artUri,
+                    fullThumb: true,
                   ),
                   if (_lyrics) LyricsWidget(
-                    artUri: AudioService.currentMediaItem.artUri,
+                    artUri: AudioService.currentMediaItem.extras['thumb'],
                     trackId: AudioService.currentMediaItem.id,
                     lyrics: Track.fromMediaItem(AudioService.currentMediaItem).lyrics,
                     height: ScreenUtil().setHeight(1050),
@@ -322,7 +326,7 @@ class _PlayerScreenVerticalState extends State<PlayerScreenVertical> {
                   MaterialPageRoute(builder: (context) => QualitySettings())
                 ),
                 child: Text(
-                  AudioService.currentMediaItem.extras['qualityString'],
+                  AudioService.currentMediaItem.extras['qualityString'] ?? '',
                   style: TextStyle(
                     fontSize: ScreenUtil().setSp(32),
                   ),
@@ -574,15 +578,15 @@ class _RepeatButtonState extends State<RepeatButton> {
 
   Icon get icon {
     switch (playerHelper.repeatType) {
-      case RepeatType.NONE:
+      case LoopMode.off:
         return Icon(Icons.repeat, size: widget.size??_size);
-      case RepeatType.LIST:
+      case LoopMode.all:
         return Icon(
           Icons.repeat,
           color: Theme.of(context).primaryColor,
           size: widget.size??_size
         );
-      case RepeatType.TRACK:
+      case LoopMode.one:
         return Icon(
           Icons.repeat_one,
           color: Theme.of(context).primaryColor,
@@ -708,6 +712,18 @@ class QueueScreen extends StatefulWidget {
 }
 
 class _QueueScreenState extends State<QueueScreen> {
+
+  //Get proper icon color by theme
+  Color get shuffleIconColor {
+    Color og = Theme.of(context).primaryColor;
+    if (og.computeLuminance() > 0.5) {
+     if (playerHelper.shuffle) return Theme.of(context).primaryColorLight;
+      return Colors.black;
+    }
+    if (playerHelper.shuffle) return Theme.of(context).primaryColorDark;
+    return Colors.white;
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -715,10 +731,13 @@ class _QueueScreenState extends State<QueueScreen> {
           title: Text('Queue'),
           actions: <Widget>[
             IconButton(
-              icon: Icon(Icons.shuffle),
+              icon: Icon(
+                Icons.shuffle,
+                color: shuffleIconColor
+              ),
               onPressed: () async {
-                await AudioService.customAction('shuffleQueue');
-                setState(() => {});
+                await playerHelper.toggleShuffle();
+                setState(() {});
               },
             )
           ],

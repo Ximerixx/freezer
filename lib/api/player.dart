@@ -1,9 +1,6 @@
 import 'package:audio_service/audio_service.dart';
-import 'package:collection/collection.dart';
-import 'package:dio/dio.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import 'package:freezer/api/deezer.dart';
-import 'package:freezer/ui/cached_image.dart';
 import 'package:just_audio/just_audio.dart';
 import 'package:connectivity/connectivity.dart';
 import 'package:path/path.dart' as p;
@@ -23,7 +20,8 @@ class PlayerHelper {
   StreamSubscription _customEventSubscription;
   StreamSubscription _playbackStateStreamSubscription;
   QueueSource queueSource;
-  RepeatType repeatType = RepeatType.NONE;
+  LoopMode repeatType = LoopMode.off;
+  bool shuffle = false;
 
   //Find queue index by id
   int get queueIndex => AudioService.queue.indexWhere((mi) => mi.id == AudioService.currentMediaItem?.id??'Random string so it returns -1');
@@ -45,7 +43,6 @@ class PlayerHelper {
       if (event['action'] == 'queueEnd') {
         //If last song is played, load more queue
         this.queueSource = QueueSource.fromJson(event['queueSource']);
-        print(queueSource.toJson());
         return;
       }
     });
@@ -74,20 +71,24 @@ class PlayerHelper {
     );
   }
 
-
+  Future toggleShuffle() async {
+    this.shuffle = !this.shuffle;
+    await AudioService.customAction('shuffle', this.shuffle);
+  }
+  
   //Repeat toggle
   Future changeRepeat() async {
     //Change to next repeat type
     switch (repeatType) {
-      case RepeatType.NONE:
-        repeatType = RepeatType.LIST; break;
-      case RepeatType.LIST:
-        repeatType = RepeatType.TRACK; break;
+      case LoopMode.one:
+        repeatType = LoopMode.off; break;
+      case LoopMode.all:
+        repeatType = LoopMode.one; break;
       default:
-        repeatType = RepeatType.NONE; break;
+        repeatType = LoopMode.all; break;
     }
     //Set repeat type
-    await AudioService.customAction("repeatType", RepeatType.values.indexOf(repeatType));
+    await AudioService.customAction("repeatType", LoopMode.values.indexOf(repeatType));
   }
 
   //Executed before exit
@@ -101,7 +102,7 @@ class PlayerHelper {
     await startService();
     await settings.updateAudioServiceQuality();
     await AudioService.updateQueue(queue);
-    await AudioService.playFromMediaId(trackId);
+    await AudioService.skipToQueueItem(trackId);
   }
 
   //Play track from album
@@ -178,277 +179,229 @@ void backgroundTaskEntrypoint() async {
 }
 
 class AudioPlayerTask extends BackgroundAudioTask {
+  AudioPlayer _player = AudioPlayer();
 
-  AudioPlayer _audioPlayer = AudioPlayer();
-
+  //Queue
   List<MediaItem> _queue = <MediaItem>[];
-  int _queueIndex = -1;
+  int _queueIndex = 0;
+  ConcatenatingAudioSource _audioSource;
 
-  bool _playing;
-  bool _interrupted;
   AudioProcessingState _skipState;
-  Duration _lastPosition;
+  bool _interrupted;
+  Seeker _seeker;
 
-  ImagesDatabase imagesDB;
+  //Stream subscriptions
+  StreamSubscription _eventSub;
+
+  //Loaded from file/frontend
   int mobileQuality;
   int wifiQuality;
-
-  StreamSubscription _eventSub;
-  StreamSubscription _playerStateSub;
-
   QueueSource queueSource;
-  int repeatType = 0;
+  Duration _lastPosition;
 
   MediaItem get mediaItem => _queue[_queueIndex];
 
-  //Controls
-  final playControl = MediaControl(
-    androidIcon: 'drawable/ic_play_arrow',
-    label: 'Play',
-    action: MediaAction.play
-  );
-  final pauseControl = MediaControl(
-    androidIcon: 'drawable/ic_pause',
-    label: 'Pause',
-    action: MediaAction.pause
-  );
-  final stopControl = MediaControl(
-    androidIcon: 'drawable/ic_stop',
-    label: 'Stop',
-    action: MediaAction.stop
-  );
-  final nextControl = MediaControl(
-    androidIcon: 'drawable/ic_skip_next',
-    label: 'Next',
-    action: MediaAction.skipToNext
-  );
-  final previousControl = MediaControl(
-    androidIcon: 'drawable/ic_skip_previous',
-    label: 'Previous',
-    action: MediaAction.skipToPrevious
-  );
-
   @override
-  Future onStart(Map<String, dynamic> params) async {
-    _playerStateSub = _audioPlayer.playbackStateStream
-      .where((state) => state == AudioPlaybackState.completed)
-      .listen((_event) {
-        if (_queue.length > _queueIndex + 1) {
-          onSkipToNext();
-          return;
-        } else {
-          //Repeat whole list (if enabled)
-          if (repeatType == 1) {
-            _skip(-_queueIndex);
-            return;
-          }
-          //Ask for more tracks in queue
-          AudioServiceBackground.sendCustomEvent({
-            'action': 'queueEnd',
-            'queueSource': (queueSource??QueueSource()).toJson()
-          });
-          if (_playing) _playing = false;
-          _setState(AudioProcessingState.none);
-          return;
+  Future onStart(Map<String, dynamic> params) {
+
+    //Update track index
+    _player.currentIndexStream.listen((index) {
+      if (index != null) {
+        _queueIndex = index;
+        AudioServiceBackground.setMediaItem(mediaItem);
+      }
+    });
+    //Update state on all clients on change
+    _eventSub = _player.playbackEventStream.listen((event) {
+      _broadcastState();
+    });
+    _player.processingStateStream.listen((state) {
+        switch(state) {
+          case ProcessingState.completed:
+            //Player ended, get more songs
+            AudioServiceBackground.sendCustomEvent({
+              'action': 'queueEnd',
+              'queueSource': (queueSource??QueueSource()).toJson()
+            });
+            break;
+          case ProcessingState.ready:
+            //Ready to play
+            _skipState = null;
+            break;
+          default:
+            break;
         }
     });
 
-    //Read audio player events
-    _eventSub = _audioPlayer.playbackEventStream.listen((event) {
-      AudioProcessingState bufferingState = event.buffering ? AudioProcessingState.buffering : null;
-      switch (event.state) {
-        case AudioPlaybackState.paused:
-        case AudioPlaybackState.playing:
-          _setState(bufferingState ?? AudioProcessingState.ready, pos: event.position);
-          break;
-        case AudioPlaybackState.connecting:
-          _setState(_skipState ?? AudioProcessingState.connecting, pos: event.position);
-          break;
-        default:
-          break;
-      }
-    });
-
-    //Initialize later
-    //await imagesDB.init();
-
+    //Load queue
     AudioServiceBackground.setQueue(_queue);
     AudioServiceBackground.sendCustomEvent({'action': 'onLoad'});
   }
 
   @override
-  Future onSkipToNext() async {
-    //If repeating allowed
-    if (repeatType == 2) {
-      await _skip(0);
-      return null;
-    }
-    _skip(1);
-  }
+  Future onSkipToQueueItem(String mediaId) async {
+    _lastPosition = null;
 
-  @override
-  Future onSkipToPrevious() => _skip(-1);
+    //Calculate new index
+    final newIndex = _queue.indexWhere((i) => i.id == mediaId);
+    if (newIndex == -1) return;
 
-  Future _skip(int offset) async {
-    int newPos = _queueIndex + offset;
-    //Out of bounds
-    if (newPos >= _queue.length || newPos < 0) return;
-    //First song
-    if (_playing == null) {
-      _playing = true;
-    } else if (_playing) {
-      await _audioPlayer.stop();
-    }
-    //Update position, album art source, queue source text
-    _queueIndex = newPos;
-    //Get uri
-    String uri = await _getTrackUri(mediaItem);
-    //Modify extras
-    Map<String, dynamic> extras = mediaItem.extras;
-    extras.addAll({"qualityString": await _getQualityString(uri, mediaItem.duration)});
-    _queue[_queueIndex] = mediaItem.copyWith(
-      artUri: await _getArtUri(mediaItem.artUri),
-      extras: extras
-    );
-    //Play
-    AudioServiceBackground.setMediaItem(mediaItem);
-    _skipState = offset > 0 ? AudioProcessingState.skippingToNext:AudioProcessingState.skippingToPrevious;
-    //Load
-    await _audioPlayer.setUrl(uri);
+    //Update buffering state
+    _skipState = newIndex > _queueIndex
+      ? AudioProcessingState.skippingToNext
+      : AudioProcessingState.skippingToPrevious;
+
+    //Skip in player
+    await _player.seek(Duration.zero, index: newIndex);
     _skipState = null;
-    await _saveQueue();
-    (_playing??false) ? onPlay() : _setState(AudioProcessingState.ready);
-  }
-
-  @override
-  void onPlay() async {
-    //Start playing preloaded queue
-    if (AudioServiceBackground.state.processingState == AudioProcessingState.none && _queue.length > 0) {
-      if (_queueIndex < 0 || _queueIndex == null) {
-        await this._skip(1);
-      } else {
-        await this._skip(0);
-      }
-      //Restore position from saved queue
-      if (_lastPosition != null) {
-        onSeekTo(_lastPosition);
-        _lastPosition = null;
-      }
-      return;
-    }
-    if (_skipState == null) {
-      _playing = true;
-      _audioPlayer.play();
-    }
-  }
-
-  @override
-  void onPause() {
-    if (_skipState == null && _playing) {
-      _playing = false;
-      _audioPlayer.pause();
-    }
-  }
-
-  @override
-  void onSeekTo(Duration pos) {
-    _audioPlayer.seek(pos);
-  }
-
-  @override
-  void onClick(MediaButton button) {
-    if (_playing) onPause();
     onPlay();
   }
 
   @override
-  Future onUpdateQueue(List<MediaItem> q) async {
-    this._queue = q;
-    AudioServiceBackground.setQueue(_queue);
-    await _saveQueue();
+  Future onPlay() {
+    _player.play();
+    //Restore position on play
+    if (_lastPosition != null) {
+      onSeekTo(_lastPosition);
+    }
   }
 
   @override
-  void onPlayFromMediaId(String mediaId) async {
-    int pos = this._queue.indexWhere((mi) => mi.id == mediaId);
-    await _skip(pos - _queueIndex);
-    if (_playing == null || !_playing) onPlay();
-  }
+  Future onPause() => _player.pause();
 
   @override
-  Future onFastForward() async {
-    await _seekRelative(fastForwardInterval);
-  }
+  Future onSeekTo(Duration pos) => _player.seek(pos);
 
   @override
-  void onAddQueueItemAt(MediaItem mi, int index) {
-    _queue.insert(index, mi);
-    AudioServiceBackground.setQueue(_queue);
-    _saveQueue();
-  }
+  Future<void> onFastForward() => _seekRelative(fastForwardInterval);
 
   @override
-  void onAddQueueItem(MediaItem mi) {
-    _queue.add(mi);
-    AudioServiceBackground.setQueue(_queue);
-    _saveQueue();
-  }
+  Future<void> onRewind() => _seekRelative(-rewindInterval);
 
   @override
-  Future onRewind() async {
-    await _seekRelative(rewindInterval);
+  Future<void> onSeekForward(bool begin) async => _seekContinuously(begin, 1);
+
+  @override
+  Future<void> onSeekBackward(bool begin) async => _seekContinuously(begin, -1);
+
+  //While seeking, jump 10s every 1s
+  void _seekContinuously(bool begin, int direction) {
+    _seeker?.stop();
+    if (begin) {
+      _seeker = Seeker(_player, Duration(seconds: 10 * direction), Duration(seconds: 1), mediaItem)..start();
+    }
   }
 
+  //Relative seek
   Future _seekRelative(Duration offset) async {
-    Duration newPos = _audioPlayer.playbackEvent.position + offset;
+    Duration newPos = _player.position + offset;
+    //Out of bounds check
     if (newPos < Duration.zero) newPos = Duration.zero;
     if (newPos > mediaItem.duration) newPos = mediaItem.duration;
-    onSeekTo(_audioPlayer.playbackEvent.position + offset);
+
+    await _player.seek(newPos);
   }
 
+  //Update state on all clients
+  Future _broadcastState() async {
+    await AudioServiceBackground.setState(
+      controls: [
+        MediaControl.skipToPrevious,
+        if (_player.playing) MediaControl.pause else MediaControl.play,
+        MediaControl.skipToNext,
+        //MediaControl.stop
+      ],
+      systemActions: [
+        MediaAction.seekTo,
+        MediaAction.seekForward,
+        MediaAction.seekBackward
+      ],
+      processingState: _getProcessingState(),
+      playing: _player.playing,
+      position: _player.position,
+      bufferedPosition: _player.bufferedPosition,
+      speed: _player.speed
+    );
+  }
+
+  //just_audio state -> audio_service state. If skipping, use _skipState
+  AudioProcessingState _getProcessingState() {
+    if (_skipState != null) return _skipState;
+    //SRC: audio_service example
+    switch (_player.processingState) {
+      case ProcessingState.none:
+        return AudioProcessingState.stopped;
+      case ProcessingState.loading:
+        return AudioProcessingState.connecting;
+      case ProcessingState.buffering:
+        return AudioProcessingState.buffering;
+      case ProcessingState.ready:
+        return AudioProcessingState.ready;
+      case ProcessingState.completed:
+        return AudioProcessingState.completed;
+      default:
+        throw Exception("Invalid state: ${_player.processingState}");
+    }
+  }
+
+  //Replace current queue
   @override
-  Future onUpdateMediaItem(MediaItem mediaItem) async {
-    _queue[_queueIndex] = mediaItem;
+  Future onUpdateQueue(List<MediaItem> q) async {
+    //just_audio
+    _player.stop();
+    if (_audioSource != null) _audioSource.clear();
+    //audio_service
+    this._queue = q;
+    AudioServiceBackground.setQueue(_queue);
+    //Load
+    await _loadQueue();
+    await _player.seek(Duration.zero, index: 0);
+  }
+
+  //Load queue to just_audio
+  Future _loadQueue() async {
+    List<AudioSource> sources = [];
+    for(int i=0; i<_queue.length; i++) {
+      sources.add(await _mediaItemToAudioSource(_queue[i]));
+    }
+
+    _audioSource = ConcatenatingAudioSource(children: sources);
+    //Load in just_audio
+    try {
+      await _player.load(_audioSource);
+    } catch (e) {
+      //Error loading tracks
+    }
     AudioServiceBackground.setMediaItem(mediaItem);
   }
 
-  //Audio interruptions
-  @override
-  void onAudioFocusLost(AudioInterruption interruption) {
-    if (_playing) _interrupted = true;
-    switch (interruption) {
-      case AudioInterruption.pause:
-      case AudioInterruption.temporaryPause:
-      case AudioInterruption.unknownPause:
-        if (_playing) onPause();
-        break;
-      case AudioInterruption.temporaryDuck:
-        _audioPlayer.setVolume(0.5);
-        break;
+  Future<AudioSource> _mediaItemToAudioSource(MediaItem mi) async {
+    String url = await _getTrackUrl(mi);
+    if (url.startsWith('http')) return ProgressiveAudioSource(Uri.parse(url));
+    return AudioSource.uri(Uri.parse(url));
+  }
+
+  Future _getTrackUrl(MediaItem mediaItem, {int quality}) async {
+    //Check if offline
+    String _offlinePath = p.join((await getExternalStorageDirectory()).path, 'offline/');
+    File f = File(p.join(_offlinePath, mediaItem.id));
+    if (await f.exists()) {
+      return f.path;
     }
+
+    //Due to current limitations of just_audio, quality fallback moved to DeezerDataSource in ExoPlayer
+    //This just returns fake url that contains metadata
+    List playbackDetails = jsonDecode(mediaItem.extras['playbackDetails']);
+    //Quality
+    ConnectivityResult conn = await Connectivity().checkConnectivity();
+    quality = mobileQuality;
+    if (conn == ConnectivityResult.wifi) quality = wifiQuality;
+
+    String url = 'https://dzcdn.net/?md5=${playbackDetails[0]}&mv=${playbackDetails[1]}&q=${quality.toString()}#${mediaItem.id}';
+    return url;
   }
 
-  @override
-  void onAudioFocusGained(AudioInterruption interruption) {
-    switch (interruption) {
-      case AudioInterruption.temporaryPause:
-        if (!_playing && _interrupted) onPlay();
-        break;
-      case AudioInterruption.temporaryDuck:
-        _audioPlayer.setVolume(1.0);
-        break;
-      default:
-        break;
-    }
-    _interrupted = false;
-  }
-  
-  @override
-  void onAudioBecomingNoisy() {
-    onPause();
-  }
-
-
+  //Custom actions
   @override
   Future onCustomAction(String name, dynamic args) async {
     if (name == 'updateQuality') {
@@ -457,228 +410,178 @@ class AudioPlayerTask extends BackgroundAudioTask {
       this.wifiQuality = args['wifiQuality'];
       this.mobileQuality = args['mobileQuality'];
     }
-    if (name == 'saveQueue') {
-      await this._saveQueue();
-    }
-    //Load queue, called after start
-    if (name == 'load') {
-      await _loadQueue();
-    }
     //Change queue source
     if (name == 'queueSource') {
       this.queueSource = QueueSource.fromJson(Map<String, dynamic>.from(args));
     }
-    //Shuffle
-    if (name == 'shuffleQueue') {
-      MediaItem mi = mediaItem;
-      shuffle(this._queue);
-      _queueIndex = _queue.indexOf(mi);
-      AudioServiceBackground.setQueue(this._queue);
-    }
-    //Repeating
+    //Looping
     if (name == 'repeatType') {
-      this.repeatType = args;
+      _player.setLoopMode(LoopMode.values[args]);
     }
+    if (name == 'saveQueue') await this._saveQueue();
+    //Load queue after some initialization in frontend
+    if (name == 'load') await this._loadQueueFile();
+    //Shuffle
+    if (name == 'shuffle') await _player.setShuffleModeEnabled(args);
+
     return true;
   }
 
-  Future<String> _getArtUri(String url) async {
-    //Load from cache
-    if (url.startsWith('http')) {
-      //Prepare db
-      if (imagesDB == null) {
-        imagesDB = ImagesDatabase();
-        await imagesDB.init();
-      }
-
-      String path = await imagesDB.getImage(url);
-      return 'file://$path';
+  //Audio interruptions
+  @override
+  Future onAudioFocusLost(AudioInterruption interruption) {
+    if (_player.playing) _interrupted = true;
+    switch (interruption) {
+      case AudioInterruption.pause:
+      case AudioInterruption.temporaryPause:
+      case AudioInterruption.unknownPause:
+        if (_player.playing) onPause();
+        break;
+      case AudioInterruption.temporaryDuck:
+        _player.setVolume(0.5);
+        break;
     }
-    //If file
-    if (url.startsWith('/')) return 'file://' + url;
-    return url;
-  }
-
-  Future<String> _getTrackUri(MediaItem mi, {int quality}) async {
-    String prefix = 'DEEZER|${mi.id}|';
-
-    //Check if song is available offline
-    String _offlinePath = p.join((await getExternalStorageDirectory()).path, 'offline/');
-    File f = File(p.join(_offlinePath, mi.id));
-    if (await f.exists()) return f.path;
-
-    //Get online url
-    Track t = Track(
-      id: mi.id,
-      playbackDetails: jsonDecode(mi.extras['playbackDetails']) //JSON Because of audio_service bug
-    );
-
-    //Check connection
-    if (quality == null) {
-      ConnectivityResult conn = await Connectivity().checkConnectivity();
-      quality = mobileQuality;
-      if (conn == ConnectivityResult.wifi) quality = wifiQuality;
-    }
-    String url = t.getUrl(quality);
-
-    //Quality fallback
-    Dio dio = Dio();
-    try {
-      await dio.head(url);
-      return prefix + url;
-    } catch (e) {
-      if (quality == 9) return _getTrackUri(mi, quality: 3);
-      if (quality == 3) return _getTrackUri(mi, quality: 1);
-      throw Exception('No available quality!');
-    }
-  }
-
-
-  Future<String> _getQualityString(String uri, Duration duration) async {
-    //Get url/path
-    String url = uri;
-    List<String> split = uri.split('|');
-    if (split.length >= 3) url = split[2];
-
-    int size;
-    String format;
-    String source;
-
-    //Local file
-    if (url.startsWith('/')) {
-      //Read first 4 bytes of file, get format
-      File f = File(url);
-      Stream<List<int>> reader = f.openRead(0, 4);
-      List<int> magic = await reader.first;
-      format = _magicToFormat(magic);
-      size = await f.length();
-      source = 'Offline';
-    }
-
-    //URL
-    if (url.startsWith('http')) {
-      Dio dio = Dio();
-      Response response = await dio.head(url);
-      size = int.parse(response.headers['Content-Length'][0]);
-      //Parse format
-      format = response.headers['Content-Type'][0];
-      if (format.trim() == 'audio/mpeg') format = 'MP3';
-      if (format.trim() == 'audio/flac') format = 'FLAC';
-      source = 'Stream';
-    }
-    //Calculate
-    return '$format ${_bitrateString(size, duration.inSeconds)} ($source)';
-  }
-
-  String _bitrateString(int size, int duration) {
-    int bitrate = ((size / 125) / duration).floor();
-    //Prettify
-    if (bitrate > 315 && bitrate < 325) return '320kbps';
-    if (bitrate > 125 && bitrate < 135) return '128kbps';
-    return '${bitrate}kbps';
-  }
-
-  //Magic number to string, source: https://en.wikipedia.org/wiki/List_of_file_signatures
-  String _magicToFormat(List<int> magic) {
-    Function eq = const ListEquality().equals;
-    if (eq(magic.sublist(0, 4), [0x66, 0x4c, 0x61, 0x43])) return 'FLAC';
-    //MP3 With ID3
-    if (eq(magic.sublist(0, 3), [0x49, 0x44, 0x33])) return 'MP3';
-    //MP3
-    List<int> m = magic.sublist(0, 2);
-    if (eq(m, [0xff, 0xfb]) ||eq(m, [0xff, 0xf3]) || eq(m, [0xff, 0xf2])) return 'MP3';
-    //Unknown
-    return 'UNK';
   }
 
   @override
-  void onTaskRemoved() async {
+  Future onAudioFocusGained(AudioInterruption interruption) {
+    switch (interruption) {
+      case AudioInterruption.temporaryPause:
+        if (!_player.playing && _interrupted) onPlay();
+        break;
+      case AudioInterruption.temporaryDuck:
+        _player.setVolume(1.0);
+        break;
+      default:
+        break;
+    }
+    _interrupted = false;
+  }
+
+  @override
+  Future onAudioBecomingNoisy() {
+    onPause();
+  }
+
+  @override
+  Future onTaskRemoved() async {
     await onStop();
   }
 
   @override
+  Future onClose() async {
+    await onStop();
+  }
+
   Future onStop() async {
-    _audioPlayer.stop();
-    if (_playerStateSub != null) _playerStateSub.cancel();
-    if (_eventSub != null) _eventSub.cancel();
     await _saveQueue();
+    _player.stop();
+    if (_eventSub != null) _eventSub.cancel();
 
-    await super.onStop();
+    super.onStop();
   }
 
-  @override
-  void onClose() async {
-    //await _saveQueue();
-    //Gets saved in onStop()
-    await onStop();
-  }
-
-  //Update state
-  void _setState(AudioProcessingState state, {Duration pos}) {
-    AudioServiceBackground.setState(
-      controls: _getControls(),
-      systemActions: (_playing == null) ? [] : [MediaAction.seekTo],
-      processingState: state ?? AudioServiceBackground.state.processingState,
-      playing: _playing ?? false,
-      position: pos ?? _audioPlayer.playbackEvent.position,
-      bufferedPosition: pos ?? _audioPlayer.playbackEvent.position,
-      speed: _audioPlayer.speed
-    );
-  }
-
-  List<MediaControl> _getControls() {
-    if (_playing == null || !_playing) {
-      //Paused / not-started
-      return [
-        previousControl,
-        playControl,
-        nextControl
-      ];
-    }
-    //Playing
-    return [
-      previousControl,
-      pauseControl,
-      nextControl
-    ];
-  }
-
-  //Get queue saved file path
+  //Get queue save file path
   Future<String> _getQueuePath() async {
     Directory dir = await getApplicationDocumentsDirectory();
-    return p.join(dir.path, 'offline.json');
+    return p.join(dir.path, 'playback.json');
   }
 
   //Export queue to JSON
   Future _saveQueue() async {
-    print('save');
-    File f = File(await _getQueuePath());
-    await f.writeAsString(jsonEncode({
+    String path = await _getQueuePath();
+    File f = File(path);
+    //Create if doesnt exist
+    if (! await File(path).exists()) {
+      f = await f.create();
+    }
+
+    Map data = {
       'index': _queueIndex,
       'queue': _queue.map<Map<String, dynamic>>((mi) => mi.toJson()).toList(),
-      'position': _audioPlayer.playbackEvent.position.inMilliseconds,
+      'position': _player.position.inMilliseconds,
       'queueSource': (queueSource??QueueSource()).toJson(),
-    }));
+    };
+    await f.writeAsString(jsonEncode(data));
   }
 
-  Future _loadQueue() async {
+  //Restore queue & playback info from path
+  Future _loadQueueFile() async {
     File f = File(await _getQueuePath());
     if (await f.exists()) {
       Map<String, dynamic> json = jsonDecode(await f.readAsString());
       this._queue = (json['queue']??[]).map<MediaItem>((mi) => MediaItem.fromJson(mi)).toList();
-      this._queueIndex = json['index'] ?? -1;
+      this._queueIndex = json['index'] ?? 0;
       this._lastPosition = Duration(milliseconds: json['position']??0);
       this.queueSource = QueueSource.fromJson(json['queueSource']??{});
+      //Restore queue
       if (_queue != null) {
-        AudioServiceBackground.setQueue(_queue);
+        await AudioServiceBackground.setQueue(_queue);
+        await _loadQueue();
         AudioServiceBackground.setMediaItem(mediaItem);
-        //Update state to allow play button in notification
-        this._setState(AudioProcessingState.none, pos: _lastPosition);
       }
-      //Send restored queue source to ui
-      AudioServiceBackground.sendCustomEvent({'action': 'onRestore', 'queueSource': (queueSource??QueueSource()).toJson()});
-      return true;
+    }
+    //Send restored queue source to ui
+    AudioServiceBackground.sendCustomEvent({
+      'action': 'onRestore',
+      'queueSource': (queueSource??QueueSource()).toJson()
+    });
+    return true;
+  }
+
+  @override
+  Future onAddQueueItemAt(MediaItem mi, int index) async {
+    //-1 == play next
+    if (index == -1) index = _queueIndex + 1;
+
+
+    _queue.insert(index, mi);
+    await AudioServiceBackground.setQueue(_queue);
+    await _audioSource.insert(index, await _mediaItemToAudioSource(mi));
+
+    _saveQueue();
+  }
+
+  //Add at end of queue
+  @override
+  Future onAddQueueItem(MediaItem mi) async {
+    _queue.add(mi);
+    await AudioServiceBackground.setQueue(_queue);
+    await _audioSource.add(await _mediaItemToAudioSource(mi));
+    _saveQueue();
+  }
+
+  @override
+  Future onPlayFromMediaId(String mediaId) async {
+    //Does the same thing
+    await this.onSkipToQueueItem(mediaId);
+  }
+
+}
+
+//Seeker from audio_service example (why reinvent the wheel?)
+//While holding seek button, will continuously seek
+class Seeker {
+  final AudioPlayer player;
+  final Duration positionInterval;
+  final Duration stepInterval;
+  final MediaItem mediaItem;
+  bool _running = false;
+
+  Seeker(this.player, this.positionInterval, this.stepInterval, this.mediaItem);
+
+  Future start() async {
+    _running = true;
+    while (_running) {
+      Duration newPosition = player.position + positionInterval;
+      if (newPosition < Duration.zero) newPosition = Duration.zero;
+      if (newPosition > mediaItem.duration) newPosition = mediaItem.duration;
+      player.seek(newPosition);
+      await Future.delayed(stepInterval);
     }
   }
 
+  void stop() {
+    _running = false;
+  }
 }

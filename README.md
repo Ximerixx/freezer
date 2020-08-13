@@ -27,7 +27,7 @@ https://t.me/freezerandroid
 Tobs: Beta tester  
 Bas Curtiz: Icon, Logo, Banner, Design suggestions  
 Deemix: https://notabug.org/RemixDev/deemix  
-just_audio: https://github.com/ryanheise/just_audio  
+just_audio && audio_service: https://github.com/ryanheise/just_audio  
 
 
 ## Support me
@@ -35,7 +35,8 @@ BTC: `14hcr4PGbgqeXd3SoXY9QyJFNpyurgrL9y`
 ETH: `0xb4D1893195404E1F4b45e5BDA77F202Ac4012288`  
 
 ## just_audio
-This app depends on modified just_audio plugin with Deezer support. Repo: https://notabug.org/exttex/just_audio
+This app depends on modified just_audio plugin with Deezer support.
+The fork repo is deprecated, current version available in this repo.
 
 ## Disclaimer
 ```

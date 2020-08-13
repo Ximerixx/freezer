@@ -140,15 +140,8 @@ class MenuSheet {
       title: Text('Play next'),
       leading: Icon(Icons.playlist_play),
       onTap: () async {
-        if (playerHelper.queueIndex == -1) {
-          //First track
-          await AudioService.addQueueItem(t.toMediaItem());
-          await AudioService.play();
-        } else {
-          //Normal
-          await AudioService.addQueueItemAt(
-              t.toMediaItem(), playerHelper.queueIndex + 1);
-        }
+        //-1 = next
+        await AudioService.addQueueItemAt(t.toMediaItem(), -1);
         _close();
       });
 

@@ -394,7 +394,19 @@ class ArtistDetails extends StatelessWidget {
                   fontSize: 22.0
                 ),
               ),
-              ...List.generate(artist.albums.length, (i) {
+              ...List.generate(artist.albums.length > 10 ? 11 : artist.albums.length + 1, (i) {
+                //Show discography
+                if (i == 10 || i == artist.albums.length) {
+                  return ListTile(
+                    title: Text('Show all albums'),
+                    onTap: () {
+                      Navigator.of(context).push(
+                        MaterialPageRoute(builder: (context) => DiscographyScreen(artist: artist,))
+                      );
+                    }
+                  );
+                }
+                //Top albums
                 Album a = artist.albums[i];
                 return AlbumTile(
                   a,
@@ -418,6 +430,103 @@ class ArtistDetails extends StatelessWidget {
     );
   }
 }
+
+class DiscographyScreen extends StatefulWidget {
+
+  Artist artist;
+  DiscographyScreen({@required this.artist, Key key}): super(key: key);
+
+  @override
+  _DiscographyScreenState createState() => _DiscographyScreenState();
+}
+
+class _DiscographyScreenState extends State<DiscographyScreen> {
+
+  Artist artist;
+  bool _loading = false;
+  bool _error = false;
+  ScrollController _scrollController = ScrollController();
+
+  Future _load() async {
+    if (artist.albums.length >= artist.albumCount || _loading) return;
+    setState(() => _loading = true);
+
+    //Fetch data
+    List<Album> data;
+    try {
+      data = await deezerAPI.discographyPage(artist.id, start: artist.albums.length);
+    } catch (e) {
+      setState(() {
+        _error = true;
+        _loading = false;
+      });
+      return;
+    }
+
+    //Save
+    setState(() {
+      artist.albums.addAll(data);
+      _loading = false;
+    });
+
+  }
+
+  @override
+  void initState() {
+    artist = widget.artist;
+
+    //Lazy loading scroll
+    _scrollController.addListener(() {
+      double off = _scrollController.position.maxScrollExtent * 0.90;
+      if (_scrollController.position.pixels > off) {
+        _load();
+      }
+    });
+
+    super.initState();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(title: Text('Discography'),),
+      body: ListView.builder(
+        controller: _scrollController,
+        itemCount: artist.albums.length + 1,
+        itemBuilder: (context, i) {
+          //Loading
+          if (i == artist.albums.length) {
+            if (_loading)
+              return Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [CircularProgressIndicator()],
+              );
+            //Error
+            if (_error)
+              return ErrorScreen();
+            //Success
+            return Container(width: 0, height: 0,);
+          }
+
+          Album a = artist.albums[i];
+          return AlbumTile(
+            a,
+            onTap: () {
+              Navigator.of(context).push(
+                  MaterialPageRoute(builder: (context) => AlbumDetails(a))
+              );
+            },
+            onHold: () {
+              MenuSheet m = MenuSheet(context);
+              m.defaultAlbumMenu(a);
+            },
+          );
+        },
+      ),
+    );
+  }
+}
+
 
 
 class PlaylistDetails extends StatefulWidget {

@@ -32,7 +32,7 @@ class PlayerBar extends StatelessWidget {
                   leading: CachedImage(
                     width: 50,
                     height: 50,
-                    url: AudioService.currentMediaItem.artUri,
+                    url: AudioService.currentMediaItem.extras['thumb'] ?? AudioService.currentMediaItem.artUri,
                   ),
                   title: Text(
                     AudioService.currentMediaItem.displayTitle,

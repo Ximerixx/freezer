@@ -1,3 +1,4 @@
+import 'package:connectivity/connectivity.dart';
 import 'package:flutter/material.dart';
 import 'package:freezer/api/download.dart';
 import 'package:freezer/api/player.dart';
@@ -7,7 +8,6 @@ import 'package:freezer/ui/menu.dart';
 import 'tiles.dart';
 import '../api/deezer.dart';
 import '../api/definitions.dart';
-import '../settings.dart';
 import 'error.dart';
 
 class SearchScreen extends StatefulWidget {
@@ -18,13 +18,26 @@ class SearchScreen extends StatefulWidget {
 class _SearchScreenState extends State<SearchScreen> {
 
   String _query;
-  bool _offline = settings.offlineMode;
+  bool _offline = false;
 
   void _submit(BuildContext context, {String query}) {
     if (query != null) _query = query;
     Navigator.of(context).push(
         MaterialPageRoute(builder: (context) => SearchResultsScreen(_query, offline: _offline,))
     );
+  }
+
+  @override
+  void initState() {
+    //Check for connectivity and enable offline mode
+    Connectivity().checkConnectivity().then((res) {
+      if (res == ConnectivityResult.none) setState(() {
+        _offline = true;
+      });
+    });
+
+
+    super.initState();
   }
 
   @override
@@ -59,11 +72,7 @@ class _SearchScreenState extends State<SearchScreen> {
             leading: Switch(
               value: _offline,
               onChanged: (v) {
-                if (settings.offlineMode) {
-                  setState(() => _offline = true);
-                } else {
-                  setState(() => _offline = v);
-                }
+                setState(() => _offline = !_offline);
               },
             ),
           )

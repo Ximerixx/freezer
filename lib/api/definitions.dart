@@ -80,6 +80,7 @@ class Track {
       id: this.id,
       extras: {
         "playbackDetails": jsonEncode(this.playbackDetails),
+        "thumb": this.albumArt.thumb,
         "lyrics": jsonEncode(this.lyrics.toJson()),
         "albumId": this.album.id,
         "artists": jsonEncode(this.artists.map<Map>((art) => art.toJson()).toList())
@@ -102,7 +103,10 @@ class Track {
       artists: artists,
       album: album,
       id: mi.id,
-      albumArt: ImageDetails(fullUrl: mi.artUri),
+      albumArt: ImageDetails(
+        fullUrl: mi.artUri,
+        thumbUrl: mi.extras['thumb']
+      ),
       duration: mi.duration,
       playbackDetails: null, // So it gets updated from api
       lyrics: Lyrics.fromJson(jsonDecode(((mi.extras??{})['lyrics'])??"{}"))
@@ -116,7 +120,7 @@ class Track {
       title = "${json['SNG_TITLE']} ${json['VERSION']}";
     }
     return Track(
-      id: json['SNG_ID'],
+      id: json['SNG_ID'].toString(),
       title: title,
       duration: Duration(seconds: int.parse(json['DURATION'])),
       albumArt: ImageDetails.fromPrivateString(json['ALB_PICTURE']),
@@ -180,7 +184,7 @@ class Album {
 
   //JSON
   factory Album.fromPrivateJson(Map<dynamic, dynamic> json, {Map<dynamic, dynamic> songsJson = const {}, bool library = false}) => Album(
-    id: json['ALB_ID'],
+    id: json['ALB_ID'].toString(),
     title: json['ALB_TITLE'],
     art: ImageDetails.fromPrivateString(json['ALB_PICTURE']),
     artists: (json['ARTISTS']??[json]).map<Artist>((dynamic art) => Artist.fromPrivateJson(art)).toList(),
@@ -240,7 +244,7 @@ class Artist {
         Map<dynamic, dynamic> topJson = const {},
         bool library = false
       }) => Artist(
-    id: json['ART_ID'],
+    id: json['ART_ID'].toString(),
     name: json['ART_NAME'],
     fans: json['NB_FAN'],
     picture: ImageDetails.fromPrivateString(json['ART_PICTURE'], type: 'artist'),
@@ -299,7 +303,7 @@ class Playlist {
 
   //JSON
   factory Playlist.fromPrivateJson(Map<dynamic, dynamic> json, {Map<dynamic, dynamic> songsJson = const {}, bool library = false}) => Playlist(
-    id: json['PLAYLIST_ID'],
+    id: json['PLAYLIST_ID'].toString(),
     title: json['TITLE'],
     trackCount: json['NB_SONG']??songsJson['total'],
     image: ImageDetails.fromPrivateString(json['PLAYLIST_PICTURE'], type: 'playlist'),

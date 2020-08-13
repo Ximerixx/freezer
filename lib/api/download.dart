@@ -328,7 +328,8 @@ class DownloadManager {
       List<Map> duplicate = await db.rawQuery('SELECT * FROM downloads WHERE trackId == ?', [track.id]);
       if (duplicate.length != 0) return;
       //Save art
-      await imagesDatabase.getImage(track.albumArt.full, permanent: true);
+      //await imagesDatabase.getImage(track.albumArt.full);
+      imagesDatabase.saveImage(track.albumArt.full);
       //Save to db
       b.insert('tracks', track.toSQL(off: true), conflictAlgorithm: ConflictAlgorithm.replace);
       b.insert('albums', track.album.toSQL(), conflictAlgorithm: ConflictAlgorithm.ignore);

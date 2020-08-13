@@ -360,6 +360,18 @@ class DeezerAPI {
     //Return playlistId
     return data['results'].toString();
   }
-  
+
+  //Get part of discography
+  Future<List<Album>> discographyPage(String artistId, {int start = 0, int nb = 50}) async {
+    Map data = await callApi('album.getDiscography', params: {
+      'art_id': int.parse(artistId),
+      'discography_mode': 'all',
+      'nb': nb,
+      'start': start,
+      'nb_songs': 30
+    });
+
+    return data['results']['data'].map<Album>((a) => Album.fromPrivateJson(a)).toList();
+  }
 }
 
