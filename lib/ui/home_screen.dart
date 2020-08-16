@@ -22,18 +22,6 @@ class HomeScreen extends StatelessWidget {
         ],
       ),
     );
-
-    /*
-    return ListView(
-      children: <Widget>[
-        Padding(
-          padding: EdgeInsets.symmetric(vertical: 16.0),
-          child: FreezerTitle(),
-        ),
-        HomePageScreen()
-      ],
-    );
-    */
   }
 }
 
@@ -104,7 +92,7 @@ class _HomePageScreenState extends State<HomePageScreen> {
     } catch (e) {}
     //On background load from API
     try {
-      if (settings.offlineMode) return;
+      if (settings.offlineMode) await deezerAPI.authorize();
       HomePage _hp = await deezerAPI.homePage();
       if (_hp != null) {
         if (_cancel) return;
@@ -148,12 +136,14 @@ class _HomePageScreenState extends State<HomePageScreen> {
   @override
   Widget build(BuildContext context) {
     if (_homePage == null)
-      return Center(child: CircularProgressIndicator(),);
+      return Center(child: Padding(
+        padding: EdgeInsets.all(8.0),
+        child: CircularProgressIndicator(),
+      ));
     if (_error)
       return ErrorScreen();
     return ListView.builder(
       shrinkWrap: true,
-      addAutomaticKeepAlives: true,
       physics: NeverScrollableScrollPhysics(),
       itemCount: _homePage.sections.length,
       itemBuilder: (context, i) {
@@ -179,7 +169,36 @@ class _HomePageScreenState extends State<HomePageScreen> {
             SingleChildScrollView(
               scrollDirection: Axis.horizontal,
               child: Row(
-                children: List.generate(section.items.length, (i) {
+                children: List.generate(section.items.length + 1, (i) {
+                  //Has more items
+                  if (i == section.items.length) {
+                    if (section.hasMore??false) {
+                      return FlatButton(
+                        child: Text(
+                          'Show more',
+                          textAlign: TextAlign.center,
+                          style: TextStyle(
+                              fontSize: 20.0
+                          ),
+                        ),
+                        onPressed: () => Navigator.of(context).push(MaterialPageRoute(
+                            builder: (context) => Scaffold(
+                              appBar: AppBar(
+                                title: Text(section.title),
+                              ),
+                              body: SingleChildScrollView(
+                                child: HomePageScreen(
+                                  channel: DeezerChannel(target: section.pagePath)
+                                )
+                              ),
+                            ),
+                        )),
+                      );
+                    }
+                    return Container(height: 0, width: 0);
+                  }
+
+                  //Show item
                   HomePageItem item = section.items[i];
                   return HomePageItemWidget(item);
                 }),
@@ -255,7 +274,9 @@ class HomePageItemWidget extends StatelessWidget {
             Navigator.of(context).push(MaterialPageRoute(
                 builder: (context) => Scaffold(
                   appBar: AppBar(title: Text(item.value.title.toString()),),
-                  body: HomePageScreen(channel: item.value,),
+                  body: SingleChildScrollView(
+                    child: HomePageScreen(channel: item.value,)
+                  ),
                 )
             ));
           },

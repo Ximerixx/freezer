@@ -553,14 +553,24 @@ class HomePageSection {
   String title;
   HomePageSectionLayout layout;
 
+  //For loading more items
+  String pagePath;
+  bool hasMore;
+
   @JsonKey(fromJson: _homePageItemFromJson, toJson: _homePageItemToJson)
   List<HomePageItem> items;
 
-  HomePageSection({this.layout, this.items, this.title});
+  HomePageSection({this.layout, this.items, this.title, this.pagePath, this.hasMore});
 
   //JSON
   factory HomePageSection.fromPrivateJson(Map<dynamic, dynamic> json) {
-    HomePageSection hps = HomePageSection(title: json['title'], items: []);
+    HomePageSection hps = HomePageSection(
+      title: json['title'],
+      items: [],
+      pagePath: json['target'],
+      hasMore: json['hasMoreItems']??false
+    );
+
     String layout = json['layout'];
     //No ads there
     if (layout == 'ads') return null;

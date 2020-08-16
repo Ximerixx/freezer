@@ -273,6 +273,8 @@ HomePageSection _$HomePageSectionFromJson(Map<String, dynamic> json) {
         _$enumDecodeNullable(_$HomePageSectionLayoutEnumMap, json['layout']),
     items: HomePageSection._homePageItemFromJson(json['items']),
     title: json['title'] as String,
+    pagePath: json['pagePath'] as String,
+    hasMore: json['hasMore'] as bool,
   );
 }
 
@@ -280,6 +282,8 @@ Map<String, dynamic> _$HomePageSectionToJson(HomePageSection instance) =>
     <String, dynamic>{
       'title': instance.title,
       'layout': _$HomePageSectionLayoutEnumMap[instance.layout],
+      'pagePath': instance.pagePath,
+      'hasMore': instance.hasMore,
       'items': HomePageSection._homePageItemToJson(instance.items),
     };
 

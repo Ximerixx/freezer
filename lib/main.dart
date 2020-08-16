@@ -43,8 +43,12 @@ class _FreezerAppState extends State<FreezerApp> {
   void initState() {
     //Make update theme global
     updateTheme = _updateTheme;
-
     super.initState();
+  }
+
+  @override
+  void dispose() {
+    super.dispose();
   }
 
   void _updateTheme() {

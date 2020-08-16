@@ -62,12 +62,12 @@ class PlayerHelper {
     await AudioService.start(
       backgroundTaskEntrypoint: backgroundTaskEntrypoint,
       androidEnableQueue: true,
-      androidStopForegroundOnPause: false,
+      androidStopForegroundOnPause: true,
       androidNotificationOngoing: false,
       androidNotificationClickStartsActivity: true,
       androidNotificationChannelDescription: 'Freezer',
       androidNotificationChannelName: 'Freezer',
-      androidNotificationIcon: 'drawable/ic_logo'
+      androidNotificationIcon: 'drawable/ic_logo',
     );
   }
 
@@ -470,6 +470,7 @@ class AudioPlayerTask extends BackgroundAudioTask {
 
   @override
   Future onClose() async {
+    print('onClose');
     await onStop();
   }
 
@@ -478,7 +479,7 @@ class AudioPlayerTask extends BackgroundAudioTask {
     _player.stop();
     if (_eventSub != null) _eventSub.cancel();
 
-    super.onStop();
+    await super.onStop();
   }
 
   //Get queue save file path

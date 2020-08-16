@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:dio/dio.dart';
 import 'package:cookie_jar/cookie_jar.dart';
 import 'package:dio_cookie_manager/dio_cookie_manager.dart';
@@ -29,6 +31,7 @@ class DeezerAPI {
     "Accept-Language": "${settings.deezerLanguage??"en"}-${settings.deezerCountry??'US'},${settings.deezerLanguage??"en"};q=0.9,en-US;q=0.8,en;q=0.7",
     "Connection": "keep-alive"
   };
+  Future _authorizing;
 
   CookieJar _cookieJar = new CookieJar();
 
@@ -75,8 +78,16 @@ class DeezerAPI {
     return response.data;
   }
 
+  //Wrapper so it can be globally awaited
+  Future authorize() async {
+    if (_authorizing == null) {
+      this._authorizing = this._authorize();
+    }
+    return _authorizing;
+  }
+
   //Authorize, bool = success
-  Future<bool> authorize() async {
+  Future<bool> _authorize() async {
     try {
       Map<dynamic, dynamic> data = await callApi('deezer.getUserData');
       if (data['results']['USER']['USER_ID'] == 0) {

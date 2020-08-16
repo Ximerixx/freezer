@@ -19,6 +19,7 @@ class _SearchScreenState extends State<SearchScreen> {
 
   String _query;
   bool _offline = false;
+  TextEditingController _controller = new TextEditingController();
 
   void _submit(BuildContext context, {String query}) {
     if (query != null) _query = query;
@@ -52,17 +53,33 @@ class _SearchScreenState extends State<SearchScreen> {
             child: Row(
               children: <Widget>[
                 Expanded(
-                  child: TextField(
-                    onChanged: (String s) => _query = s,
-                    decoration: InputDecoration(
-                        labelText: 'Search'
-                    ),
-                    onSubmitted: (String s) => _submit(context, query: s),
-                  ),
+                  child: Stack(
+                    alignment: Alignment(1.0, 1.0),
+                    children: [
+                      TextField(
+                        onChanged: (String s) => _query = s,
+                        decoration: InputDecoration(
+                            labelText: 'Search'
+                        ),
+                        controller: _controller,
+                        onSubmitted: (String s) => _submit(context, query: s),
+                      ),
+                      IconButton(
+                        icon: Icon(Icons.clear),
+                        onPressed: () {
+                          _controller.clear();
+                        },
+                      ),
+                    ],
+                  )
                 ),
-                IconButton(
-                  icon: Icon(Icons.search),
-                  onPressed: () => _submit(context),
+
+                Padding(
+                  padding: EdgeInsets.fromLTRB(0, 8, 0, 0),
+                  child: IconButton(
+                    icon: Icon(Icons.search),
+                    onPressed: () => _submit(context),
+                  ),
                 )
               ],
             ),
