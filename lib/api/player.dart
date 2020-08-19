@@ -62,7 +62,7 @@ class PlayerHelper {
     await AudioService.start(
       backgroundTaskEntrypoint: backgroundTaskEntrypoint,
       androidEnableQueue: true,
-      androidStopForegroundOnPause: true,
+      androidStopForegroundOnPause: false,
       androidNotificationOngoing: false,
       androidNotificationClickStartsActivity: true,
       androidNotificationChannelDescription: 'Freezer',
