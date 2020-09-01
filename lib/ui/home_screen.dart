@@ -123,8 +123,8 @@ class _HomePageScreenState extends State<HomePageScreen> {
 
   @override
   void initState() {
-    _load();
     super.initState();
+    _load();
   }
 
   @override

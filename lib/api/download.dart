@@ -136,7 +136,8 @@ class DownloadManager {
           }
           updateQueue();
         }
-      ).catchError((err) async {
+      ).catchError((e, st) async {
+        print('Download error: $e\n$st');
         //Catch download errors
         _download = null;
         _cancelNotifications = true;
@@ -455,6 +456,24 @@ class DownloadManager {
     ]);
   }
 
+  //Delete download from db
+  Future removeDownload(Download download) async {
+    await db.delete('downloads', where: 'trackId == ?', whereArgs: [download.track.id]);
+    queue.removeWhere((d) => d.track.id == download.track.id);
+    //TODO: remove files for downloaded
+  }
+
+  //Delete queue
+  Future clearQueue() async {
+    for (int i=queue.length-1; i>0; i--) {
+      await removeDownload(queue[i]);
+    }
+  }
+
+  //Remove non-private downloads
+  Future cleanDownloadHistory() async {
+    await db.delete('downloads', where: 'private == 0');
+  }
 
 }
 
@@ -479,25 +498,29 @@ class Download {
     if (!this.private) {
       String ext = this.path;
       //Get track details
-      this.track = await deezerAPI.track(track.id);
+      Map rawTrack = (await deezerAPI.callApi('song.getListData', params: {'sng_ids': [track.id]}))['results']['data'][0];
+      this.track = Track.fromPrivateJson(rawTrack);
+
+
       //Get path if public
       RegExp sanitize = RegExp(r'[\/\\\?\%\*\:\|\"\<\>]');
       //Download path
-      if (settings.downloadFolderStructure) {
-        this.path = p.join(
-          settings.downloadPath ?? (await ExtStorage.getExternalStoragePublicDirectory(ExtStorage.DIRECTORY_MUSIC)),
-          track.artists[0].name.replaceAll(sanitize, ''),
-          track.album.title.replaceAll(sanitize, ''),
-        );
-      } else {
-        this.path = settings.downloadPath;
+      this.path = settings.downloadPath ??  (await ExtStorage.getExternalStoragePublicDirectory(ExtStorage.DIRECTORY_MUSIC));
+      if (settings.artistFolder)
+        this.path = p.join(this.path, track.artists[0].name.replaceAll(sanitize, ''));
+      if (settings.albumFolder) {
+        String folderName = track.album.title.replaceAll(sanitize, '');
+        //Add disk number
+        if (settings.albumDiscFolder) folderName += ' - Disk ${rawTrack["DISK_NUMBER"]}';
+
+        this.path = p.join(this.path, folderName);
       }
       //Make dirs
       await Directory(this.path).create(recursive: true);
 
       //Grab cover
       _cover = p.join(this.path, 'cover.jpg');
-      if (!settings.downloadFolderStructure) _cover = p.join(this.path, randomAlpha(12) + '_cover.jpg');
+      if (!settings.albumFolder) _cover = p.join(this.path, randomAlpha(12) + '_cover.jpg');
 
       if (!await File(_cover).exists()) {
         try {
@@ -508,11 +531,22 @@ class Download {
         } catch (e) {print('Error downloading cover');}
       }
 
-      //Add filename
-      String _filename = '${track.trackNumber.toString().padLeft(2, '0')}. ${track.title.replaceAll(sanitize, "")}.$ext';
-      //Different naming types
-      if (settings.downloadNaming == DownloadNaming.STANDALONE)
-        _filename = '${track.artistString.replaceAll(sanitize, "")} - ${track.title.replaceAll(sanitize, "")}.$ext';
+      //Create filename
+      String _filename = settings.downloadFilename;
+      //Filters
+      Map<String, String> vars = {
+        '%artists%': track.artistString.replaceAll(sanitize, ''),
+        '%artist%': track.artists[0].name.replaceAll(sanitize, ''),
+        '%title%': track.title.replaceAll(sanitize, ''),
+        '%album%': track.album.title.replaceAll(sanitize, ''),
+        '%trackNumber%': track.trackNumber.toString(),
+        '%0trackNumber%': track.trackNumber.toString().padLeft(2, '0')
+      };
+      //Replace
+      vars.forEach((key, value) {
+        _filename = _filename.replaceAll(key, value);
+      });
+      _filename += '.$ext';
 
       this.path = p.join(this.path, _filename);
     }
@@ -551,7 +585,7 @@ class Download {
     }
     //Remove encrypted
     await File(path + '.ENC').delete();
-    if (!settings.downloadFolderStructure) await File(_cover).delete();
+    if (!settings.albumFolder) await File(_cover).delete();
     this.state = DownloadState.DONE;
     onDone();
     return;

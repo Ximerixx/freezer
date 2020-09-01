@@ -186,7 +186,7 @@ class _MainScreenState extends State<MainScreen> {
       body: AudioServiceWidget(
         child: CustomNavigator(
           navigatorKey: navigatorKey,
-          home:  _screens[_selected],
+          home: _screens[_selected],
           pageRoute: PageRoutes.materialPageRoute,
         ),
       )

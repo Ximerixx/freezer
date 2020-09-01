@@ -36,10 +36,16 @@ class Settings {
 
   //Download options
   String downloadPath;
-  @JsonKey(defaultValue: DownloadNaming.DEFAULT)
-  DownloadNaming downloadNaming;
+
+  @JsonKey(defaultValue: "%artists% - %title%")
+  String downloadFilename;
   @JsonKey(defaultValue: true)
-  bool downloadFolderStructure;
+  bool albumFolder;
+  @JsonKey(defaultValue: true)
+  bool artistFolder;
+  @JsonKey(defaultValue: false)
+  bool albumDiscFolder;
+
 
   //Appearance
   @JsonKey(defaultValue: Themes.Light)
@@ -207,10 +213,4 @@ enum Themes {
   Dark,
   Deezer,
   Black
-}
-
-enum DownloadNaming {
-  DEFAULT,
-  STANDALONE,
-
 }

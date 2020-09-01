@@ -474,31 +474,62 @@ class _GeneralSettingsState extends State<GeneralSettings> {
           ),
           ListTile(
             title: Text('Downloads naming'),
+            subtitle: Text('Currently: ${settings.downloadFilename}'),
             leading: Icon(Icons.text_format),
             onTap: () {
               showDialog(
                 context: context,
                 builder: (context) {
-                  return SimpleDialog(
-                    children: <Widget>[
-                      ListTile(
-                        title: Text('Default naming'),
-                        subtitle: Text('01. Title'),
-                        onTap: () {
-                          settings.downloadNaming = DownloadNaming.DEFAULT;
-                          Navigator.of(context).pop();
-                          settings.save();
+
+                  TextEditingController _controller = TextEditingController();
+                  String filename = settings.downloadFilename;
+                  _controller.value = _controller.value.copyWith(text: filename);
+
+                  //Dialog with filename format
+                  return AlertDialog(
+                    title: Text('Downloaded tracks filename'),
+                    content: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        TextField(
+                          controller: _controller,
+                        ),
+                        Container(height: 8.0),
+                        Text(
+                          'Valid variables are: %artists%, %artist%, %title%, %album%, %trackNumber%, %0trackNumber%',
+                          style: TextStyle(
+                            fontSize: 12.0,
+                          ),
+                        )
+                      ],
+                    ),
+                    actions: [
+                      FlatButton(
+                        child: Text('Cancel'),
+                        onPressed: () => Navigator.of(context).pop(),
+                      ),
+                      FlatButton(
+                        child: Text('Reset'),
+                        onPressed: () {
+                          _controller.value = _controller.value.copyWith(
+                            text: '%artists% - %title%'
+                          );
                         },
                       ),
-                      ListTile(
-                        title: Text('Standalone naming'),
-                        subtitle: Text('Artist - Title'),
-                        onTap: () {
-                          settings.downloadNaming = DownloadNaming.STANDALONE;
-                          Navigator.of(context).pop();
-                          settings.save();
-                        },
+                      FlatButton(
+                        child: Text('Clear'),
+                        onPressed: () => _controller.clear(),
                       ),
+                      FlatButton(
+                        child: Text('Save'),
+                        onPressed: () {
+                          setState(() {
+                            settings.downloadFilename = _controller.text;
+                            settings.save();
+                            Navigator.of(context).pop();
+                          });
+                        },
+                      )
                     ],
                   );
                 }
@@ -506,12 +537,31 @@ class _GeneralSettingsState extends State<GeneralSettings> {
             },
           ),
           ListTile(
-            title: Text('Create download folder structure'),
-            subtitle: Text('Artist/Album/Track'),
+            title: Text('Create folders for artist'),
             leading: Switch(
-              value: settings.downloadFolderStructure,
+              value: settings.artistFolder,
               onChanged: (v) {
-                setState(() => settings.downloadFolderStructure = v);
+                setState(() => settings.artistFolder = v);
+                settings.save();
+              },
+            ),
+          ),
+          ListTile(
+            title: Text('Create folders for albums'),
+            leading: Switch(
+              value: settings.albumFolder,
+              onChanged: (v) {
+                setState(() => settings.albumFolder = v);
+                settings.save();
+              },
+            ),
+          ),
+          ListTile(
+            title: Text('Separate albums by discs'),
+            leading: Switch(
+              value: settings.albumDiscFolder,
+              onChanged: (v) {
+                setState(() => settings.albumDiscFolder = v);
                 settings.save();
               },
             ),
