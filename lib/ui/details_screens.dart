@@ -26,6 +26,15 @@ class AlbumDetails extends StatelessWidget {
     }
   }
 
+  //Get count of CDs in album
+  int get cdCount {
+    int c = 1;
+    for (Track t in album.tracks) {
+      if (t.diskNumber > c) c = t.diskNumber;
+    }
+    return c;
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -153,19 +162,27 @@ class AlbumDetails extends StatelessWidget {
                   ],
                 ),
               ),
-              ...List.generate(album.tracks.length, (i) {
-                Track t = album.tracks[i];
-                return TrackTile(
-                  t,
-                  onTap: () {
-                    playerHelper.playFromAlbum(album, t.id);
-                  },
-                  onHold: () {
-                    MenuSheet m = MenuSheet(context);
-                    m.defaultTrackMenu(t);
-                  }
+              ...List.generate(cdCount, (cdi) {
+                List<Track> tracks = album.tracks.where((t) => t.diskNumber == cdi + 1).toList();
+                return Column(
+                  children: [
+                    Padding(
+                      padding: EdgeInsets.symmetric(vertical: 4.0),
+                      child: Text('Disk ${cdi + 1}'),
+                    ),
+                    ...List.generate(tracks.length, (i) => TrackTile(
+                      tracks[i],
+                      onTap: () {
+                        playerHelper.playFromAlbum(album, tracks[i].id);
+                      },
+                      onHold: () {
+                        MenuSheet m = MenuSheet(context);
+                        m.defaultTrackMenu(tracks[i]);
+                      }
+                    ))
+                  ],
                 );
-              })
+              }),
             ],
           );
         },
@@ -433,7 +450,7 @@ class ArtistDetails extends StatelessWidget {
 
 class DiscographyScreen extends StatefulWidget {
 
-  Artist artist;
+  final Artist artist;
   DiscographyScreen({@required this.artist, Key key}): super(key: key);
 
   @override
@@ -445,7 +462,11 @@ class _DiscographyScreenState extends State<DiscographyScreen> {
   Artist artist;
   bool _loading = false;
   bool _error = false;
-  ScrollController _scrollController = ScrollController();
+  List<ScrollController> _controllers = [
+    ScrollController(),
+    ScrollController(),
+    ScrollController()
+  ];
 
   Future _load() async {
     if (artist.albums.length >= artist.albumCount || _loading) return;
@@ -471,16 +492,42 @@ class _DiscographyScreenState extends State<DiscographyScreen> {
 
   }
 
+  //Get album tile
+  Widget _tile(Album a) => AlbumTile(
+    a,
+    onTap: () => Navigator.of(context).push(MaterialPageRoute(builder: (context) => AlbumDetails(a))),
+    onHold: () {
+      MenuSheet m = MenuSheet(context);
+      m.defaultAlbumMenu(a);
+    },
+  );
+
+  Widget get _loadingWidget {
+    if (_loading)
+      return Padding(
+        padding: EdgeInsets.symmetric(vertical: 8.0),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [CircularProgressIndicator()],
+        ),
+      );
+    //Error
+    if (_error)
+      return ErrorScreen();
+    //Success
+    return Container(width: 0, height: 0,);
+  }
+
   @override
   void initState() {
     artist = widget.artist;
 
     //Lazy loading scroll
-    _scrollController.addListener(() {
-      double off = _scrollController.position.maxScrollExtent * 0.90;
-      if (_scrollController.position.pixels > off) {
-        _load();
-      }
+    _controllers.forEach((_c) {
+      _c.addListener(() {
+        double off = _c.position.maxScrollExtent * 0.85;
+        if (_c.position.pixels > off) _load();
+      });
     });
 
     super.initState();
@@ -488,41 +535,68 @@ class _DiscographyScreenState extends State<DiscographyScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(title: Text('Discography'),),
-      body: ListView.builder(
-        controller: _scrollController,
-        itemCount: artist.albums.length + 1,
-        itemBuilder: (context, i) {
-          //Loading
-          if (i == artist.albums.length) {
-            if (_loading)
-              return Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [CircularProgressIndicator()],
-              );
-            //Error
-            if (_error)
-              return ErrorScreen();
-            //Success
-            return Container(width: 0, height: 0,);
-          }
 
-          Album a = artist.albums[i];
-          return AlbumTile(
-            a,
-            onTap: () {
-              Navigator.of(context).push(
-                  MaterialPageRoute(builder: (context) => AlbumDetails(a))
-              );
-            },
-            onHold: () {
-              MenuSheet m = MenuSheet(context);
-              m.defaultAlbumMenu(a);
-            },
-          );
-        },
-      ),
+    return DefaultTabController(
+      length: 3,
+      child: Builder(builder: (BuildContext context) {
+
+        final TabController tabController = DefaultTabController.of(context);
+        tabController.addListener(() {
+          if (!tabController.indexIsChanging) {
+            //Load data if empty tabs
+            int nSingles = artist.albums.where((a) => a.type == AlbumType.SINGLE).length;
+            int nFeatures = artist.albums.where((a) => a.type == AlbumType.FEATURED).length;
+            if ((nSingles == 0 || nFeatures == 0) && !_loading) _load();
+          }
+        });
+
+        return Scaffold(
+          appBar: AppBar(
+            title: Text('Discography'),
+            bottom: TabBar(
+              tabs: [
+                Tab(icon: Icon(Icons.album)),
+                Tab(icon: Icon(Icons.audiotrack)),
+                Tab(icon: Icon(Icons.recent_actors))
+              ],
+            ),
+          ),
+          body: TabBarView(
+            children: [
+              //Albums
+              ListView.builder(
+                controller: _controllers[0],
+                itemCount: artist.albums.length + 1,
+                itemBuilder: (context, i) {
+                  if (i == artist.albums.length) return _loadingWidget;
+                  if (artist.albums[i].type == AlbumType.ALBUM) return _tile(artist.albums[i]);
+                  return Container(width: 0, height: 0,);
+                },
+              ),
+              //Singles
+              ListView.builder(
+                controller: _controllers[1],
+                itemCount: artist.albums.length + 1,
+                itemBuilder: (context, i) {
+                  if (i == artist.albums.length) return _loadingWidget;
+                  if (artist.albums[i].type == AlbumType.SINGLE) return _tile(artist.albums[i]);
+                  return Container(width: 0, height: 0,);
+                },
+              ),
+              //Featured
+              ListView.builder(
+                controller: _controllers[2],
+                itemCount: artist.albums.length + 1,
+                itemBuilder: (context, i) {
+                  if (i == artist.albums.length) return _loadingWidget;
+                  if (artist.albums[i].type == AlbumType.FEATURED) return _tile(artist.albums[i]);
+                  return Container(width: 0, height: 0,);
+                },
+              ),
+            ],
+          ),
+        );
+      })
     );
   }
 }

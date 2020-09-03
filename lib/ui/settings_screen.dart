@@ -14,6 +14,7 @@ import 'package:language_pickers/languages.dart';
 import 'package:package_info/package_info.dart';
 import 'package:path_provider_ex/path_provider_ex.dart';
 import 'package:permission_handler/permission_handler.dart';
+import 'package:clipboard/clipboard.dart';
 
 import '../settings.dart';
 import '../main.dart';
@@ -34,7 +35,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
     //Load about text
     PackageInfo.fromPlatform().then((PackageInfo info) {
       setState(() {
-        _about = '${info.appName} ${info.version}';
+        _about = '${info.appName}';
       });
     });
     super.initState();
@@ -565,6 +566,17 @@ class _GeneralSettingsState extends State<GeneralSettings> {
                 settings.save();
               },
             ),
+          ),
+          ListTile(
+            title: Text('Copy ARL'),
+            subtitle: Text('Copy userToken/ARL Cookie for use in other apps.'),
+            leading: Icon(Icons.lock),
+            onTap: () async {
+              await FlutterClipboard.copy(settings.arl);
+              await Fluttertoast.showToast(
+                msg: 'Copied',
+              );
+            },
           ),
           ListTile(
             title: Text('Log out', style: TextStyle(color: Colors.red),),

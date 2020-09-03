@@ -30,6 +30,7 @@ Track _$TrackFromJson(Map<String, dynamic> json) {
         ? null
         : Lyrics.fromJson(json['lyrics'] as Map<String, dynamic>),
     favorite: json['favorite'] as bool,
+    diskNumber: json['diskNumber'] as int,
   );
 }
 
@@ -44,6 +45,7 @@ Map<String, dynamic> _$TrackToJson(Track instance) => <String, dynamic>{
       'offline': instance.offline,
       'lyrics': instance.lyrics,
       'favorite': instance.favorite,
+      'diskNumber': instance.diskNumber,
       'playbackDetails': instance.playbackDetails,
     };
 
@@ -65,6 +67,7 @@ Album _$AlbumFromJson(Map<String, dynamic> json) {
     fans: json['fans'] as int,
     offline: json['offline'] as bool,
     library: json['library'] as bool,
+    type: _$enumDecodeNullable(_$AlbumTypeEnumMap, json['type']),
   );
 }
 
@@ -77,7 +80,46 @@ Map<String, dynamic> _$AlbumToJson(Album instance) => <String, dynamic>{
       'fans': instance.fans,
       'offline': instance.offline,
       'library': instance.library,
+      'type': _$AlbumTypeEnumMap[instance.type],
     };
+
+T _$enumDecode<T>(
+  Map<T, dynamic> enumValues,
+  dynamic source, {
+  T unknownValue,
+}) {
+  if (source == null) {
+    throw ArgumentError('A value must be provided. Supported values: '
+        '${enumValues.values.join(', ')}');
+  }
+
+  final value = enumValues.entries
+      .singleWhere((e) => e.value == source, orElse: () => null)
+      ?.key;
+
+  if (value == null && unknownValue == null) {
+    throw ArgumentError('`$source` is not one of the supported values: '
+        '${enumValues.values.join(', ')}');
+  }
+  return value ?? unknownValue;
+}
+
+T _$enumDecodeNullable<T>(
+  Map<T, dynamic> enumValues,
+  dynamic source, {
+  T unknownValue,
+}) {
+  if (source == null) {
+    return null;
+  }
+  return _$enumDecode<T>(enumValues, source, unknownValue: unknownValue);
+}
+
+const _$AlbumTypeEnumMap = {
+  AlbumType.ALBUM: 'ALBUM',
+  AlbumType.SINGLE: 'SINGLE',
+  AlbumType.FEATURED: 'FEATURED',
+};
 
 Artist _$ArtistFromJson(Map<String, dynamic> json) {
   return Artist(
@@ -286,38 +328,6 @@ Map<String, dynamic> _$HomePageSectionToJson(HomePageSection instance) =>
       'hasMore': instance.hasMore,
       'items': HomePageSection._homePageItemToJson(instance.items),
     };
-
-T _$enumDecode<T>(
-  Map<T, dynamic> enumValues,
-  dynamic source, {
-  T unknownValue,
-}) {
-  if (source == null) {
-    throw ArgumentError('A value must be provided. Supported values: '
-        '${enumValues.values.join(', ')}');
-  }
-
-  final value = enumValues.entries
-      .singleWhere((e) => e.value == source, orElse: () => null)
-      ?.key;
-
-  if (value == null && unknownValue == null) {
-    throw ArgumentError('`$source` is not one of the supported values: '
-        '${enumValues.values.join(', ')}');
-  }
-  return value ?? unknownValue;
-}
-
-T _$enumDecodeNullable<T>(
-  Map<T, dynamic> enumValues,
-  dynamic source, {
-  T unknownValue,
-}) {
-  if (source == null) {
-    return null;
-  }
-  return _$enumDecode<T>(enumValues, source, unknownValue: unknownValue);
-}
 
 const _$HomePageSectionLayoutEnumMap = {
   HomePageSectionLayout.ROW: 'ROW',

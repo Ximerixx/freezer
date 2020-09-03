@@ -62,7 +62,16 @@ class _TrackTileState extends State<TrackTile> {
       ),
       onTap: widget.onTap,
       onLongPress: widget.onHold,
-      trailing: widget.trailing,
+      trailing: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Padding(
+            padding: EdgeInsets.symmetric(horizontal: 2.0),
+            child: Text(widget.track.durationString),
+          ),
+          widget.trailing??Container(width: 0, height: 0)
+        ],
+      ),
     );
   }
 }
@@ -120,7 +129,7 @@ class ArtistTile extends StatelessWidget {
               CachedImage(
                 url: artist.picture.thumb,
                 circular: true,
-                width: 64,
+                width: 100,
               ),
               Container(height: 4,),
               Text(

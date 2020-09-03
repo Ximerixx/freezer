@@ -511,7 +511,7 @@ class Download {
       if (settings.albumFolder) {
         String folderName = track.album.title.replaceAll(sanitize, '');
         //Add disk number
-        if (settings.albumDiscFolder) folderName += ' - Disk ${rawTrack["DISK_NUMBER"]}';
+        if (settings.albumDiscFolder) folderName += ' - Disk ${track.diskNumber}';
 
         this.path = p.join(this.path, folderName);
       }

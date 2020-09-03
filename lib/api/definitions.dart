@@ -31,10 +31,13 @@ class Track {
   Lyrics lyrics;
   bool favorite;
 
+  //TODO: Not in DB
+  int diskNumber;
+
   List<dynamic> playbackDetails;
 
   Track({this.id, this.title, this.duration, this.album, this.playbackDetails, this.albumArt,
-    this.artists, this.trackNumber, this.offline, this.lyrics, this.favorite});
+    this.artists, this.trackNumber, this.offline, this.lyrics, this.favorite, this.diskNumber});
 
   String get artistString => artists.map<String>((art) => art.name).join(', ');
   String get durationString => "${duration.inMinutes}:${duration.inSeconds.remainder(60).toString().padLeft(2, '0')}";
@@ -130,7 +133,8 @@ class Track {
       trackNumber: int.parse((json['TRACK_NUMBER']??'0').toString()),
       playbackDetails: [json['MD5_ORIGIN'], json['MEDIA_VERSION']],
       lyrics: Lyrics(id: json['LYRICS_ID'].toString()),
-      favorite: favorite
+      favorite: favorite,
+      diskNumber: int.parse(json['DISK_NUMBER']??'1')
     );
   }
   Map<String, dynamic> toSQL({off = false}) => {
@@ -164,6 +168,12 @@ class Track {
   Map<String, dynamic> toJson() => _$TrackToJson(this);
 }
 
+enum AlbumType {
+  ALBUM,
+  SINGLE,
+  FEATURED
+}
+
 @JsonSerializable()
 class Album {
   String id;
@@ -174,8 +184,10 @@ class Album {
   int fans;
   bool offline; //If the album is offline, or just saved in db as metadata
   bool library;
+  //TODO: Not in DB
+  AlbumType type;
 
-  Album({this.id, this.title, this.art, this.artists, this.tracks, this.fans, this.offline, this.library});
+  Album({this.id, this.title, this.art, this.artists, this.tracks, this.fans, this.offline, this.library, this.type});
 
   String get artistString => artists.map<String>((art) => art.name).join(', ');
   Duration get duration => Duration(seconds: tracks.fold(0, (v, t) => v += t.duration.inSeconds));
@@ -183,15 +195,22 @@ class Album {
   String get fansString => NumberFormat.compact().format(fans);
 
   //JSON
-  factory Album.fromPrivateJson(Map<dynamic, dynamic> json, {Map<dynamic, dynamic> songsJson = const {}, bool library = false}) => Album(
-    id: json['ALB_ID'].toString(),
-    title: json['ALB_TITLE'],
-    art: ImageDetails.fromPrivateString(json['ALB_PICTURE']),
-    artists: (json['ARTISTS']??[json]).map<Artist>((dynamic art) => Artist.fromPrivateJson(art)).toList(),
-    tracks: (songsJson['data']??[]).map<Track>((dynamic track) => Track.fromPrivateJson(track)).toList(),
-    fans: json['NB_FAN'],
-    library: library
-  );
+  factory Album.fromPrivateJson(Map<dynamic, dynamic> json, {Map<dynamic, dynamic> songsJson = const {}, bool library = false}) {
+    AlbumType type = AlbumType.ALBUM;
+    if (json['TYPE'] != null && json['TYPE'].toString() == "0") type = AlbumType.SINGLE;
+    if (json['ROLE_ID'] == 5) type = AlbumType.FEATURED;
+
+    return Album(
+      id: json['ALB_ID'].toString(),
+      title: json['ALB_TITLE'],
+      art: ImageDetails.fromPrivateString(json['ALB_PICTURE']),
+      artists: (json['ARTISTS']??[json]).map<Artist>((dynamic art) => Artist.fromPrivateJson(art)).toList(),
+      tracks: (songsJson['data']??[]).map<Track>((dynamic track) => Track.fromPrivateJson(track)).toList(),
+      fans: json['NB_FAN'],
+      library: library,
+      type: type
+    );
+  }
   Map<String, dynamic> toSQL({off = false}) => {
     'id': id,
     'title': title,
