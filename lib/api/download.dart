@@ -1,3 +1,5 @@
+import 'dart:typed_data';
+
 import 'package:disk_space/disk_space.dart';
 import 'package:ext_storage/ext_storage.dart';
 import 'package:flutter/services.dart';
@@ -30,7 +32,7 @@ class DownloadManager {
   FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin;
   bool _cancelNotifications = true;
 
-  bool get stopped => queue.length > 0 && _download == null;
+  bool stopped = true;
 
   Future init() async {
     //Prepare DB
@@ -115,7 +117,7 @@ class DownloadManager {
 
   //Update queue, start new download
   void updateQueue() async {
-    if (_download == null && queue.length > 0) {
+    if (_download == null && queue.length > 0 && !stopped) {
       _download = queue[0].download(
         onDone: () async {
           //On download finished
@@ -137,15 +139,33 @@ class DownloadManager {
           updateQueue();
         }
       ).catchError((e, st) async {
+        if (stopped) return;
         print('Download error: $e\n$st');
         //Catch download errors
         _download = null;
         _cancelNotifications = true;
+        //Cancellation error i guess
         await _showError();
       });
       //Show download progress notifications
       if (_cancelNotifications == null || _cancelNotifications) _startProgressNotification();
     }
+  }
+
+  //Stop downloading and end my life
+  Future stop() async {
+    stopped = true;
+    if (_download != null) {
+      await queue[0].stop();
+    }
+    _download = null;
+  }
+
+  //Start again downloads
+  Future start() async {
+    if (_download != null) return;
+    stopped = false;
+    updateQueue();
   }
 
   //Show error notification
@@ -290,18 +310,13 @@ class DownloadManager {
     return d.path;
   }
 
-  Future addOfflineTrack(Track track, {private = true}) async {
+  Future addOfflineTrack(Track track, {private = true, forceStart = true}) async {
     //Paths
     String path = p.join(_offlinePath, track.id);
     if (track.playbackDetails == null) {
       //Get track from API if download info missing
       track = await deezerAPI.track(track.id);
     }
-    //Load lyrics
-    try {
-      Lyrics l = await deezerAPI.lyrics(track.id);
-      track.lyrics = l;
-    } catch (e) {}
 
     String url = track.getUrl(settings.getQualityInt(settings.offlineQuality));
     if (!private) {
@@ -316,6 +331,12 @@ class DownloadManager {
       if (settings.downloadQuality == AudioQuality.FLAC) {
         path = 'flac';
       }
+    } else {
+      //Load lyrics for private
+      try {
+        Lyrics l = await deezerAPI.lyrics(track.id);
+        track.lyrics = l;
+      } catch (e) {}
     }
 
     Download download = Download(track: track, path: path, url: url, private: private);
@@ -339,7 +360,7 @@ class DownloadManager {
     await b.commit();
 
     queue.add(download);
-    updateQueue();
+    if (forceStart) start();
   }
 
   Future addOfflineAlbum(Album album, {private = true}) async {
@@ -353,8 +374,9 @@ class DownloadManager {
     }
     //Save all tracks
     for (Track track in album.tracks) {
-      await addOfflineTrack(track, private: private);
+      await addOfflineTrack(track, private: private, forceStart: false);
     }
+    start();
   }
 
   //Add offline playlist, can be also used as update
@@ -370,8 +392,9 @@ class DownloadManager {
     }
     //Download all tracks
     for (Track t in playlist.tracks) {
-      await addOfflineTrack(t, private: private);
+      await addOfflineTrack(t, private: private, forceStart: false);
     }
+    start();
   }
 
 
@@ -465,8 +488,13 @@ class DownloadManager {
 
   //Delete queue
   Future clearQueue() async {
-    for (int i=queue.length-1; i>0; i--) {
-      await removeDownload(queue[i]);
+    while (queue.length > 0) {
+      if (queue.length == 1) {
+        if (_download != null) break;
+        await removeDownload(queue[0]);
+        return;
+      }
+      await removeDownload(queue[1]);
     }
   }
 
@@ -485,22 +513,38 @@ class Download {
   DownloadState state;
   String _cover;
 
+  //For canceling
+  IOSink _outSink;
+  CancelToken _cancel;
+  StreamSubscription _progressSub;
+
   int received = 0;
   int total = 1;
 
   Download({this.track, this.path, this.url, this.private, this.state = DownloadState.NONE});
+
+  //Stop download
+  Future stop() async {
+    if (_cancel != null) _cancel.cancel();
+    //if (_outSink != null) _outSink.close();
+    if (_progressSub != null) _progressSub.cancel();
+
+    received = 0;
+    total = 1;
+    state = DownloadState.NONE;
+  }
 
   Future download({onDone}) async {
     Dio dio = Dio();
 
     //TODO: Check for internet before downloading
 
-    if (!this.private) {
+    if (!this.private && !(this.path.endsWith('.mp3') || this.path.endsWith('.flac'))) {
       String ext = this.path;
       //Get track details
-      Map rawTrack = (await deezerAPI.callApi('song.getListData', params: {'sng_ids': [track.id]}))['results']['data'][0];
+      Map _rawTrackData = await deezerAPI.callApi('song.getListData', params: {'sng_ids': [track.id]});
+      Map rawTrack = _rawTrackData['results']['data'][0];
       this.track = Track.fromPrivateJson(rawTrack);
-
 
       //Get path if public
       RegExp sanitize = RegExp(r'[\/\\\?\%\*\:\|\"\<\>]');
@@ -533,6 +577,9 @@ class Download {
 
       //Create filename
       String _filename = settings.downloadFilename;
+      //Feats filter
+      String feats = '';
+      if (track.artists.length > 1) feats = "feat. ${track.artists.sublist(1).map((a) => a.name).join(', ')}";
       //Filters
       Map<String, String> vars = {
         '%artists%': track.artistString.replaceAll(sanitize, ''),
@@ -540,7 +587,8 @@ class Download {
         '%title%': track.title.replaceAll(sanitize, ''),
         '%album%': track.album.title.replaceAll(sanitize, ''),
         '%trackNumber%': track.trackNumber.toString(),
-        '%0trackNumber%': track.trackNumber.toString().padLeft(2, '0')
+        '%0trackNumber%': track.trackNumber.toString().padLeft(2, '0'),
+        '%feats%': feats
       };
       //Replace
       vars.forEach((key, value) {
@@ -553,15 +601,48 @@ class Download {
     //Download
     this.state = DownloadState.DOWNLOADING;
 
-    await dio.download(
+    //Create download file
+    File downloadFile = File(this.path + '.ENC');
+    //Get start position
+    int start = 0;
+    if (await downloadFile.exists()) {
+      FileStat stat = await downloadFile.stat();
+      start = stat.size;
+    } else {
+      //Create file if doesnt exist
+      await downloadFile.create(recursive: true);
+    }
+    //Download
+    _cancel = CancelToken();
+    Response response = await dio.get(
       this.url,
-      this.path + '.ENC',
-      deleteOnError: true,
-      onReceiveProgress: (rec, total) {
-        this.received = rec;
-        this.total = total;
-      }
+      options: Options(
+        responseType: ResponseType.stream,
+        headers: {
+          'Range': 'bytes=$start-'
+        },
+      ),
+      cancelToken: _cancel
     );
+    //Size
+    this.total = int.parse(response.headers['Content-Length'][0]) + start;
+    this.received = start;
+    //Save
+    _outSink = downloadFile.openWrite(mode: FileMode.append);
+    Stream<Uint8List> _data = response.data.stream.asBroadcastStream();
+    _progressSub = _data.listen((Uint8List c) {
+      this.received += c.length;
+    });
+    //Pipe to file
+    try {
+      await _outSink.addStream(_data);
+    } catch (e) {
+      await _outSink.close();
+      throw Exception('Download error');
+    }
+      await _outSink.close();
+    _cancel = null;
+
 
     this.state = DownloadState.POST;
     //Decrypt
@@ -586,6 +667,28 @@ class Download {
     //Remove encrypted
     await File(path + '.ENC').delete();
     if (!settings.albumFolder) await File(_cover).delete();
+
+    //Get lyrics
+    Lyrics lyrics;
+    try {
+      lyrics = await deezerAPI.lyrics(track.id);
+    } catch (e) {}
+    if (lyrics != null && lyrics.lyrics != null) {
+      //Create .LRC file
+      String lrcPath = p.join(p.dirname(path), p.basenameWithoutExtension(path)) + '.lrc';
+      File lrcFile = File(lrcPath);
+      String lrcData = '';
+      //Generate file
+      lrcData += '[ar:${track.artistString}]\r\n';
+      lrcData += '[al:${track.album.title}]\r\n';
+      lrcData += '[ti:${track.title}]\r\n';
+      for (Lyric l in lyrics.lyrics) {
+        if (l.lrcTimestamp != null && l.lrcTimestamp != '' && l.text != null)
+          lrcData += '${l.lrcTimestamp}${l.text}\r\n';
+      }
+      lrcFile.writeAsString(lrcData);
+    }
+
     this.state = DownloadState.DONE;
     onDone();
     return;

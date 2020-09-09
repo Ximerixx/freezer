@@ -49,6 +49,7 @@ class _TrackTileState extends State<TrackTile> {
       title: Text(
         widget.track.title,
         maxLines: 1,
+        overflow: TextOverflow.clip,
         style: TextStyle(
           color: nowPlaying?Theme.of(context).primaryColor:null
         ),
@@ -59,12 +60,23 @@ class _TrackTileState extends State<TrackTile> {
       ),
       leading: CachedImage(
         url: widget.track.albumArt.thumb,
+        width: 48,
       ),
       onTap: widget.onTap,
       onLongPress: widget.onHold,
       trailing: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
+          if (widget.track.explicit??false)
+            Padding(
+              padding: EdgeInsets.symmetric(horizontal: 4.0),
+              child: Text(
+                'E',
+                style: TextStyle(
+                  color: Colors.red
+                ),
+              ),
+            ),
           Padding(
             padding: EdgeInsets.symmetric(horizontal: 2.0),
             child: Text(widget.track.durationString),
@@ -98,6 +110,7 @@ class AlbumTile extends StatelessWidget {
       ),
       leading: CachedImage(
         url: album.art.thumb,
+        width: 48,
       ),
       onTap: onTap,
       onLongPress: onHold,
@@ -172,6 +185,7 @@ class PlaylistTile extends StatelessWidget {
       ),
       leading: CachedImage(
         url: playlist.image.thumb,
+        width: 48,
       ),
       onTap: onTap,
       onLongPress: onHold,

@@ -497,7 +497,7 @@ class _GeneralSettingsState extends State<GeneralSettings> {
                         ),
                         Container(height: 8.0),
                         Text(
-                          'Valid variables are: %artists%, %artist%, %title%, %album%, %trackNumber%, %0trackNumber%',
+                          'Valid variables are: %artists%, %artist%, %title%, %album%, %trackNumber%, %0trackNumber%, %feats%',
                           style: TextStyle(
                             fontSize: 12.0,
                           ),

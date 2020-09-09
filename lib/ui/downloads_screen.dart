@@ -52,6 +52,7 @@ class DownloadTile extends StatelessWidget {
           subtitle: Text(subtitle),
           leading: CachedImage(
             url: download.track.albumArt.thumb,
+            width: 48.0,
           ),
           trailing: trailing,
           onTap: () {
@@ -102,30 +103,12 @@ class _DownloadsScreenState extends State<DownloadsScreen> {
           title: Text('Downloads'),
           actions: [
             IconButton(
-              icon: Icon(Icons.delete_sweep),
+              icon: Icon(downloadManager.stopped ? Icons.play_arrow : Icons.stop),
               onPressed: () {
-                showDialog(
-                    context: context,
-                    builder: (context) {
-                      return AlertDialog(
-                        title: Text('Delete'),
-                        content: Text('Are you sure, you want to delete all queued downloads?'),
-                        actions: [
-                          FlatButton(
-                            child: Text('Cancel'),
-                            onPressed: () => Navigator.of(context).pop(),
-                          ),
-                          FlatButton(
-                            child: Text('Delete'),
-                            onPressed: () async {
-                              await downloadManager.clearQueue();
-                              Navigator.of(context).pop();
-                            },
-                          )
-                        ],
-                      );
-                    }
-                );
+                setState(() {
+                  if (downloadManager.stopped) downloadManager.start();
+                  else downloadManager.stop();
+                });
               },
             )
           ],
@@ -140,9 +123,41 @@ class _DownloadsScreenState extends State<DownloadsScreen> {
                   return Container(width: 0, height: 0,);
 
                 return Column(
-                    children: List.generate(downloadManager.queue.length, (i) {
-                      return DownloadTile(downloadManager.queue[i], onDelete: () => setState(() => {}));
-                    })
+                    children: [
+                      ...List.generate(downloadManager.queue.length, (i) {
+                        return DownloadTile(downloadManager.queue[i], onDelete: () => setState(() => {}));
+                      }),
+                      if (downloadManager.queue.length > 1 || (downloadManager.stopped && downloadManager.queue.length > 0))
+                        ListTile(
+                          title: Text('Clear queue'),
+                          subtitle: Text("This won't delete currently downloading item"),
+                          leading: Icon(Icons.delete),
+                          onTap: () async {
+                            showDialog(
+                                context: context,
+                                builder: (context) {
+                                  return AlertDialog(
+                                    title: Text('Delete'),
+                                    content: Text('Are you sure, you want to delete all queued downloads?'),
+                                    actions: [
+                                      FlatButton(
+                                        child: Text('Cancel'),
+                                        onPressed: () => Navigator.of(context).pop(),
+                                      ),
+                                      FlatButton(
+                                        child: Text('Delete'),
+                                        onPressed: () async {
+                                          await downloadManager.clearQueue();
+                                          Navigator.of(context).pop();
+                                        },
+                                      )
+                                    ],
+                                  );
+                                }
+                            );
+                          },
+                        )
+                    ]
                 );
               },
             ),

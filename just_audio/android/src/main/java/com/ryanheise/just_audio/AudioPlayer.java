@@ -3,6 +3,8 @@ package com.ryanheise.just_audio;
 import android.content.Context;
 import android.net.Uri;
 import android.os.Handler;
+import android.util.Log;
+
 import com.google.android.exoplayer2.C;
 import com.google.android.exoplayer2.ExoPlaybackException;
 import com.google.android.exoplayer2.PlaybackParameters;
@@ -31,7 +33,6 @@ import com.google.android.exoplayer2.upstream.DefaultHttpDataSource;
 import com.google.android.exoplayer2.upstream.DefaultHttpDataSourceFactory;
 import com.google.android.exoplayer2.upstream.HttpDataSource;
 import com.google.android.exoplayer2.util.Util;
-import io.flutter.Log;
 import io.flutter.plugin.common.BinaryMessenger;
 import io.flutter.plugin.common.EventChannel;
 import io.flutter.plugin.common.EventChannel.EventSink;
@@ -446,7 +447,7 @@ public class AudioPlayer implements MethodCallHandler, Player.EventListener, Met
 		case "progressive":
 			Uri uri = Uri.parse((String)map.get("uri"));
 			//Deezer
-			if (uri.getHost().contains("dzcdn.net")) {
+			if (uri.getHost() != null && uri.getHost().contains("dzcdn.net")) {
                 //Track id is stored in URL fragment (after #)
 			    String fragment = uri.getFragment();
 			    uri = Uri.parse(((String)map.get("uri")).replace("#" + fragment, ""));

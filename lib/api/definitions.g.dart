@@ -31,6 +31,7 @@ Track _$TrackFromJson(Map<String, dynamic> json) {
         : Lyrics.fromJson(json['lyrics'] as Map<String, dynamic>),
     favorite: json['favorite'] as bool,
     diskNumber: json['diskNumber'] as int,
+    explicit: json['explicit'] as bool,
   );
 }
 
@@ -46,6 +47,7 @@ Map<String, dynamic> _$TrackToJson(Track instance) => <String, dynamic>{
       'lyrics': instance.lyrics,
       'favorite': instance.favorite,
       'diskNumber': instance.diskNumber,
+      'explicit': instance.explicit,
       'playbackDetails': instance.playbackDetails,
     };
 
@@ -244,12 +246,14 @@ Lyric _$LyricFromJson(Map<String, dynamic> json) {
         ? null
         : Duration(microseconds: json['offset'] as int),
     text: json['text'] as String,
+    lrcTimestamp: json['lrcTimestamp'] as String,
   );
 }
 
 Map<String, dynamic> _$LyricToJson(Lyric instance) => <String, dynamic>{
       'offset': instance.offset?.inMicroseconds,
       'text': instance.text,
+      'lrcTimestamp': instance.lrcTimestamp,
     };
 
 QueueSource _$QueueSourceFromJson(Map<String, dynamic> json) {

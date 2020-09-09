@@ -309,12 +309,13 @@ class AudioPlayerTask extends BackgroundAudioTask {
         MediaControl.skipToPrevious,
         if (_player.playing) MediaControl.pause else MediaControl.play,
         MediaControl.skipToNext,
-        //MediaControl.stop
+        MediaControl.stop
       ],
       systemActions: [
         MediaAction.seekTo,
         MediaAction.seekForward,
-        MediaAction.seekBackward
+        MediaAction.seekBackward,
+        //MediaAction.stop
       ],
       processingState: _getProcessingState(),
       playing: _player.playing,

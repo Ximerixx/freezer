@@ -56,20 +56,20 @@ class LibraryScreen extends StatelessWidget {
       body: ListView(
         children: <Widget>[
           Container(height: 4.0,),
-          if (downloadManager.stopped)
+          if (downloadManager.stopped && downloadManager.queue.length > 0)
             ListTile(
               title: Text('Downloads'),
               leading: Icon(Icons.file_download),
               subtitle: Text('Downloading is currently stopped, click here to resume.'),
               onTap: () {
-                downloadManager.updateQueue();
+                downloadManager.start();
                 Navigator.of(context).push(MaterialPageRoute(
                   builder: (context) => DownloadsScreen()
                 ));
               },
             ),
           //Dirty if to not use columns
-          if (downloadManager.stopped)
+          if (downloadManager.stopped && downloadManager.queue.length > 0)
             Divider(),
 
           ListTile(

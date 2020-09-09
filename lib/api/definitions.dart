@@ -33,11 +33,12 @@ class Track {
 
   //TODO: Not in DB
   int diskNumber;
+  bool explicit;
 
   List<dynamic> playbackDetails;
 
   Track({this.id, this.title, this.duration, this.album, this.playbackDetails, this.albumArt,
-    this.artists, this.trackNumber, this.offline, this.lyrics, this.favorite, this.diskNumber});
+    this.artists, this.trackNumber, this.offline, this.lyrics, this.favorite, this.diskNumber, this.explicit});
 
   String get artistString => artists.map<String>((art) => art.name).join(', ');
   String get durationString => "${duration.inMinutes}:${duration.inSeconds.remainder(60).toString().padLeft(2, '0')}";
@@ -134,7 +135,8 @@ class Track {
       playbackDetails: [json['MD5_ORIGIN'], json['MEDIA_VERSION']],
       lyrics: Lyrics(id: json['LYRICS_ID'].toString()),
       favorite: favorite,
-      diskNumber: int.parse(json['DISK_NUMBER']??'1')
+      diskNumber: int.parse(json['DISK_NUMBER']??'1'),
+      explicit: (json['EXPLICIT_LYRICS'].toString() == '1') ? true:false
     );
   }
   Map<String, dynamic> toSQL({off = false}) => {
@@ -470,15 +472,17 @@ class Lyrics {
 class Lyric {
   Duration offset;
   String text;
+  String lrcTimestamp;
 
-  Lyric({this.offset, this.text});
+  Lyric({this.offset, this.text, this.lrcTimestamp});
 
   //JSON
   factory Lyric.fromPrivateJson(Map<dynamic, dynamic> json) {
     if (json['milliseconds'] == null || json['line'] == null) return Lyric(); //Empty lyric
     return Lyric(
       offset: Duration(milliseconds: int.parse(json['milliseconds'].toString())),
-      text: json['line']
+      text: json['line'],
+      lrcTimestamp: json['lrc_timestamp']
     );
   }
 

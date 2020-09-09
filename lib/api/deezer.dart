@@ -64,7 +64,7 @@ class DeezerAPI {
           'gateway_input': gatewayInput
       },
       data: jsonEncode(params??{}),
-      options: Options(responseType: ResponseType.json, sendTimeout: 5000, receiveTimeout: 5000)
+      options: Options(responseType: ResponseType.json, sendTimeout: 10000, receiveTimeout: 10000)
     );
     return response.data;
   }
@@ -73,7 +73,7 @@ class DeezerAPI {
     Dio dio = Dio();
     Response response = await dio.get(
       'https://api.deezer.com/' + path,
-      options: Options(responseType: ResponseType.json, sendTimeout: 5000, receiveTimeout: 5000)
+      options: Options(responseType: ResponseType.json, sendTimeout: 10000, receiveTimeout: 10000)
     );
     return response.data;
   }
