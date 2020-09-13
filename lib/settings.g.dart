@@ -28,6 +28,7 @@ Settings _$SettingsFromJson(Map<String, dynamic> json) {
     ..albumFolder = json['albumFolder'] as bool ?? true
     ..artistFolder = json['artistFolder'] as bool ?? true
     ..albumDiscFolder = json['albumDiscFolder'] as bool ?? false
+    ..overwriteDownload = json['overwriteDownload'] as bool ?? false
     ..theme =
         _$enumDecodeNullable(_$ThemesEnumMap, json['theme']) ?? Themes.Light
     ..primaryColor = Settings._colorFromJson(json['primaryColor'] as int)
@@ -48,6 +49,7 @@ Map<String, dynamic> _$SettingsToJson(Settings instance) => <String, dynamic>{
       'albumFolder': instance.albumFolder,
       'artistFolder': instance.artistFolder,
       'albumDiscFolder': instance.albumDiscFolder,
+      'overwriteDownload': instance.overwriteDownload,
       'theme': _$ThemesEnumMap[instance.theme],
       'primaryColor': Settings._colorToJson(instance.primaryColor),
       'useArtColor': instance.useArtColor,

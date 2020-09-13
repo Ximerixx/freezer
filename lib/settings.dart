@@ -45,6 +45,8 @@ class Settings {
   bool artistFolder;
   @JsonKey(defaultValue: false)
   bool albumDiscFolder;
+  @JsonKey(defaultValue: false)
+  bool overwriteDownload;
 
 
   //Appearance

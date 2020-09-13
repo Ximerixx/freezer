@@ -1,6 +1,7 @@
 import 'package:audio_service/audio_service.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import 'package:freezer/api/deezer.dart';
+import 'package:freezer/ui/details_screens.dart';
 import 'package:just_audio/just_audio.dart';
 import 'package:connectivity/connectivity.dart';
 import 'package:path/path.dart' as p;
@@ -309,7 +310,12 @@ class AudioPlayerTask extends BackgroundAudioTask {
         MediaControl.skipToPrevious,
         if (_player.playing) MediaControl.pause else MediaControl.play,
         MediaControl.skipToNext,
-        MediaControl.stop
+        //Stop
+        MediaControl(
+          androidIcon: 'drawable/ic_action_stop',
+          label: 'stop',
+          action: MediaAction.stop
+        )
       ],
       systemActions: [
         MediaAction.seekTo,

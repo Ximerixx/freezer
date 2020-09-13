@@ -568,6 +568,16 @@ class _GeneralSettingsState extends State<GeneralSettings> {
             ),
           ),
           ListTile(
+            title: Text('Overwrite already downloaded files'),
+            leading: Switch(
+              value: settings.overwriteDownload,
+              onChanged: (v) {
+                setState(() => settings.overwriteDownload = v);
+                settings.save();
+              },
+            ),
+          ),
+          ListTile(
             title: Text('Copy ARL'),
             subtitle: Text('Copy userToken/ARL Cookie for use in other apps.'),
             leading: Icon(Icons.lock),

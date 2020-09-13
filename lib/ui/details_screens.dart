@@ -30,7 +30,7 @@ class AlbumDetails extends StatelessWidget {
   int get cdCount {
     int c = 1;
     for (Track t in album.tracks) {
-      if (t.diskNumber > c) c = t.diskNumber;
+      if ((t.diskNumber??1) > c) c = t.diskNumber;
     }
     return c;
   }
@@ -163,7 +163,7 @@ class AlbumDetails extends StatelessWidget {
                 ),
               ),
               ...List.generate(cdCount, (cdi) {
-                List<Track> tracks = album.tracks.where((t) => t.diskNumber == cdi + 1).toList();
+                List<Track> tracks = album.tracks.where((t) => (t.diskNumber??1) == cdi + 1).toList();
                 return Column(
                   children: [
                     Padding(
@@ -601,7 +601,11 @@ class _DiscographyScreenState extends State<DiscographyScreen> {
   }
 }
 
-
+enum SortType {
+  DEFAULT,
+  ALPHABETIC,
+  ARTIST
+}
 
 class PlaylistDetails extends StatefulWidget {
 
@@ -617,7 +621,24 @@ class _PlaylistDetailsState extends State<PlaylistDetails> {
   Playlist playlist;
   bool _loading = false;
   bool _error = false;
+  SortType _sort = SortType.DEFAULT;
   ScrollController _scrollController = ScrollController();
+
+  //Get sorted playlist
+  List<Track> get sorted {
+    List<Track> tracks = new List.from(playlist.tracks??[]);
+    switch (_sort) {
+      case SortType.ALPHABETIC:
+        tracks.sort((a, b) => a.title.compareTo(b.title));
+        return tracks;
+      case SortType.ARTIST:
+        tracks.sort((a, b) => a.artists[0].name.compareTo(b.artists[0].name));
+        return tracks;
+      case SortType.DEFAULT:
+      default:
+        return tracks;
+    }
+  }
 
   //Load tracks from api
   void _load() async {
@@ -790,16 +811,40 @@ class _PlaylistDetailsState extends State<PlaylistDetails> {
                   onPressed: () {
                     downloadManager.addOfflinePlaylist(playlist, private: false);
                   },
-                )
+                ),
+                PopupMenuButton(
+                  child: Icon(Icons.sort, size: 32.0),
+                  onSelected: (SortType s) => setState(() => _sort = s),
+                  itemBuilder: (context) => <PopupMenuEntry<SortType>>[
+                    const PopupMenuItem(
+                      value: SortType.DEFAULT,
+                      child: Text('Default'),
+                    ),
+                    const PopupMenuItem(
+                      value: SortType.ALPHABETIC,
+                      child: Text('Alphabetic'),
+                    ),
+                    const PopupMenuItem(
+                      value: SortType.ARTIST,
+                      child: Text('Artist'),
+                    ),
+                  ],
+                ),
+                Container(width: 4.0)
               ],
             ),
           ),
           ...List.generate(playlist.tracks.length, (i) {
-            Track t = playlist.tracks[i];
+            Track t = sorted[i];
             return TrackTile(
               t,
               onTap: () {
-                playerHelper.playFromPlaylist(playlist, t.id);
+                Playlist p = Playlist(
+                  title: playlist.title,
+                  id: playlist.id,
+                  tracks: sorted
+                );
+                playerHelper.playFromPlaylist(p, t.id);
               },
               onHold: () {
                 MenuSheet m = MenuSheet(context);

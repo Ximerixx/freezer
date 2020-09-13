@@ -598,6 +598,14 @@ class Download {
 
       this.path = p.join(this.path, _filename);
     }
+
+    //Check if file exists
+    if (await File(this.path).exists() && !settings.overwriteDownload) {
+      this.state = DownloadState.DONE;
+      onDone();
+      return;
+    }
+
     //Download
     this.state = DownloadState.DOWNLOADING;
 
