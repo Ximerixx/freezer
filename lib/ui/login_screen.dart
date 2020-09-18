@@ -163,7 +163,7 @@ class _LoginWidgetState extends State<LoginWidget> {
                             ),
                             actions: <Widget>[
                               FlatButton(
-                                child: Text('Save'),
+                                child: Text('Save'.i18n),
                                 onPressed: () {
                                   settings.arl = _arl.trim();
                                   Navigator.of(context).pop();
@@ -188,7 +188,7 @@ class _LoginWidgetState extends State<LoginWidget> {
               Padding(
                 padding: EdgeInsets.symmetric(horizontal: 32.0),
                 child: OutlineButton(
-                  child: Text('Open in browser'),
+                  child: Text('Open in browser'.i18n),
                   onPressed: () {
                     InAppBrowser.openWithSystemBrowser(url: 'https://deezer.com/register');
                   },
