@@ -4,6 +4,7 @@ import 'package:freezer/api/deezer.dart';
 import 'package:freezer/api/definitions.dart';
 import 'package:freezer/api/spotify.dart';
 import 'package:freezer/ui/menu.dart';
+import 'package:freezer/translations.i18n.dart';
 
 class ImporterScreen extends StatefulWidget {
   @override
@@ -34,8 +35,8 @@ class _ImporterScreenState extends State<ImporterScreen> {
       setState(() => _data = data);
       return;
 
-    } catch (e) {
-      print(e);
+    } catch (e, st) {
+      print('$e, $st');
       setState(() {
         _error = true;
         _loading = false;
@@ -49,13 +50,13 @@ class _ImporterScreenState extends State<ImporterScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text('Importer'),
+        title: Text('Importer'.i18n),
       ),
       body: ListView(
         children: <Widget>[
           ListTile(
-            title: Text('Currently supporting only Spotify, with 100 tracks limit'),
-            subtitle: Text('Due to API limitations'),
+            title: Text('Currently supporting only Spotify, with 100 tracks limit'.i18n),
+            subtitle: Text('Due to API limitations'.i18n),
             leading: Icon(
               Icons.warning,
               color: Colors.deepOrangeAccent,
@@ -64,7 +65,7 @@ class _ImporterScreenState extends State<ImporterScreen> {
           Divider(),
           Container(height: 16.0,),
           Text(
-            'Enter your playlist link below',
+            'Enter your playlist link below'.i18n,
             textAlign: TextAlign.center,
             style: TextStyle(
               fontSize: 20.0
@@ -104,7 +105,7 @@ class _ImporterScreenState extends State<ImporterScreen> {
             ),
           if (_error)
             ListTile(
-              title: Text('Error loading URL!'),
+              title: Text('Error loading URL!'.i18n),
               leading: Icon(Icons.error, color: Colors.red,),
             ),
           if (_data != null)
@@ -133,13 +134,14 @@ class _ImporterWidgetState extends State<ImporterWidget> {
         ListTile(
           title: Text(widget.playlist.name),
           subtitle: Text(widget.playlist.description),
-          leading: Image.network(widget.playlist.image),
+          //Default image
+          leading: Image.network(widget.playlist.image??'http://cdn-images.deezer.com/images/cover//256x256-000000-80-0-0.jpg'),
         ),
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceAround,
           children: <Widget>[
             RaisedButton(
-              child: Text('Convert'),
+              child: Text('Convert'.i18n),
               color: Theme.of(context).primaryColor,
               onPressed: () {
                 spotify.convertPlaylist(widget.playlist);
@@ -149,7 +151,7 @@ class _ImporterWidgetState extends State<ImporterWidget> {
               },
             ),
             RaisedButton(
-              child: Text('Download only'),
+              child: Text('Download only'.i18n),
               color: Theme.of(context).primaryColor,
               onPressed: () {
                 spotify.convertPlaylist(widget.playlist, downloadOnly: true);
@@ -197,7 +199,7 @@ class CurrentlyImportingScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text('Importing...'),),
+      appBar: AppBar(title: Text('Importing...'.i18n),),
       body: StreamBuilder(
         stream: spotify.importingStream.stream,
         builder: (context, snapshot) {
@@ -254,7 +256,7 @@ class CurrentlyImportingScreen extends StatelessWidget {
                     ),
                     if (snapshot.data != null)
                       FlatButton(
-                        child: Text('Playlist menu'),
+                        child: Text('Playlist menu'.i18n),
                         onPressed: () async {
                           Playlist p = await deezerAPI.playlist(snapshot.data);
                           p.library = true;

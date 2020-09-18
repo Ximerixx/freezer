@@ -1,10 +1,9 @@
-import 'package:audio_service/audio_service.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:freezer/api/deezer.dart';
 import 'package:freezer/api/player.dart';
-import 'package:freezer/main.dart';
 import 'package:flutter_inappwebview/flutter_inappwebview.dart';
+import 'package:freezer/translations.i18n.dart';
 
 import '../settings.dart';
 import '../api/definitions.dart';
@@ -62,11 +61,11 @@ class _LoginWidgetState extends State<LoginWidget> {
       context: context,
       builder: (context) {
         return AlertDialog(
-          title: Text('Error'),
-          content: Text('Error logging in! Please check your token and internet connection and try again.'),
+          title: Text('Error'.i18n),
+          content: Text('Error logging in! Please check your token and internet connection and try again.'.i18n),
           actions: <Widget>[
             FlatButton(
-              child: Text('Dismiss'),
+              child: Text('Dismiss'.i18n),
               onPressed: () {
                 Navigator.of(context).pop();
               },
@@ -117,7 +116,7 @@ class _LoginWidgetState extends State<LoginWidget> {
             children: <Widget>[
               Container(height: 16.0,),
               Text(
-                'Welcome to',
+                'Welcome to'.i18n,
                 textAlign: TextAlign.center,
                 style: TextStyle(
                   fontSize: 16.0
@@ -126,7 +125,7 @@ class _LoginWidgetState extends State<LoginWidget> {
               FreezerTitle(),
               Container(height: 8.0,),
               Text(
-                "Please login using your Deezer account.",
+                "Please login using your Deezer account.".i18n,
                 textAlign: TextAlign.center,
                 style: TextStyle(
                     fontSize: 16.0
@@ -136,7 +135,7 @@ class _LoginWidgetState extends State<LoginWidget> {
               Padding(
                 padding: EdgeInsets.symmetric(horizontal: 32.0),
                 child: OutlineButton(
-                  child: Text('Login using browser'),
+                  child: Text('Login using browser'.i18n),
                   onPressed: () {
                     Navigator.of(context).push(
                         MaterialPageRoute(builder: (context) => LoginBrowser(_update))
@@ -147,18 +146,18 @@ class _LoginWidgetState extends State<LoginWidget> {
               Padding(
                 padding: EdgeInsets.symmetric(horizontal: 32.0),
                 child: OutlineButton(
-                  child: Text('Login using token'),
+                  child: Text('Login using token'.i18n),
                   onPressed: () {
                     showDialog(
                         context: context,
                         builder: (context) {
                           return AlertDialog(
-                            title: Text('Enter ARL'),
+                            title: Text('Enter ARL'.i18n),
                             content: Container(
                               child: TextField(
                                 onChanged: (String s) => _arl = s,
                                 decoration: InputDecoration(
-                                    labelText: 'Token (ARL)'
+                                  labelText: 'Token (ARL)'.i18n
                                 ),
                               ),
                             ),
@@ -166,7 +165,7 @@ class _LoginWidgetState extends State<LoginWidget> {
                               FlatButton(
                                 child: Text('Save'),
                                 onPressed: () {
-                                  settings.arl = _arl;
+                                  settings.arl = _arl.trim();
                                   Navigator.of(context).pop();
                                   _update();
                                 },
@@ -180,7 +179,7 @@ class _LoginWidgetState extends State<LoginWidget> {
               ),
               Container(height: 16.0,),
               Text(
-                "If you don't have account, you can register on deezer.com for free.",
+                "If you don't have account, you can register on deezer.com for free.".i18n,
                 textAlign: TextAlign.center,
                 style: TextStyle(
                   fontSize: 16.0
@@ -199,7 +198,7 @@ class _LoginWidgetState extends State<LoginWidget> {
               Divider(),
               Container(height: 8.0,),
               Text(
-                "By using this app, you don't agree with the Deezer ToS",
+                "By using this app, you don't agree with the Deezer ToS".i18n,
                 textAlign: TextAlign.center,
                 style: TextStyle(
                   fontSize: 16.0

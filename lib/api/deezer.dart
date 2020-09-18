@@ -20,6 +20,7 @@ class DeezerAPI {
 
   String token;
   String userId;
+  String userName;
   String favoritesPlaylistId;
   String privateUrl = 'http://www.deezer.com/ajax/gw-light.php';
   Map<String, String> headers = {
@@ -95,6 +96,7 @@ class DeezerAPI {
       } else {
         this.token = data['results']['checkForm'];
         this.userId = data['results']['USER']['USER_ID'].toString();
+        this.userName = data['results']['USER']['BLOG_NAME'];
         this.favoritesPlaylistId = data['results']['USER']['LOVEDTRACKS_ID'];
         return true;
       }
@@ -383,6 +385,21 @@ class DeezerAPI {
     });
 
     return data['results']['data'].map<Album>((a) => Album.fromPrivateJson(a)).toList();
+  }
+
+  Future<List> searchSuggestions(String query) async {
+    Map data = await callApi('search_getSuggestedQueries', params: {
+      'QUERY': query
+    });
+    return data['results']['SUGGESTION'].map((s) => s['QUERY']).toList();
+  }
+
+  //Get smart radio for artist id
+  Future<List<Track>> smartRadio(String artistId) async {
+    Map data = await callApi('smart.getSmartRadio', params: {
+      'art_id': int.parse(artistId)
+    });
+    return data['results']['data'].map<Track>((t) => Track.fromPrivateJson(t)).toList();
   }
 }
 

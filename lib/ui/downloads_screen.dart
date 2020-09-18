@@ -1,5 +1,6 @@
 import 'package:filesize/filesize.dart';
 import 'package:flutter/material.dart';
+import 'package:freezer/translations.i18n.dart';
 
 import 'cached_image.dart';
 import '../api/download.dart';
@@ -17,9 +18,9 @@ class DownloadTile extends StatelessWidget {
       case DownloadState.DOWNLOADING:
         return '${filesize(download.received)} / ${filesize(download.total)}';
       case DownloadState.POST:
-        return 'Post processing...';
+        return 'Post processing...'.i18n;
       case DownloadState.DONE:
-        return 'Done'; //Shouldn't be visible
+        return 'Done'.i18n; //Shouldn't be visible
     }
     return '';
   }
@@ -27,6 +28,7 @@ class DownloadTile extends StatelessWidget {
   Widget get progressBar {
     switch (download.state) {
       case DownloadState.DOWNLOADING:
+        print(download.track.id);
         return LinearProgressIndicator(value: download.received / download.total);
       case DownloadState.POST:
         return LinearProgressIndicator();
@@ -62,15 +64,15 @@ class DownloadTile extends StatelessWidget {
                 context: context,
                 builder: (context) {
                   return AlertDialog(
-                    title: Text('Delete'),
-                    content: Text('Are you sure, you want to delete this download?'),
+                    title: Text('Delete'.i18n),
+                    content: Text('Are you sure you want to delete this download?'.i18n),
                     actions: [
                       FlatButton(
-                        child: Text('Cancel'),
+                        child: Text('Cancel'.i18n),
                         onPressed: () => Navigator.of(context).pop(),
                       ),
                       FlatButton(
-                        child: Text('Delete'),
+                        child: Text('Delete'.i18n),
                         onPressed: () {
                           downloadManager.removeDownload(download);
                           if (this.onDelete != null) this.onDelete();
@@ -100,7 +102,7 @@ class _DownloadsScreenState extends State<DownloadsScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
         appBar: AppBar(
-          title: Text('Downloads'),
+          title: Text('Downloads'.i18n),
           actions: [
             IconButton(
               icon: Icon(downloadManager.stopped ? Icons.play_arrow : Icons.stop),
@@ -129,23 +131,23 @@ class _DownloadsScreenState extends State<DownloadsScreen> {
                       }),
                       if (downloadManager.queue.length > 1 || (downloadManager.stopped && downloadManager.queue.length > 0))
                         ListTile(
-                          title: Text('Clear queue'),
-                          subtitle: Text("This won't delete currently downloading item"),
+                          title: Text('Clear queue'.i18n),
+                          subtitle: Text("This won't delete currently downloading item".i18n),
                           leading: Icon(Icons.delete),
                           onTap: () async {
                             showDialog(
                                 context: context,
                                 builder: (context) {
                                   return AlertDialog(
-                                    title: Text('Delete'),
-                                    content: Text('Are you sure, you want to delete all queued downloads?'),
+                                    title: Text('Delete'.i18n),
+                                    content: Text('Are you sure you want to delete all queued downloads?'.i18n),
                                     actions: [
                                       FlatButton(
-                                        child: Text('Cancel'),
+                                        child: Text('Cancel'.i18n),
                                         onPressed: () => Navigator.of(context).pop(),
                                       ),
                                       FlatButton(
-                                        child: Text('Delete'),
+                                        child: Text('Delete'.i18n),
                                         onPressed: () async {
                                           await downloadManager.clearQueue();
                                           Navigator.of(context).pop();
@@ -181,9 +183,9 @@ class _DownloadsScreenState extends State<DownloadsScreen> {
                       return DownloadTile(d);
                     }),
                     ListTile(
-                      title: Text('Clear downloads history'),
+                      title: Text('Clear downloads history'.i18n),
                       leading: Icon(Icons.delete),
-                      subtitle: Text('WARNING: This will only clear non-offline (external downloads)'),
+                      subtitle: Text('WARNING: This will only clear non-offline (external downloads)'.i18n),
                       onTap: () async {
                         await downloadManager.cleanDownloadHistory();
                         setState(() {});

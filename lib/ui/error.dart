@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:freezer/translations.i18n.dart';
 
 class ErrorScreen extends StatelessWidget {
 
@@ -18,7 +19,7 @@ class ErrorScreen extends StatelessWidget {
             size: 64.0,
           ),
           Container(height: 4.0,),
-          Text(message ?? 'Please check your connection and try again later...')
+          Text(message ?? 'Please check your connection and try again later...'.i18n)
         ],
       ),
     );

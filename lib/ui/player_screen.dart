@@ -1,12 +1,9 @@
-import 'dart:ui';
-import 'dart:async';
-
 import 'package:flutter/material.dart';
 import 'package:audio_service/audio_service.dart';
 import 'package:flutter_screenutil/screenutil.dart';
 import 'package:freezer/api/deezer.dart';
 import 'package:freezer/api/player.dart';
-import 'package:freezer/settings.dart';
+import 'package:freezer/translations.i18n.dart';
 import 'package:freezer/ui/menu.dart';
 import 'package:freezer/ui/settings_screen.dart';
 import 'package:freezer/ui/tiles.dart';
@@ -17,6 +14,9 @@ import 'package:marquee/marquee.dart';
 import 'cached_image.dart';
 import '../api/definitions.dart';
 import 'player_bar.dart';
+
+import 'dart:ui';
+import 'dart:async';
 
 class PlayerScreen extends StatefulWidget {
   @override
@@ -527,9 +527,9 @@ class PlayerScreenTopRow extends StatelessWidget {
               ),
             ),
             Container(
-              width: this.textWidth??ScreenUtil().setWidth(600),
+              width: this.textWidth??ScreenUtil().setWidth(550),
               child: Text(
-                (short??false)?playerHelper.queueSource.text:'Playing from: ' + playerHelper.queueSource.text,
+                (short??false)?playerHelper.queueSource.text:'Playing from:'.i18n + ' ' + playerHelper.queueSource.text,
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
                 textAlign: TextAlign.left,
@@ -728,7 +728,7 @@ class _QueueScreenState extends State<QueueScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
         appBar: AppBar(
-          title: Text('Queue'),
+          title: Text('Queue'.i18n),
           actions: <Widget>[
             IconButton(
               icon: Icon(

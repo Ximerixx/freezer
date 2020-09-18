@@ -19,6 +19,10 @@ Settings settings;
 @JsonSerializable()
 class Settings {
 
+  //Language
+  @JsonKey(defaultValue: null)
+  String language;
+
   //Account
   String arl;
   @JsonKey(ignore: true)

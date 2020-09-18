@@ -137,7 +137,7 @@ class PlayPauseButton extends StatelessWidget {
         }
 
         //Paused
-        if ((!AudioService.playbackState.playing &&
+        if ((!(AudioService.playbackState?.playing??false) &&
             AudioService.playbackState.processingState == AudioProcessingState.ready) ||
             //None state (stopped)
             AudioService.playbackState.processingState == AudioProcessingState.none) {

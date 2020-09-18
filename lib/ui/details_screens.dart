@@ -6,9 +6,9 @@ import 'package:freezer/api/download.dart';
 import 'package:freezer/api/player.dart';
 import 'package:freezer/ui/error.dart';
 import 'package:freezer/ui/search.dart';
+import 'package:freezer/translations.i18n.dart';
 
 import '../api/definitions.dart';
-import 'player_bar.dart';
 import 'cached_image.dart';
 import 'tiles.dart';
 import 'menu.dart';
@@ -134,13 +134,13 @@ class AlbumDetails extends StatelessWidget {
                         children: <Widget>[
                           Icon(Icons.favorite, size: 32),
                           Container(width: 4,),
-                          Text('Library')
+                          Text('Library'.i18n)
                         ],
                       ),
                       onPressed: () async {
                         await deezerAPI.addFavoriteAlbum(album.id);
                         Fluttertoast.showToast(
-                          msg: 'Added to library',
+                          msg: 'Added to library'.i18n,
                           toastLength: Toast.LENGTH_SHORT,
                           gravity: ToastGravity.BOTTOM
                         );
@@ -152,7 +152,7 @@ class AlbumDetails extends StatelessWidget {
                         children: <Widget>[
                           Icon(Icons.file_download, size: 32.0,),
                           Container(width: 4,),
-                          Text('Download')
+                          Text('Download'.i18n)
                         ],
                       ),
                       onPressed: () {
@@ -168,7 +168,7 @@ class AlbumDetails extends StatelessWidget {
                   children: [
                     Padding(
                       padding: EdgeInsets.symmetric(vertical: 4.0),
-                      child: Text('Disk ${cdi + 1}'),
+                      child: Text('Disk'.i18n + ' ${cdi + 1}'),
                     ),
                     ...List.generate(tracks.length, (i) => TrackTile(
                       tracks[i],
@@ -237,7 +237,7 @@ class _MakeAlbumOfflineState extends State<MakeAlbumOffline> {
         ),
         Container(width: 4.0,),
         Text(
-          'Offline',
+          'Offline'.i18n,
           style: TextStyle(fontSize: 16),
         )
       ],
@@ -345,25 +345,43 @@ class ArtistDetails extends StatelessWidget {
                         children: <Widget>[
                           Icon(Icons.favorite, size: 32),
                           Container(width: 4,),
-                          Text('Library')
+                          Text('Library'.i18n)
                         ],
                       ),
                       onPressed: () async {
                         await deezerAPI.addFavoriteArtist(artist.id);
                         Fluttertoast.showToast(
-                          msg: 'Added to library',
+                          msg: 'Added to library'.i18n,
                           toastLength: Toast.LENGTH_SHORT,
                           gravity: ToastGravity.BOTTOM
                         );
                       },
                     ),
+                    if ((artist.radio??false))
+                      FlatButton(
+                        child: Row(
+                          children: <Widget>[
+                            Icon(Icons.radio, size: 32),
+                            Container(width: 4,),
+                            Text('Radio'.i18n)
+                          ],
+                        ),
+                        onPressed: () async {
+                          List<Track> tracks = await deezerAPI.smartRadio(artist.id);
+                          playerHelper.playFromTrackList(tracks, tracks[0].id, QueueSource(
+                            id: artist.id,
+                            text: 'Radio'.i18n + ' ${artist.name}',
+                            source: 'smartradio'
+                          ));
+                        },
+                      )
                   ],
                 ),
               ),
               Container(height: 16.0,),
               //Top tracks
               Text(
-                'Top Tracks',
+                'Top Tracks'.i18n,
                 textAlign: TextAlign.center,
                 style: TextStyle(
                   fontWeight: FontWeight.bold,
@@ -390,12 +408,12 @@ class ArtistDetails extends StatelessWidget {
                 );
               }),
               ListTile(
-                title: Text('Show more tracks'),
+                title: Text('Show more tracks'.i18n),
                 onTap: () {
                   Navigator.of(context).push(
                     MaterialPageRoute(builder: (context) => TrackListScreen(artist.topTracks, QueueSource(
                       id: artist.id,
-                      text: 'Top ${artist.name}',
+                      text: 'Top'.i18n + '${artist.name}',
                       source: 'topTracks'
                     )))
                   );
@@ -404,7 +422,7 @@ class ArtistDetails extends StatelessWidget {
               Divider(),
               //Albums
               Text(
-                'Top Albums',
+                'Top Albums'.i18n,
                 textAlign: TextAlign.center,
                 style: TextStyle(
                   fontWeight: FontWeight.bold,
@@ -415,7 +433,7 @@ class ArtistDetails extends StatelessWidget {
                 //Show discography
                 if (i == 10 || i == artist.albums.length) {
                   return ListTile(
-                    title: Text('Show all albums'),
+                    title: Text('Show all albums'.i18n),
                     onTap: () {
                       Navigator.of(context).push(
                         MaterialPageRoute(builder: (context) => DiscographyScreen(artist: artist,))
@@ -552,7 +570,7 @@ class _DiscographyScreenState extends State<DiscographyScreen> {
 
         return Scaffold(
           appBar: AppBar(
-            title: Text('Discography'),
+            title: Text('Discography'.i18n),
             bottom: TabBar(
               tabs: [
                 Tab(icon: Icon(Icons.album)),
@@ -603,6 +621,7 @@ class _DiscographyScreenState extends State<DiscographyScreen> {
 
 enum SortType {
   DEFAULT,
+  REVERSE,
   ALPHABETIC,
   ARTIST
 }
@@ -634,6 +653,8 @@ class _PlaylistDetailsState extends State<PlaylistDetails> {
       case SortType.ARTIST:
         tracks.sort((a, b) => a.artists[0].name.compareTo(b.artists[0].name));
         return tracks;
+      case SortType.REVERSE:
+        return tracks.reversed.toList();
       case SortType.DEFAULT:
       default:
         return tracks;
@@ -782,32 +803,20 @@ class _PlaylistDetailsState extends State<PlaylistDetails> {
               mainAxisSize: MainAxisSize.max,
               mainAxisAlignment: MainAxisAlignment.spaceAround,
               children: <Widget>[
-                FlatButton(
-                  child: Row(
-                    children: <Widget>[
-                      Icon(Icons.favorite, size: 32),
-                      Container(width: 4,),
-                      Text('Library')
-                    ],
-                  ),
+                MakePlaylistOffline(playlist),
+                IconButton(
+                  icon: Icon(Icons.favorite, size: 32),
                   onPressed: () async {
                     await deezerAPI.addFavoriteAlbum(playlist.id);
                     Fluttertoast.showToast(
-                        msg: 'Added to library',
+                        msg: 'Added to library'.i18n,
                         toastLength: Toast.LENGTH_SHORT,
                         gravity: ToastGravity.BOTTOM
                     );
                   },
                 ),
-                MakePlaylistOffline(playlist),
-                FlatButton(
-                  child: Row(
-                    children: <Widget>[
-                      Icon(Icons.file_download, size: 32.0,),
-                      Container(width: 4,),
-                      Text('Download')
-                    ],
-                  ),
+                IconButton(
+                  icon: Icon(Icons.file_download, size: 32.0,),
                   onPressed: () {
                     downloadManager.addOfflinePlaylist(playlist, private: false);
                   },
@@ -816,17 +825,21 @@ class _PlaylistDetailsState extends State<PlaylistDetails> {
                   child: Icon(Icons.sort, size: 32.0),
                   onSelected: (SortType s) => setState(() => _sort = s),
                   itemBuilder: (context) => <PopupMenuEntry<SortType>>[
-                    const PopupMenuItem(
+                    PopupMenuItem(
                       value: SortType.DEFAULT,
-                      child: Text('Default'),
+                      child: Text('Default'.i18n),
                     ),
-                    const PopupMenuItem(
+                    PopupMenuItem(
+                      value: SortType.REVERSE,
+                      child: Text('Reverse'.i18n),
+                    ),
+                    PopupMenuItem(
                       value: SortType.ALPHABETIC,
-                      child: Text('Alphabetic'),
+                      child: Text('Alphabetic'.i18n),
                     ),
-                    const PopupMenuItem(
+                    PopupMenuItem(
                       value: SortType.ARTIST,
-                      child: Text('Artist'),
+                      child: Text('Artist'.i18n),
                     ),
                   ],
                 ),
@@ -914,7 +927,7 @@ class _MakePlaylistOfflineState extends State<MakePlaylistOffline> {
         ),
         Container(width: 4.0,),
         Text(
-          'Offline',
+          'Offline'.i18n,
           style: TextStyle(fontSize: 16),
         )
       ],

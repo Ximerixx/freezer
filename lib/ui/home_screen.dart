@@ -4,6 +4,7 @@ import 'package:freezer/api/definitions.dart';
 import 'package:freezer/api/player.dart';
 import 'package:freezer/ui/error.dart';
 import 'package:freezer/ui/menu.dart';
+import 'package:freezer/translations.i18n.dart';
 import 'tiles.dart';
 import 'details_screens.dart';
 import '../settings.dart';
@@ -175,7 +176,7 @@ class _HomePageScreenState extends State<HomePageScreen> {
                     if (section.hasMore??false) {
                       return FlatButton(
                         child: Text(
-                          'Show more',
+                          'Show more'.i18n,
                           textAlign: TextAlign.center,
                           style: TextStyle(
                               fontSize: 20.0

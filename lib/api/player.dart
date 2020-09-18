@@ -1,11 +1,13 @@
 import 'package:audio_service/audio_service.dart';
+import 'package:audio_session/audio_session.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import 'package:freezer/api/deezer.dart';
-import 'package:freezer/ui/details_screens.dart';
+import 'package:freezer/ui/android_auto.dart';
 import 'package:just_audio/just_audio.dart';
 import 'package:connectivity/connectivity.dart';
 import 'package:path/path.dart' as p;
 import 'package:path_provider/path_provider.dart';
+import 'package:freezer/translations.i18n.dart';
 
 import 'definitions.dart';
 import '../settings.dart';
@@ -43,8 +45,20 @@ class PlayerHelper {
       }
       if (event['action'] == 'queueEnd') {
         //If last song is played, load more queue
+        onQueueEnd();
         this.queueSource = QueueSource.fromJson(event['queueSource']);
         return;
+      }
+      //Android auto get screen
+      if (event['action'] == 'screenAndroidAuto') {
+        AndroidAuto androidAuto = AndroidAuto();
+        List<MediaItem> data = await androidAuto.getScreen(event['id']);
+        await AudioService.customAction('screenAndroidAuto', jsonEncode(data));
+      }
+      //Android auto play list
+      if (event['action'] == 'tracksAndroidAuto') {
+        AndroidAuto androidAuto = AndroidAuto();
+        await androidAuto.playItem(event['id']);
       }
     });
     _playbackStateStreamSubscription = AudioService.playbackStateStream.listen((event) {
@@ -106,6 +120,30 @@ class PlayerHelper {
     await AudioService.skipToQueueItem(trackId);
   }
 
+  //Called when queue ends to load more tracks
+  Future onQueueEnd() async {
+    //Flow
+    if (queueSource == null) return;
+    if (queueSource.id == 'flow') {
+      List<Track> tracks = await deezerAPI.flow();
+      List<MediaItem> mi = tracks.map<MediaItem>((t) => t.toMediaItem()).toList();
+      await AudioService.addQueueItems(mi);
+      AudioService.skipToNext();
+      return;
+    }
+
+    //SmartRadio/Artist radio
+    if (queueSource.source == 'smartradio') {
+      List<Track> tracks = await deezerAPI.smartRadio(queueSource.id);
+      List<MediaItem> mi = tracks.map<MediaItem>((t) => t.toMediaItem()).toList();
+      await AudioService.addQueueItems(mi);
+      AudioService.skipToNext();
+      return;
+    }
+
+    print(queueSource.toJson());
+  }
+
   //Play track from album
   Future playFromAlbum(Album album, String trackId) async {
     await playFromTrackList(album.tracks, trackId, QueueSource(
@@ -144,7 +182,7 @@ class PlayerHelper {
     if (stl.tracks == null || stl.tracks.length == 0) {
       if (settings.offlineMode) {
         Fluttertoast.showToast(
-          msg: "Offline mode, can't play flow/smart track lists.",
+          msg: "Offline mode, can't play flow or smart track lists.".i18n,
           gravity: ToastGravity.BOTTOM,
           toastLength: Toast.LENGTH_SHORT
         );
@@ -188,7 +226,6 @@ class AudioPlayerTask extends BackgroundAudioTask {
   ConcatenatingAudioSource _audioSource;
 
   AudioProcessingState _skipState;
-  bool _interrupted;
   Seeker _seeker;
 
   //Stream subscriptions
@@ -200,10 +237,15 @@ class AudioPlayerTask extends BackgroundAudioTask {
   QueueSource queueSource;
   Duration _lastPosition;
 
+  Completer _androidAutoCallback;
+
   MediaItem get mediaItem => _queue[_queueIndex];
 
   @override
-  Future onStart(Map<String, dynamic> params) {
+  Future onStart(Map<String, dynamic> params) async {
+
+    final session = await AudioSession.instance;
+    session.configure(AudioSessionConfiguration.music());
 
     //Update track index
     _player.currentIndexStream.listen((index) {
@@ -284,6 +326,20 @@ class AudioPlayerTask extends BackgroundAudioTask {
 
   @override
   Future<void> onSeekBackward(bool begin) async => _seekContinuously(begin, -1);
+
+  @override
+  Future<List<MediaItem>> onLoadChildren(String parentMediaId) async {
+    AudioServiceBackground.sendCustomEvent({
+      'action': 'screenAndroidAuto',
+      'id': parentMediaId
+    });
+
+    //Wait for data from main thread
+    _androidAutoCallback = Completer();
+    List<MediaItem> data = (await _androidAutoCallback.future) as List<MediaItem>;
+    _androidAutoCallback = null;
+    return data;
+  }
 
   //While seeking, jump 10s every 1s
   void _seekContinuously(bool begin, int direction) {
@@ -430,44 +486,12 @@ class AudioPlayerTask extends BackgroundAudioTask {
     if (name == 'load') await this._loadQueueFile();
     //Shuffle
     if (name == 'shuffle') await _player.setShuffleModeEnabled(args);
+    //Android auto callback
+    if (name == 'screenAndroidAuto' && _androidAutoCallback != null) {
+      _androidAutoCallback.complete(jsonDecode(args).map<MediaItem>((m) => MediaItem.fromJson(m)).toList());
+    }
 
     return true;
-  }
-
-  //Audio interruptions
-  @override
-  Future onAudioFocusLost(AudioInterruption interruption) {
-    if (_player.playing) _interrupted = true;
-    switch (interruption) {
-      case AudioInterruption.pause:
-      case AudioInterruption.temporaryPause:
-      case AudioInterruption.unknownPause:
-        if (_player.playing) onPause();
-        break;
-      case AudioInterruption.temporaryDuck:
-        _player.setVolume(0.5);
-        break;
-    }
-  }
-
-  @override
-  Future onAudioFocusGained(AudioInterruption interruption) {
-    switch (interruption) {
-      case AudioInterruption.temporaryPause:
-        if (!_player.playing && _interrupted) onPlay();
-        break;
-      case AudioInterruption.temporaryDuck:
-        _player.setVolume(1.0);
-        break;
-      default:
-        break;
-    }
-    _interrupted = false;
-  }
-
-  @override
-  Future onAudioBecomingNoisy() {
-    onPause();
   }
 
   @override
@@ -561,6 +585,16 @@ class AudioPlayerTask extends BackgroundAudioTask {
 
   @override
   Future onPlayFromMediaId(String mediaId) async {
+
+    //Android auto load tracks
+    if (mediaId.startsWith(AndroidAuto.prefix)) {
+      AudioServiceBackground.sendCustomEvent({
+        'action': 'tracksAndroidAuto',
+        'id': mediaId.replaceFirst(AndroidAuto.prefix, '')
+      });
+      return;
+    }
+
     //Does the same thing
     await this.onSkipToQueueItem(mediaId);
   }

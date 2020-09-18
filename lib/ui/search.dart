@@ -4,6 +4,7 @@ import 'package:freezer/api/download.dart';
 import 'package:freezer/api/player.dart';
 import 'package:freezer/ui/details_screens.dart';
 import 'package:freezer/ui/menu.dart';
+import 'package:freezer/translations.i18n.dart';
 
 import 'tiles.dart';
 import '../api/deezer.dart';
@@ -20,6 +21,7 @@ class _SearchScreenState extends State<SearchScreen> {
   String _query;
   bool _offline = false;
   TextEditingController _controller = new TextEditingController();
+  List _suggestions = [];
 
   void _submit(BuildContext context, {String query}) {
     if (query != null) _query = query;
@@ -41,10 +43,21 @@ class _SearchScreenState extends State<SearchScreen> {
     super.initState();
   }
 
+  //Load search suggestions
+  Future<List<String>> _loadSuggestions() async {
+    if (_query == null || _query.length < 2) return null;
+    String q = _query;
+    await Future.delayed(Duration(milliseconds: 300));
+    if (q != _query) return null;
+    //Load
+    List sugg = await deezerAPI.searchSuggestions(_query);
+    setState(() => _suggestions = sugg);
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text('Search'),),
+      appBar: AppBar(title: Text('Search'.i18n),),
       body: ListView(
         children: <Widget>[
           Container(height: 16.0),
@@ -57,9 +70,12 @@ class _SearchScreenState extends State<SearchScreen> {
                     alignment: Alignment(1.0, 1.0),
                     children: [
                       TextField(
-                        onChanged: (String s) => _query = s,
+                        onChanged: (String s) {
+                          setState(() => _query = s);
+                          _loadSuggestions();
+                        },
                         decoration: InputDecoration(
-                            labelText: 'Search'
+                          labelText: 'Search'.i18n
                         ),
                         controller: _controller,
                         onSubmitted: (String s) => _submit(context, query: s),
@@ -73,7 +89,6 @@ class _SearchScreenState extends State<SearchScreen> {
                     ],
                   )
                 ),
-
                 Padding(
                   padding: EdgeInsets.fromLTRB(0, 8, 0, 0),
                   child: IconButton(
@@ -85,14 +100,23 @@ class _SearchScreenState extends State<SearchScreen> {
             ),
           ),
           ListTile(
-            title: Text('Offline search'),
+            title: Text('Offline search'.i18n),
             leading: Switch(
               value: _offline,
               onChanged: (v) {
                 setState(() => _offline = !_offline);
               },
             ),
-          )
+          ),
+          Divider(),
+          ...List.generate((_suggestions??[]).length, (i) => ListTile(
+            title: Text(_suggestions[i]),
+            leading: Icon(Icons.search),
+            onTap: () {
+              setState(() => _query = _suggestions[i]);
+              _submit(context);
+            },
+          ))
         ],
       ),
     );
@@ -119,7 +143,7 @@ class SearchResultsScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text('Search Results'),
+        title: Text('Search Results'.i18n),
       ),
       body: FutureBuilder(
         future: _search(),
@@ -139,7 +163,7 @@ class SearchResultsScreen extends StatelessWidget {
                     Icons.warning,
                     size: 64,
                   ),
-                  Text('No results!')
+                  Text('No results!'.i18n)
                 ],
               ),
             );
@@ -149,7 +173,7 @@ class SearchResultsScreen extends StatelessWidget {
           if (results.tracks != null && results.tracks.length != 0) {
             tracks = [
               Text(
-                'Tracks',
+                'Tracks'.i18n,
                 textAlign: TextAlign.center,
                 style: TextStyle(
                   fontSize: 26.0,
@@ -163,7 +187,7 @@ class SearchResultsScreen extends StatelessWidget {
                   t,
                   onTap: () {
                     playerHelper.playFromTrackList(results.tracks, t.id, QueueSource(
-                      text: 'Search',
+                      text: 'Search'.i18n,
                       id: query,
                       source: 'search'
                     ));
@@ -175,13 +199,13 @@ class SearchResultsScreen extends StatelessWidget {
                 );
               }),
               ListTile(
-                title: Text('Show all tracks'),
+                title: Text('Show all tracks'.i18n),
                 onTap: () {
                   Navigator.of(context).push(
                     MaterialPageRoute(builder: (context) => TrackListScreen(results.tracks, QueueSource(
                       id: query,
                       source: 'search',
-                      text: 'Search'
+                      text: 'Search'.i18n
                     )))
                   );
                 },
@@ -194,7 +218,7 @@ class SearchResultsScreen extends StatelessWidget {
           if (results.albums != null && results.albums.length != 0) {
             albums = [
               Text(
-                'Albums',
+                'Albums'.i18n,
                 textAlign: TextAlign.center,
                 style: TextStyle(
                   fontSize: 26.0,
@@ -218,7 +242,7 @@ class SearchResultsScreen extends StatelessWidget {
                 );
               }),
               ListTile(
-                title: Text('Show all albums'),
+                title: Text('Show all albums'.i18n),
                 onTap: () {
                   Navigator.of(context).push(
                     MaterialPageRoute(builder: (context) => AlbumListScreen(results.albums))
@@ -233,7 +257,7 @@ class SearchResultsScreen extends StatelessWidget {
           if (results.artists != null && results.artists.length != 0) {
             artists = [
               Text(
-                'Artists',
+                'Artists'.i18n,
                 textAlign: TextAlign.center,
                 style: TextStyle(
                   fontSize: 26.0,
@@ -269,7 +293,7 @@ class SearchResultsScreen extends StatelessWidget {
           if (results.playlists != null && results.playlists.length != 0) {
             playlists = [
               Text(
-                'Playlists',
+                'Playlists'.i18n,
                 textAlign: TextAlign.center,
                 style: TextStyle(
                   fontSize: 26.0,
@@ -293,7 +317,7 @@ class SearchResultsScreen extends StatelessWidget {
                 );
               }),
               ListTile(
-                title: Text('Show all playlists'),
+                title: Text('Show all playlists'.i18n),
                 onTap: () {
                   Navigator.of(context).push(
                     MaterialPageRoute(builder: (context) => SearchResultPlaylists(results.playlists))
@@ -332,7 +356,7 @@ class TrackListScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text('Tracks'),),
+      appBar: AppBar(title: Text('Tracks'.i18n),),
       body: ListView.builder(
         itemCount: tracks.length,
         itemBuilder: (BuildContext context, int i) {
@@ -362,7 +386,7 @@ class AlbumListScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text('Albums'),),
+      appBar: AppBar(title: Text('Albums'.i18n),),
       body: ListView.builder(
         itemCount: albums.length,
         itemBuilder: (context, i) {
@@ -393,7 +417,7 @@ class SearchResultPlaylists extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text('Playlists'),),
+      appBar: AppBar(title: Text('Playlists'.i18n),),
       body: ListView.builder(
         itemCount: playlists.length,
         itemBuilder: (context, i) {

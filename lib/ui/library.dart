@@ -10,6 +10,7 @@ import 'package:freezer/ui/downloads_screen.dart';
 import 'package:freezer/ui/error.dart';
 import 'package:freezer/ui/importer_screen.dart';
 import 'package:freezer/ui/tiles.dart';
+import 'package:freezer/translations.i18n.dart';
 
 import 'menu.dart';
 import 'settings_screen.dart';
@@ -24,7 +25,7 @@ class LibraryAppBar extends StatelessWidget implements PreferredSizeWidget {
   @override
   Widget build(BuildContext context) {
     return AppBar(
-      title: Text('Library'),
+      title: Text('Library'.i18n),
       actions: <Widget>[
         IconButton(
           icon: Icon(Icons.file_download),
@@ -58,9 +59,9 @@ class LibraryScreen extends StatelessWidget {
           Container(height: 4.0,),
           if (downloadManager.stopped && downloadManager.queue.length > 0)
             ListTile(
-              title: Text('Downloads'),
+              title: Text('Downloads'.i18n),
               leading: Icon(Icons.file_download),
-              subtitle: Text('Downloading is currently stopped, click here to resume.'),
+              subtitle: Text('Downloading is currently stopped, click here to resume.'.i18n),
               onTap: () {
                 downloadManager.start();
                 Navigator.of(context).push(MaterialPageRoute(
@@ -73,7 +74,7 @@ class LibraryScreen extends StatelessWidget {
             Divider(),
 
           ListTile(
-            title: Text('Tracks'),
+            title: Text('Tracks'.i18n),
             leading: Icon(Icons.audiotrack),
             onTap: () {
               Navigator.of(context).push(
@@ -82,7 +83,7 @@ class LibraryScreen extends StatelessWidget {
             },
           ),
           ListTile(
-            title: Text('Albums'),
+            title: Text('Albums'.i18n),
             leading: Icon(Icons.album),
             onTap: () {
               Navigator.of(context).push(
@@ -91,7 +92,7 @@ class LibraryScreen extends StatelessWidget {
             },
           ),
           ListTile(
-            title: Text('Artists'),
+            title: Text('Artists'.i18n),
             leading: Icon(Icons.recent_actors),
             onTap: () {
               Navigator.of(context).push(
@@ -100,7 +101,7 @@ class LibraryScreen extends StatelessWidget {
             },
           ),
           ListTile(
-            title: Text('Playlists'),
+            title: Text('Playlists'.i18n),
             leading: Icon(Icons.playlist_play),
             onTap: () {
               Navigator.of(context).push(
@@ -110,9 +111,9 @@ class LibraryScreen extends StatelessWidget {
           ),
           Divider(),
           ListTile(
-            title: Text('Import'),
+            title: Text('Import'.i18n),
             leading: Icon(Icons.import_export),
-            subtitle: Text('Import playlists from Spotify'),
+            subtitle: Text('Import playlists from Spotify'.i18n),
             onTap: () {
               if (spotify.doneImporting != null) {
                 Navigator.of(context).push(
@@ -128,7 +129,7 @@ class LibraryScreen extends StatelessWidget {
             },
           ),
           ExpansionTile(
-            title: Text('Statistics'),
+            title: Text('Statistics'.i18n),
             leading: Icon(Icons.insert_chart),
             children: <Widget>[
               FutureBuilder(
@@ -148,27 +149,27 @@ class LibraryScreen extends StatelessWidget {
                   return Column(
                     children: <Widget>[
                       ListTile(
-                        title: Text('Offline tracks'),
+                        title: Text('Offline tracks'.i18n),
                         leading: Icon(Icons.audiotrack),
                         trailing: Text(data[0]),
                       ),
                       ListTile(
-                        title: Text('Offline albums'),
+                        title: Text('Offline albums'.i18n),
                         leading: Icon(Icons.album),
                         trailing: Text(data[1]),
                       ),
                       ListTile(
-                        title: Text('Offline playlists'),
+                        title: Text('Offline playlists'.i18n),
                         leading: Icon(Icons.playlist_add),
                         trailing: Text(data[2]),
                       ),
                       ListTile(
-                        title: Text('Offline size'),
+                        title: Text('Offline size'.i18n),
                         leading: Icon(Icons.sd_card),
                         trailing: Text(data[3]),
                       ),
                       ListTile(
-                        title: Text('Free space'),
+                        title: Text('Free space'.i18n),
                         leading: Icon(Icons.disc_full),
                         trailing: Text(data[4]),
                       ),
@@ -254,7 +255,7 @@ class _LibraryTracksState extends State<LibraryTracks> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text('Tracks'),),
+      appBar: AppBar(title: Text('Tracks'.i18n),),
       body: ListView(
         children: <Widget>[
           Card(
@@ -263,7 +264,7 @@ class _LibraryTracksState extends State<LibraryTracks> {
               children: <Widget>[
                 Container(height: 8.0,),
                 Text(
-                  'Loved tracks',
+                  'Loved tracks'.i18n,
                   style: TextStyle(
                     fontWeight: FontWeight.bold,
                     fontSize: 24
@@ -279,7 +280,7 @@ class _LibraryTracksState extends State<LibraryTracks> {
                         children: <Widget>[
                           Icon(Icons.file_download, size: 32.0,),
                           Container(width: 4,),
-                          Text('Download')
+                          Text('Download'.i18n)
                         ],
                       ),
                       onPressed: () {
@@ -299,7 +300,7 @@ class _LibraryTracksState extends State<LibraryTracks> {
               onTap: () {
                 playerHelper.playFromTrackList(tracks, t.id, QueueSource(
                   id: deezerAPI.favoritesPlaylistId,
-                  text: 'Favorites',
+                  text: 'Favorites'.i18n,
                   source: 'playlist'
                 ));
               },
@@ -328,7 +329,7 @@ class _LibraryTracksState extends State<LibraryTracks> {
             ),
           Divider(),
           Text(
-            'All offline tracks',
+            'All offline tracks'.i18n,
             textAlign: TextAlign.center,
             style: TextStyle(
               fontSize: 24,
@@ -343,7 +344,7 @@ class _LibraryTracksState extends State<LibraryTracks> {
               onTap: () {
                 playerHelper.playFromTrackList(allTracks, t.id, QueueSource(
                   id: 'allTracks',
-                  text: 'All offline tracks',
+                  text: 'All offline tracks'.i18n,
                   source: 'offline'
                 ));
               },
@@ -386,7 +387,7 @@ class _LibraryAlbumsState extends State<LibraryAlbums> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text('Albums'),),
+      appBar: AppBar(title: Text('Albums'.i18n),),
       body: ListView(
         children: <Widget>[
           Container(height: 8.0,),
@@ -427,7 +428,7 @@ class _LibraryAlbumsState extends State<LibraryAlbums> {
                 children: <Widget>[
                   Divider(),
                   Text(
-                    'Offline albums',
+                    'Offline albums'.i18n,
                     textAlign: TextAlign.center,
                     style: TextStyle(
                       fontWeight: FontWeight.bold,
@@ -473,7 +474,7 @@ class _LibraryArtistsState extends State<LibraryArtists> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text('Artists'),),
+      appBar: AppBar(title: Text('Artists'.i18n),),
       body: FutureBuilder(
         future: deezerAPI.getArtists(),
         builder: (BuildContext context, AsyncSnapshot snapshot) {
@@ -533,20 +534,30 @@ class _LibraryPlaylistsState extends State<LibraryPlaylists> {
     super.initState();
   }
 
+  Playlist get favoritesPlaylist => Playlist(
+    id: deezerAPI.favoritesPlaylistId,
+    title: 'Favorites'.i18n,
+    user: User(name: deezerAPI.userName),
+    image: ImageDetails(thumbUrl: 'assets/favorites_thumb.jpg'),
+    tracks: [],
+    trackCount: 1,
+    duration: Duration(seconds: 0)
+  );
+
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text('Playlists'),),
+      appBar: AppBar(title: Text('Playlists'.i18n),),
       body: ListView(
         children: <Widget>[
           ListTile(
-            title: Text('Create new playlist'),
+            title: Text('Create new playlist'.i18n),
             leading: Icon(Icons.playlist_add),
             onTap: () {
               if (settings.offlineMode) {
                 Fluttertoast.showToast(
-                  msg: 'Cannot create playlists in offline mode',
+                  msg: 'Cannot create playlists in offline mode'.i18n,
                   gravity: ToastGravity.BOTTOM
                 );
                 return;
@@ -564,6 +575,20 @@ class _LibraryPlaylistsState extends State<LibraryPlaylists> {
                 CircularProgressIndicator(),
               ],
             ),
+
+          //Favorites playlist
+          PlaylistTile(
+            favoritesPlaylist,
+            onTap: () async {
+              Navigator.of(context).push(MaterialPageRoute(
+                  builder: (context) => PlaylistDetails(favoritesPlaylist)
+              ));
+            },
+            onHold: () {
+              MenuSheet m = MenuSheet(context);
+              m.defaultPlaylistMenu(favoritesPlaylist);
+            },
+          ),
 
           if (_playlists != null)
             ...List.generate(_playlists.length, (int i) {
@@ -593,7 +618,7 @@ class _LibraryPlaylistsState extends State<LibraryPlaylists> {
                 children: <Widget>[
                   Divider(),
                   Text(
-                    'Offline playlists',
+                    'Offline playlists'.i18n,
                     textAlign: TextAlign.center,
                     style: TextStyle(
                       fontSize: 24.0,

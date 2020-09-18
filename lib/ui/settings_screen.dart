@@ -9,11 +9,13 @@ import 'package:flutter_material_color_picker/flutter_material_color_picker.dart
 import 'package:fluttertoast/fluttertoast.dart';
 import 'package:freezer/api/deezer.dart';
 import 'package:freezer/ui/error.dart';
+import 'package:i18n_extension/i18n_widget.dart';
 import 'package:language_pickers/language_pickers.dart';
 import 'package:language_pickers/languages.dart';
 import 'package:package_info/package_info.dart';
 import 'package:path_provider_ex/path_provider_ex.dart';
 import 'package:permission_handler/permission_handler.dart';
+import 'package:freezer/translations.i18n.dart';
 import 'package:clipboard/clipboard.dart';
 
 import '../settings.dart';
@@ -44,18 +46,18 @@ class _SettingsScreenState extends State<SettingsScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text('Settings'),),
+      appBar: AppBar(title: Text('Settings'.i18n),),
       body: ListView(
         children: <Widget>[
           ListTile(
-            title: Text('General'),
+            title: Text('General'.i18n),
             leading: Icon(Icons.settings),
             onTap: () => Navigator.of(context).push(MaterialPageRoute(
                 builder: (context) => GeneralSettings()
             )),
           ),
           ListTile(
-            title: Text('Appearance'),
+            title: Text('Appearance'.i18n),
             leading: Icon(Icons.color_lens),
             onTap: () => Navigator.push(
                 context,
@@ -63,7 +65,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
             ),
           ),
           ListTile(
-            title: Text('Quality'),
+            title: Text('Quality'.i18n),
             leading: Icon(Icons.high_quality),
             onTap: () => Navigator.push(
                 context,
@@ -71,11 +73,53 @@ class _SettingsScreenState extends State<SettingsScreen> {
             ),
           ),
           ListTile(
-            title: Text('Deezer'),
+            title: Text('Deezer'.i18n),
             leading: Icon(Icons.equalizer),
             onTap: () => Navigator.push(context, MaterialPageRoute(
                 builder: (context) => DeezerSettings()
             )),
+          ),
+          //Language select
+          ListTile(
+            title: Text('Language'.i18n),
+            leading: Icon(Icons.language),
+            onTap: () {
+              showDialog(
+                context: context,
+                builder: (context) => LanguagePickerDialog(
+                  titlePadding: EdgeInsets.all(8.0),
+                  title: Text('Select language'.i18n),
+                  isSearchable: false,
+                  languagesList: supportedLocales.map<Map<String, String>>((l) {
+                    Map _lang = defaultLanguagesList.firstWhere((lang) => lang['isoCode'] == l.languageCode);
+                    _lang['name'] = _lang['name'] + ' (${l.toString()})';
+                    return _lang;
+                  }).toList(),
+                  onValuePicked: (Language l) async {
+                    setState(()  {
+                      Locale locale = supportedLocales.firstWhere((_l) => _l.languageCode == l.isoCode);
+                      settings.language = locale.toString();
+                    });
+                    await settings.save();
+                    showDialog(
+                      context: context,
+                      builder: (context) {
+                        return AlertDialog(
+                          title: Text('Language'.i18n),
+                          content: Text('Language changed, please restart Freezer to apply!'.i18n),
+                          actions: [
+                            FlatButton(
+                              child: Text('OK'),
+                              onPressed: () => Navigator.of(context).pop(),
+                            )
+                          ],
+                        );
+                      }
+                    );
+                  },
+                )
+              );
+            },
           ),
           Divider(),
           Text(
@@ -97,22 +141,22 @@ class _AppearanceSettingsState extends State<AppearanceSettings> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text('Appearance'),),
+      appBar: AppBar(title: Text('Appearance'.i18n),),
       body: ListView(
         children: <Widget>[
           ListTile(
-            title: Text('Theme'),
-            subtitle: Text('Currently: ${settings.theme.toString().split('.').last}'),
+            title: Text('Theme'.i18n),
+            subtitle: Text('Currently'.i18n + ': ${settings.theme.toString().split('.').last}'),
             leading: Icon(Icons.color_lens),
             onTap: () {
               showDialog(
                 context: context,
                 builder: (context) {
                   return SimpleDialog(
-                    title: Text('Select theme'),
+                    title: Text('Select theme'.i18n),
                     children: <Widget>[
                       SimpleDialogOption(
-                        child: Text('Light (default)'),
+                        child: Text('Light (default)'.i18n),
                         onPressed: () {
                           setState(() => settings.theme = Themes.Light);
                           settings.save();
@@ -121,7 +165,7 @@ class _AppearanceSettingsState extends State<AppearanceSettings> {
                         },
                       ),
                       SimpleDialogOption(
-                        child: Text('Dark'),
+                        child: Text('Dark'.i18n),
                         onPressed: () {
                           setState(() => settings.theme = Themes.Dark);
                           settings.save();
@@ -130,7 +174,7 @@ class _AppearanceSettingsState extends State<AppearanceSettings> {
                         },
                       ),
                       SimpleDialogOption(
-                        child: Text('Black (AMOLED)'),
+                        child: Text('Black (AMOLED)'.i18n),
                         onPressed: () {
                           setState(() => settings.theme = Themes.Black);
                           settings.save();
@@ -139,7 +183,7 @@ class _AppearanceSettingsState extends State<AppearanceSettings> {
                         },
                       ),
                       SimpleDialogOption(
-                        child: Text('Deezer (Dark)'),
+                        child: Text('Deezer (Dark)'.i18n),
                         onPressed: () {
                           setState(() => settings.theme = Themes.Deezer);
                           settings.save();
@@ -154,10 +198,10 @@ class _AppearanceSettingsState extends State<AppearanceSettings> {
             },
           ),
           ListTile(
-            title: Text('Primary color'),
+            title: Text('Primary color'.i18n),
             leading: Icon(Icons.format_paint),
             subtitle: Text(
-              'Selected color',
+              'Selected color'.i18n,
               style: TextStyle(
                 color: settings.primaryColor
               ),
@@ -167,7 +211,7 @@ class _AppearanceSettingsState extends State<AppearanceSettings> {
                 context: context,
                 builder: (context) {
                   return AlertDialog(
-                    title: Text('Primary color'),
+                    title: Text('Primary color'.i18n),
                     content: Container(
                       height: 200,
                       child: MaterialColorPicker(
@@ -189,8 +233,8 @@ class _AppearanceSettingsState extends State<AppearanceSettings> {
             },
           ),
           ListTile(
-            title: Text('Use album art primary color'),
-            subtitle: Text('Warning: might be buggy'),
+            title: Text('Use album art primary color'.i18n),
+            subtitle: Text('Warning: might be buggy'.i18n),
             leading: Switch(
               value: settings.useArtColor,
               onChanged: (v) => setState(() => settings.updateUseArtColor(v)),
@@ -212,29 +256,29 @@ class _QualitySettingsState extends State<QualitySettings> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text('Quality'),),
+      appBar: AppBar(title: Text('Quality'.i18n),),
       body: ListView(
         children: <Widget>[
           ListTile(
-            title: Text('Mobile streaming'),
+            title: Text('Mobile streaming'.i18n),
             leading: Icon(Icons.network_cell),
           ),
           QualityPicker('mobile'),
           Divider(),
           ListTile(
-            title: Text('Wifi streaming'),
+            title: Text('Wifi streaming'.i18n),
             leading: Icon(Icons.network_wifi),
           ),
           QualityPicker('wifi'),
           Divider(),
           ListTile(
-            title: Text('Offline'),
+            title: Text('Offline'.i18n),
             leading: Icon(Icons.offline_pin),
           ),
           QualityPicker('offline'),
           Divider(),
           ListTile(
-            title: Text('External downloads'),
+            title: Text('External downloads'.i18n),
             leading: Icon(Icons.file_download),
           ),
           QualityPicker('download'),
@@ -349,12 +393,12 @@ class _DeezerSettingsState extends State<DeezerSettings> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text('Deezer'),),
+      appBar: AppBar(title: Text('Deezer'.i18n),),
       body: ListView(
         children: <Widget>[
           ListTile(
-            title: Text('Content language'),
-            subtitle: Text('Not app language, used in headers. Now: ${settings.deezerLanguage}'),
+            title: Text('Content language'.i18n),
+            subtitle: Text('Not app language, used in headers. Now'.i18n + ': ${settings.deezerLanguage}'),
             leading: Icon(Icons.language),
             onTap: () {
               showDialog(
@@ -362,7 +406,7 @@ class _DeezerSettingsState extends State<DeezerSettings> {
                 builder: (context) => LanguagePickerDialog(
                   titlePadding: EdgeInsets.all(8.0),
                   isSearchable: true,
-                  title: Text('Select language'),
+                  title: Text('Select language'.i18n),
                   onValuePicked: (Language language) {
                     setState(() => settings.deezerLanguage = language.isoCode);
                     settings.save();
@@ -372,8 +416,8 @@ class _DeezerSettingsState extends State<DeezerSettings> {
             },
           ),
           ListTile(
-            title: Text('Content country'),
-            subtitle: Text('Country used in headers. Now: ${settings.deezerCountry}'),
+            title: Text('Content country'.i18n),
+            subtitle: Text('Country used in headers. Now'.i18n + ': ${settings.deezerCountry}'),
             leading: Icon(Icons.vpn_lock),
             onTap: () {
               showDialog(
@@ -390,8 +434,8 @@ class _DeezerSettingsState extends State<DeezerSettings> {
             },
           ),
           ListTile(
-            title: Text('Log tracks'),
-            subtitle: Text('Send track listen logs to Deezer, enable it for features like Flow to work properly'),
+            title: Text('Log tracks'.i18n),
+            subtitle: Text('Send track listen logs to Deezer, enable it for features like Flow to work properly'.i18n),
             leading: Checkbox(
               value: settings.logListen,
               onChanged: (bool v) {
@@ -415,12 +459,12 @@ class _GeneralSettingsState extends State<GeneralSettings> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text('General'),),
+      appBar: AppBar(title: Text('General'.i18n),),
       body: ListView(
         children: <Widget>[
           ListTile(
-            title: Text('Offline mode'),
-            subtitle: Text('Will be overwritten on start.'),
+            title: Text('Offline mode'.i18n),
+            subtitle: Text('Will be overwritten on start.'.i18n),
             leading: Switch(
               value: settings.offlineMode,
               onChanged: (bool v) {
@@ -436,7 +480,7 @@ class _GeneralSettingsState extends State<GeneralSettings> {
                         setState(() => settings.offlineMode = false);
                       } else {
                         Fluttertoast.showToast(
-                          msg: 'Error logging in, check your internet connections.',
+                          msg: 'Error logging in, check your internet connections.'.i18n,
                           gravity: ToastGravity.BOTTOM,
                           toastLength: Toast.LENGTH_SHORT
                         );
@@ -444,7 +488,7 @@ class _GeneralSettingsState extends State<GeneralSettings> {
                       Navigator.of(context).pop();
                     });
                     return AlertDialog(
-                      title: Text('Logging in...'),
+                      title: Text('Logging in...'.i18n),
                       content: Row(
                         mainAxisSize: MainAxisSize.max,
                         mainAxisAlignment: MainAxisAlignment.center,
@@ -459,7 +503,7 @@ class _GeneralSettingsState extends State<GeneralSettings> {
             ),
           ),
           ListTile(
-            title: Text('Download path'),
+            title: Text('Download path'.i18n),
             leading: Icon(Icons.folder),
             subtitle: Text(settings.downloadPath),
             onTap: () async {
@@ -474,8 +518,8 @@ class _GeneralSettingsState extends State<GeneralSettings> {
             },
           ),
           ListTile(
-            title: Text('Downloads naming'),
-            subtitle: Text('Currently: ${settings.downloadFilename}'),
+            title: Text('Downloads naming'.i18n),
+            subtitle: Text('Currently'.i18n + ': ${settings.downloadFilename}'),
             leading: Icon(Icons.text_format),
             onTap: () {
               showDialog(
@@ -485,19 +529,21 @@ class _GeneralSettingsState extends State<GeneralSettings> {
                   TextEditingController _controller = TextEditingController();
                   String filename = settings.downloadFilename;
                   _controller.value = _controller.value.copyWith(text: filename);
+                  String _new = _controller.value.text;
 
                   //Dialog with filename format
                   return AlertDialog(
-                    title: Text('Downloaded tracks filename'),
+                    title: Text('Downloaded tracks filename'.i18n),
                     content: Column(
                       mainAxisSize: MainAxisSize.min,
                       children: [
                         TextField(
                           controller: _controller,
+                          onChanged: (String s) => _new = s,
                         ),
                         Container(height: 8.0),
                         Text(
-                          'Valid variables are: %artists%, %artist%, %title%, %album%, %trackNumber%, %0trackNumber%, %feats%',
+                          'Valid variables are'.i18n + ': %artists%, %artist%, %title%, %album%, %trackNumber%, %0trackNumber%, %feats%',
                           style: TextStyle(
                             fontSize: 12.0,
                           ),
@@ -506,29 +552,30 @@ class _GeneralSettingsState extends State<GeneralSettings> {
                     ),
                     actions: [
                       FlatButton(
-                        child: Text('Cancel'),
+                        child: Text('Cancel'.i18n),
                         onPressed: () => Navigator.of(context).pop(),
                       ),
                       FlatButton(
-                        child: Text('Reset'),
+                        child: Text('Reset'.i18n),
                         onPressed: () {
                           _controller.value = _controller.value.copyWith(
                             text: '%artists% - %title%'
                           );
+                          _new = '%artists% - %title%';
                         },
                       ),
                       FlatButton(
-                        child: Text('Clear'),
+                        child: Text('Clear'.i18n),
                         onPressed: () => _controller.clear(),
                       ),
                       FlatButton(
-                        child: Text('Save'),
-                        onPressed: () {
+                        child: Text('Save'.i18n),
+                        onPressed: () async {
                           setState(() {
-                            settings.downloadFilename = _controller.text;
-                            settings.save();
-                            Navigator.of(context).pop();
+                            settings.downloadFilename = _new;
                           });
+                          await settings.save();
+                          Navigator.of(context).pop();
                         },
                       )
                     ],
@@ -538,7 +585,7 @@ class _GeneralSettingsState extends State<GeneralSettings> {
             },
           ),
           ListTile(
-            title: Text('Create folders for artist'),
+            title: Text('Create folders for artist'.i18n),
             leading: Switch(
               value: settings.artistFolder,
               onChanged: (v) {
@@ -548,7 +595,7 @@ class _GeneralSettingsState extends State<GeneralSettings> {
             ),
           ),
           ListTile(
-            title: Text('Create folders for albums'),
+            title: Text('Create folders for albums'.i18n),
             leading: Switch(
               value: settings.albumFolder,
               onChanged: (v) {
@@ -558,7 +605,7 @@ class _GeneralSettingsState extends State<GeneralSettings> {
             ),
           ),
           ListTile(
-            title: Text('Separate albums by discs'),
+            title: Text('Separate albums by discs'.i18n),
             leading: Switch(
               value: settings.albumDiscFolder,
               onChanged: (v) {
@@ -568,7 +615,7 @@ class _GeneralSettingsState extends State<GeneralSettings> {
             ),
           ),
           ListTile(
-            title: Text('Overwrite already downloaded files'),
+            title: Text('Overwrite already downloaded files'.i18n),
             leading: Switch(
               value: settings.overwriteDownload,
               onChanged: (v) {
@@ -578,40 +625,40 @@ class _GeneralSettingsState extends State<GeneralSettings> {
             ),
           ),
           ListTile(
-            title: Text('Copy ARL'),
-            subtitle: Text('Copy userToken/ARL Cookie for use in other apps.'),
+            title: Text('Copy ARL'.i18n),
+            subtitle: Text('Copy userToken/ARL Cookie for use in other apps.'.i18n),
             leading: Icon(Icons.lock),
             onTap: () async {
               await FlutterClipboard.copy(settings.arl);
               await Fluttertoast.showToast(
-                msg: 'Copied',
+                msg: 'Copied'.i18n,
               );
             },
           ),
           ListTile(
-            title: Text('Log out', style: TextStyle(color: Colors.red),),
+            title: Text('Log out'.i18n, style: TextStyle(color: Colors.red),),
             leading: Icon(Icons.exit_to_app),
             onTap: () {
               showDialog(
                 context: context,
                 builder: (context) {
                   return AlertDialog(
-                    title: Text('Log out'),
-                    content: Text('Due to plugin incompatibility, login using browser is unavailable without restart.'),
+                    title: Text('Log out'.i18n),
+                    content: Text('Due to plugin incompatibility, login using browser is unavailable without restart.'.i18n),
                     actions: <Widget>[
                       FlatButton(
-                        child: Text('Cancel'),
+                        child: Text('Cancel'.i18n),
                         onPressed: () => Navigator.of(context).pop(),
                       ),
                       FlatButton(
-                        child: Text('(ARL ONLY) Continue'),
+                        child: Text('(ARL ONLY) Continue'.i18n),
                         onPressed: () {
                           logOut();
                           Navigator.of(context).pop();
                         },
                       ),
                       FlatButton(
-                        child: Text('Log out & Exit'),
+                        child: Text('Log out & Exit'.i18n),
                         onPressed: () async {
                           try {AudioService.stop();} catch (e) {}
                           await logOut();
@@ -656,7 +703,7 @@ class _DirectoryPickerState extends State<DirectoryPicker> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text('Pick-a-Path'),
+        title: Text('Pick-a-Path'.i18n),
         actions: <Widget>[
           IconButton(
             icon: Icon(Icons.sd_card),
@@ -667,7 +714,7 @@ class _DirectoryPickerState extends State<DirectoryPicker> {
                 context: context,
                 builder: (context) {
                   return AlertDialog(
-                    title: Text('Select storage'),
+                    title: Text('Select storage'.i18n),
                     content: FutureBuilder(
                       future: PathProviderEx.getStorageInfo(),
                       builder: (context, snapshot) {
@@ -736,13 +783,13 @@ class _DirectoryPickerState extends State<DirectoryPicker> {
                 title: Text(_path),
               ),
               ListTile(
-                title: Text('Go up'),
+                title: Text('Go up'.i18n),
                 leading: Icon(Icons.arrow_upward),
                 onTap: () {
                   setState(() {
                     if (_root == _path) {
                       Fluttertoast.showToast(
-                          msg: 'Permission denied',
+                          msg: 'Permission denied'.i18n,
                           gravity: ToastGravity.BOTTOM
                       );
                       return;

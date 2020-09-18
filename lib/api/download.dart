@@ -122,14 +122,6 @@ class DownloadManager {
         onDone: () async {
           //On download finished
           await db.rawUpdate('UPDATE downloads SET state = 1 WHERE trackId = ?', [queue[0].track.id]);
-          /*
-          if (queue[0].private) {
-            await db.rawUpdate('UPDATE downloads SET state = 1 WHERE trackId = ?', [queue[0].track.id]);
-          } else {
-            //Remove on db if public
-            await db.delete('downloads', where: 'trackId = ?', whereArgs: [queue[0].track.id]);
-          }
-          */
           queue.removeAt(0);
           _download = null;
           //Remove notification if no more downloads
@@ -144,7 +136,11 @@ class DownloadManager {
         //Catch download errors
         _download = null;
         _cancelNotifications = true;
-        //Cancellation error i guess
+        queue[0].state = DownloadState.NONE;
+        //Shift to end
+        queue.add(queue[0]);
+        queue.removeAt(0);
+        //Show error
         await _showError();
       });
       //Show download progress notifications
@@ -318,14 +314,12 @@ class DownloadManager {
       track = await deezerAPI.track(track.id);
     }
 
-    String url = track.getUrl(settings.getQualityInt(settings.offlineQuality));
     if (!private) {
       //Check permissions
       if (!(await Permission.storage.request().isGranted)) {
         return;
       }
       //If saving to external
-      url = track.getUrl(settings.getQualityInt(settings.downloadQuality));
       //Save just extension to path, will be generated before download
       path = 'mp3';
       if (settings.downloadQuality == AudioQuality.FLAC) {
@@ -339,7 +333,7 @@ class DownloadManager {
       } catch (e) {}
     }
 
-    Download download = Download(track: track, path: path, url: url, private: private);
+    Download download = Download(track: track, path: path, private: private);
     //Database
     Batch b = db.batch();
     b.insert('downloads', download.toSQL());
@@ -539,12 +533,17 @@ class Download {
 
     //TODO: Check for internet before downloading
 
+    Map rawTrackPublic = {};
+    Map rawAlbumPublic = {};
     if (!this.private && !(this.path.endsWith('.mp3') || this.path.endsWith('.flac'))) {
       String ext = this.path;
       //Get track details
       Map _rawTrackData = await deezerAPI.callApi('song.getListData', params: {'sng_ids': [track.id]});
       Map rawTrack = _rawTrackData['results']['data'][0];
       this.track = Track.fromPrivateJson(rawTrack);
+      //RAW Public API call (for genre and other tags)
+      try {rawTrackPublic = await deezerAPI.callPublicApi('track/${this.track.id}');} catch (e) {rawTrackPublic = {};}
+      try {rawAlbumPublic = await deezerAPI.callPublicApi('album/${this.track.album.id}');} catch (e) {rawAlbumPublic = {};}
 
       //Get path if public
       RegExp sanitize = RegExp(r'[\/\\\?\%\*\:\|\"\<\>]');
@@ -620,6 +619,11 @@ class Download {
       //Create file if doesnt exist
       await downloadFile.create(recursive: true);
     }
+
+    //Quality fallback
+    if (this.url == null)
+      await _fallback();
+
     //Download
     _cancel = CancelToken();
     Response response = await dio.get(
@@ -658,6 +662,10 @@ class Download {
     //Tag
     if (!private) {
       //Tag track in native
+      String year;
+      if (rawTrackPublic['release_date'] != null && rawTrackPublic['release_date'].length >= 4)
+        year = rawTrackPublic['release_date'].substring(0, 4);
+
       await platformChannel.invokeMethod('tagTrack', {
         'path': path,
         'title': track.title,
@@ -665,7 +673,16 @@ class Download {
         'artists': track.artistString,
         'artist': track.artists[0].name,
         'cover': _cover,
-        'trackNumber': track.trackNumber
+        'trackNumber': track.trackNumber,
+        'diskNumber': track.diskNumber,
+        'genres': ((rawAlbumPublic['genres']??{})['data']??[]).map((g) => g['name']).toList(),
+        'year': year,
+        'bpm': rawTrackPublic['bpm'],
+        'explicit': (track.explicit??false) ? "1":"0",
+        'label': rawAlbumPublic['label'],
+        'albumTracks': rawAlbumPublic['nb_tracks'],
+        'date': rawTrackPublic['release_date'],
+        'albumArtist': (rawAlbumPublic['artist']??{})['name']
       });
       //Rescan android library
       await platformChannel.invokeMethod('rescanLibrary', {
@@ -700,6 +717,36 @@ class Download {
     this.state = DownloadState.DONE;
     onDone();
     return;
+  }
+
+  Future _fallback({fallback}) async {
+    //Get quality
+    AudioQuality quality = private ? settings.offlineQuality : settings.downloadQuality;
+    if (fallback == AudioQuality.MP3_320) quality = AudioQuality.MP3_128;
+    if (fallback == AudioQuality.FLAC) {
+      quality = AudioQuality.MP3_320;
+      if (this.path.toLowerCase().endsWith('flac'))
+        this.path = this.path.substring(0, this.path.length - 4) + 'mp3';
+    }
+
+    //No more fallback
+    if (quality == AudioQuality.MP3_128) {
+      url = track.getUrl(settings.getQualityInt(quality));
+      return;
+    }
+
+    //Check
+    int q = settings.getQualityInt(quality);
+    try {
+      Response res = await Dio().head(track.getUrl(q));
+      if (res.statusCode == 200 || res.statusCode == 206) {
+        this.url = track.getUrl(q);
+        return;
+      }
+    } catch (e) {}
+
+    //Fallback
+    return _fallback(fallback: quality);
   }
 
   //JSON

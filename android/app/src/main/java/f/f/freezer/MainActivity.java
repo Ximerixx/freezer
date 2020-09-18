@@ -25,6 +25,7 @@ import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.RandomAccessFile;
 import java.security.MessageDigest;
+import java.util.ArrayList;
 import java.util.function.Function;
 
 import javax.crypto.Cipher;
@@ -73,10 +74,33 @@ public class MainActivity extends FlutterActivity {
                         tag.setField(FieldKey.ALBUM, call.argument("album").toString());
                         tag.setField(FieldKey.ARTIST, call.argument("artists").toString());
                         tag.setField(FieldKey.TRACK, call.argument("trackNumber").toString());
+                        if (call.argument("albumArtist") != null)
+                            tag.setField(FieldKey.ALBUM_ARTIST, call.argument("albumArtist").toString());
+                        if (call.argument("diskNumber") != null)
+                            tag.setField(FieldKey.DISC_NO, call.argument("diskNumber").toString());
+                        if (call.argument("year") != null)
+                            tag.setField(FieldKey.YEAR, call.argument("year").toString());
+                        if (call.argument("bpm") != null)
+                            tag.setField(FieldKey.BPM, call.argument("bpm").toString());
+                        if (call.argument("label") != null)
+                            tag.setField(FieldKey.RECORD_LABEL, call.argument("label").toString());
+                        //Genres
+                        ArrayList<String> genres = call.argument("genres");
+                        for(int i=0; i<genres.size(); i++) {
+                            tag.addField(FieldKey.GENRE, genres.get(i));
+                        }
 
                         //Album art
                         String cover = call.argument("cover").toString();
                         if (isFlac) {
+                            //FLAC Specific tags
+                            if (call.argument("date") != null)
+                                ((FlacTag) tag).setField("DATE", call.argument("date").toString());
+                            if (call.argument("albumTracks") != null)
+                                ((FlacTag) tag).setField("TRACKTOTAL", call.argument("albumTracks").toString());
+                            ((FlacTag) tag).setField("ITUNESADVISORY", call.argument("explicit").toString());
+
+
                             //FLAC requires different cover adding
                             RandomAccessFile imageFile = new RandomAccessFile(new File(cover), "r");
                             byte[] imageData = new byte[(int) imageFile.length()];

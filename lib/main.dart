@@ -1,28 +1,29 @@
-import 'package:custom_navigator/custom_navigator.dart';
 import 'package:audio_service/audio_service.dart';
+import 'package:custom_navigator/custom_navigator.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:freezer/ui/library.dart';
 import 'package:freezer/ui/login_screen.dart';
 import 'package:freezer/ui/search.dart';
+import 'package:i18n_extension/i18n_widget.dart';
 import 'package:move_to_background/move_to_background.dart';
+import 'package:freezer/translations.i18n.dart';
 
-import 'ui/player_bar.dart';
 import 'api/deezer.dart';
-import 'settings.dart';
-import 'ui/cached_image.dart';
 import 'api/download.dart';
 import 'api/player.dart';
+import 'settings.dart';
 import 'ui/home_screen.dart';
-
+import 'ui/player_bar.dart';
 
 Function updateTheme;
 Function logOut;
 GlobalKey<NavigatorState> mainNavigatorKey = GlobalKey<NavigatorState>();
 GlobalKey<NavigatorState> navigatorKey;
 
-void main() async {
 
+void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
   //Initialize globals
@@ -57,11 +58,22 @@ class _FreezerAppState extends State<FreezerApp> {
     });
   }
 
+  Locale _locale() {
+    if (settings.language == null || settings.language.split('_').length < 2) return null;
+    return Locale(settings.language.split('_')[0], settings.language.split('_')[1]);
+  }
+
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'freezer',
+      title: 'Freezer',
       theme: settings.themeData,
+      localizationsDelegates: [
+        GlobalMaterialLocalizations.delegate,
+        GlobalWidgetsLocalizations.delegate,
+        GlobalCupertinoLocalizations.delegate,
+      ],
+      supportedLocales: supportedLocales,
       home: WillPopScope(
         onWillPop: () async {
           //For some reason AudioServiceWidget caused the app to freeze after 2 back button presses. "fix"
@@ -72,7 +84,10 @@ class _FreezerAppState extends State<FreezerApp> {
           await MoveToBackground.moveTaskToBack();
           return false;
         },
-        child: LoginMainWrapper(),
+        child: I18n(
+          initialLocale: _locale(),
+          child: LoginMainWrapper(),
+        ),
       ),
       navigatorKey: mainNavigatorKey,
     );
@@ -86,7 +101,6 @@ class LoginMainWrapper extends StatefulWidget {
 }
 
 class _LoginMainWrapperState extends State<LoginMainWrapper> {
-
   @override
   void initState() {
     if (settings.arl != null) {
@@ -116,12 +130,12 @@ class _LoginMainWrapperState extends State<LoginMainWrapper> {
   @override
   Widget build(BuildContext context) {
     if (settings.arl == null)
-      return LoginWidget(callback: () => setState(() => {}),);
+      return LoginWidget(
+        callback: () => setState(() => {}),
+      );
     return MainScreen();
   }
 }
-
-
 
 class MainScreen extends StatefulWidget {
   @override
@@ -129,12 +143,7 @@ class MainScreen extends StatefulWidget {
 }
 
 class _MainScreenState extends State<MainScreen> {
-
-  List<Widget> _screens = [
-    HomeScreen(),
-    SearchScreen(),
-    LibraryScreen()
-  ];
+  List<Widget> _screens = [HomeScreen(), SearchScreen(), LibraryScreen()];
   int _selected = 0;
 
   @override
@@ -146,50 +155,45 @@ class _MainScreenState extends State<MainScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      bottomNavigationBar: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: <Widget>[
-          PlayerBar(),
-          BottomNavigationBar(
-            backgroundColor: Theme.of(context).bottomAppBarColor,
-            currentIndex: _selected,
-            onTap: (int s) async {
-              //Pop all routes until home screen
+        bottomNavigationBar: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: <Widget>[
+            PlayerBar(),
+            BottomNavigationBar(
+              backgroundColor: Theme.of(context).bottomAppBarColor,
+              currentIndex: _selected,
+              onTap: (int s) async {
 
-              while (navigatorKey.currentState.canPop()) {
+                //Pop all routes until home screen
+                while (navigatorKey.currentState.canPop()) {
+                  await navigatorKey.currentState.maybePop();
+                }
+
                 await navigatorKey.currentState.maybePop();
-              }
-
-              await navigatorKey.currentState.maybePop();
-              setState(() {
-                _selected = s;
-              });
-            },
-            selectedItemColor: Theme.of(context).primaryColor,
-            items: <BottomNavigationBarItem>[
-              BottomNavigationBarItem(
-                  icon: Icon(Icons.home),
-                  title: Text('Home')
-              ),
-              BottomNavigationBarItem(
-                icon: Icon(Icons.search),
-                title: Text('Search'),
-              ),
-              BottomNavigationBarItem(
-                  icon: Icon(Icons.library_music),
-                  title: Text('Library')
-              )
-            ],
-          )
-        ],
-      ),
-      body: AudioServiceWidget(
-        child: CustomNavigator(
-          navigatorKey: navigatorKey,
-          home: _screens[_selected],
-          pageRoute: PageRoutes.materialPageRoute,
+                setState(() {
+                  _selected = s;
+                });
+              },
+              selectedItemColor: Theme.of(context).primaryColor,
+              items: <BottomNavigationBarItem>[
+                BottomNavigationBarItem(
+                    icon: Icon(Icons.home), title: Text('Home'.i18n)),
+                BottomNavigationBarItem(
+                  icon: Icon(Icons.search),
+                  title: Text('Search'.i18n),
+                ),
+                BottomNavigationBarItem(
+                    icon: Icon(Icons.library_music), title: Text('Library'.i18n))
+              ],
+            )
+          ],
         ),
-      )
-    );
+        body: AudioServiceWidget(
+          child: CustomNavigator(
+            navigatorKey: navigatorKey,
+            home: _screens[_selected],
+            pageRoute: PageRoutes.materialPageRoute,
+          ),
+        ));
   }
 }

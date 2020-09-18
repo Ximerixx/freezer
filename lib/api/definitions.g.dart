@@ -142,6 +142,7 @@ Artist _$ArtistFromJson(Map<String, dynamic> json) {
     fans: json['fans'] as int,
     offline: json['offline'] as bool,
     library: json['library'] as bool,
+    radio: json['radio'] as bool,
   );
 }
 
@@ -155,6 +156,7 @@ Map<String, dynamic> _$ArtistToJson(Artist instance) => <String, dynamic>{
       'fans': instance.fans,
       'offline': instance.offline,
       'library': instance.library,
+      'radio': instance.radio,
     };
 
 Playlist _$PlaylistFromJson(Map<String, dynamic> json) {

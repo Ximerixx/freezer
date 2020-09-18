@@ -11,6 +11,7 @@ Settings _$SettingsFromJson(Map<String, dynamic> json) {
     downloadPath: json['downloadPath'] as String,
     arl: json['arl'] as String,
   )
+    ..language = json['language'] as String
     ..wifiQuality =
         _$enumDecodeNullable(_$AudioQualityEnumMap, json['wifiQuality']) ??
             AudioQuality.MP3_320
@@ -39,6 +40,7 @@ Settings _$SettingsFromJson(Map<String, dynamic> json) {
 }
 
 Map<String, dynamic> _$SettingsToJson(Settings instance) => <String, dynamic>{
+      'language': instance.language,
       'arl': instance.arl,
       'wifiQuality': _$AudioQualityEnumMap[instance.wifiQuality],
       'mobileQuality': _$AudioQualityEnumMap[instance.mobileQuality],

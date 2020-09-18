@@ -48,9 +48,17 @@ class CachedImage extends StatefulWidget {
 class _CachedImageState extends State<CachedImage> {
   @override
   Widget build(BuildContext context) {
+
     if (widget.circular) return ClipOval(
       child: CachedImage(url: widget.url, height: widget.height, width: widget.width, circular: false)
     );
+
+    if (!widget.url.startsWith('http'))
+      return Image.asset(
+        widget.url,
+        width: widget.width,
+        height: widget.height,
+      );
 
     return CachedNetworkImage(
       imageUrl: widget.url,

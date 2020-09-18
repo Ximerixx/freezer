@@ -115,7 +115,7 @@ class SpotifyPlaylist {
   factory SpotifyPlaylist.fromJson(Map json) => SpotifyPlaylist(
     name: json['name'],
     description: json['description'],
-    image: json['images'][0]['url'],
+    image: (json['images'].length > 0) ? json['images'][0]['url'] : null,
     tracks: json['tracks']['items'].map<SpotifyTrack>((j) => SpotifyTrack.fromJson(j['track'])).toList()
   );
 }

@@ -254,7 +254,10 @@ class Artist {
   bool offline;
   bool library;
 
-  Artist({this.id, this.name, this.albums, this.albumCount, this.topTracks, this.picture, this.fans, this.offline, this.library});
+  //TODO: NOT IN DB
+  bool radio;
+
+  Artist({this.id, this.name, this.albums, this.albumCount, this.topTracks, this.picture, this.fans, this.offline, this.library, this.radio});
 
   String get fansString => NumberFormat.compact().format(fans);
 
@@ -264,16 +267,23 @@ class Artist {
         Map<dynamic, dynamic> albumsJson = const {},
         Map<dynamic, dynamic> topJson = const {},
         bool library = false
-      }) => Artist(
-    id: json['ART_ID'].toString(),
-    name: json['ART_NAME'],
-    fans: json['NB_FAN'],
-    picture: ImageDetails.fromPrivateString(json['ART_PICTURE'], type: 'artist'),
-    albumCount: albumsJson['total'],
-    albums: (albumsJson['data']??[]).map<Album>((dynamic data) => Album.fromPrivateJson(data)).toList(),
-    topTracks: (topJson['data']??[]).map<Track>((dynamic data) => Track.fromPrivateJson(data)).toList(),
-    library: library
-  );
+      }) {
+    //Get wether radio is available
+    bool _radio = false;
+    if (json['SMARTRADIO'] == true || json['SMARTRADIO'] == 1) _radio = true;
+
+    return Artist(
+      id: json['ART_ID'].toString(),
+      name: json['ART_NAME'],
+      fans: json['NB_FAN'],
+      picture: ImageDetails.fromPrivateString(json['ART_PICTURE'], type: 'artist'),
+      albumCount: albumsJson['total'],
+      albums: (albumsJson['data']??[]).map<Album>((dynamic data) => Album.fromPrivateJson(data)).toList(),
+      topTracks: (topJson['data']??[]).map<Track>((dynamic data) => Track.fromPrivateJson(data)).toList(),
+      library: library,
+      radio: _radio
+    );
+  }
   Map<String, dynamic> toSQL({off = false}) => {
     'id': id,
     'name': name,
