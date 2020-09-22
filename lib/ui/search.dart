@@ -83,6 +83,10 @@ class _SearchScreenState extends State<SearchScreen> {
                       IconButton(
                         icon: Icon(Icons.clear),
                         onPressed: () {
+                          setState(() {
+                            _suggestions = [];
+                            _query = '';
+                          });
                           _controller.clear();
                         },
                       ),

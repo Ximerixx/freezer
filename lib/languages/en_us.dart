@@ -180,8 +180,8 @@ const language_en_us = {
         "Language changed, please restart Freezer to apply!",
     "Importing...": "Importing...",
     "Radio": "Radio",
-
     "Flow": "Flow",
-
+    "Track is not available on Deezer!": "Track is not available on Deezer!",
+    "Failed to download track! Please restart.": "Failed to download track! Please restart."
   }
 };

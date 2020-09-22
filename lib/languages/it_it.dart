@@ -10,7 +10,7 @@ const language_it_it = {
     "Search": "Cerca",
     "Library": "Libreria",
     "Offline mode, can't play flow or smart track lists.":
-        "Modalità offline, non è possibile riprodurre flow o tracklist smart",
+    "Modalità offline, non è possibile riprodurre flow o tracklist smart",
     "Added to library": "Aggiunto alla libreria",
     "Download": "Scarica",
     "Disk": "Disco",
@@ -29,31 +29,31 @@ const language_it_it = {
     "Done": "Fatto",
     "Delete": "Cancellare",
     "Are you sure you want to delete this download?":
-        "Sei sicuro di voler cancellare questo download?",
+    "Sei sicuro di voler cancellare questo download?",
     "Cancel": "Annulla",
     "Downloads": "Download",
     "Clear queue": "Pulisci la coda",
     "This won't delete currently downloading item":
-        "Questa azione non cancellerà i download",
+    "Questa azione non cancellerà i download",
     "Are you sure you want to delete all queued downloads?":
-        "Sei sicuro di voler cancellare tutti i download in coda?",
+    "Sei sicuro di voler cancellare tutti i download in coda?",
     "Clear downloads history": "Pulisci la cronologia dei download",
     "WARNING: This will only clear non-offline (external downloads)":
-        "ATTENZIONE: Questa azione, pulirà solo i files che non sono offline (download esterni)",
+    "ATTENZIONE: Questa azione, pulirà solo i files che non sono offline (download esterni)",
     "Please check your connection and try again later...":
-        "Per favore controlla la tua connessione e riprova più tardi...",
+    "Per favore controlla la tua connessione e riprova più tardi...",
     "Show more": "Mostra di più",
     "Importer": "Importa",
     "Currently supporting only Spotify, with 100 tracks limit":
-        "Attualmente supporta solo Spotify, con un limite di 100 brani",
+    "Attualmente supporta solo Spotify, con un limite di 100 brani",
     "Due to API limitations": "A causa delle limitazioni delle API",
     "Enter your playlist link below":
-        "Inserisci il link della tua playlist qui sotto",
+    "Inserisci il link della tua playlist qui sotto",
     "Error loading URL!": "Errore nel caricare l'URL!",
     "Convert": "Converti",
     "Download only": "Solo Download",
     "Downloading is currently stopped, click here to resume.":
-        "Il download è attualmente interrotto, fare clic qui per riprenderlo.",
+    "Il download è attualmente interrotto, fare clic qui per riprenderlo.",
     "Tracks": "Brani",
     "Albums": "Album",
     "Artists": "Artisti",
@@ -71,24 +71,24 @@ const language_it_it = {
     "All offline tracks": "Tutte i brani offline",
     "Create new playlist": "Crea una nuova playlist",
     "Cannot create playlists in offline mode":
-        "Impossibile creare playlist in modalità offline",
+    "Impossibile creare playlist in modalità offline",
     "Error": "Errore",
     "Error logging in! Please check your token and internet connection and try again.":
-        "Errore durante l'accesso! Controlla il token, la tua connessione ad internet e riprova.",
+    "Errore durante l'accesso! Controlla il token, la tua connessione ad internet e riprova.",
     "Dismiss": "Chiudi",
     "Welcome to": "Benvenuto su",
     "Please login using your Deezer account.":
-        "Per favore, esegui il login utilizzando il tuo account Deezer.",
+    "Per favore, esegui il login utilizzando il tuo account Deezer.",
     "Login using browser": "Login utilizzando il browser",
     "Login using token": "Login utilizzando il token",
     "Enter ARL": "Inserisci l'ARL",
     "Token (ARL)": "Token (ARL)",
     "Save": "Salva",
     "If you don't have account, you can register on deezer.com for free.":
-        "Se non possiedi un account, puoi registrarti sul sito deezer.com gratuitamente.",
+    "Se non possiedi un account, puoi registrarti sul sito deezer.com gratuitamente.",
     "Open in browser": "Apri nel browser",
     "By using this app, you don't agree with the Deezer ToS":
-        "Utilizzando questa applicazione, non accetti i ToS di Deezer",
+    "Utilizzando questa applicazione, non accetti i ToS di Deezer",
     "Play next": "Riproduci subito dopo",
     "Add to queue": "Aggiungi alla coda",
     "Add track to favorites": "Aggiungi il brano ai preferiti",
@@ -141,24 +141,24 @@ const language_it_it = {
     "Primary color": "Colore Principale",
     "Selected color": "Colore Selezionato",
     "Use album art primary color":
-        "Usa il colore principale della copertina dell'album",
+    "Usa il colore principale della copertina dell'album",
     "Warning: might be buggy": "Attenzione: potrebbe causare problemi",
     "Mobile streaming": "Streaming con dati",
     "Wifi streaming": "Streaming con WiFi",
     "External downloads": "Download esterni",
     "Content language": "Lingua dei contenuti",
     "Not app language, used in headers. Now":
-        "Non la lingua dell'app, utilizzata negli header. Adesso",
+    "Non la lingua dell'app, utilizzata negli header. Adesso",
     "Select language": "Seleziona la lingua",
     "Content country": "Contenuto dal Paese",
     "Country used in headers. Now": "Paese contenuto negli header. Ora",
     "Log tracks": "Log delle tracce",
     "Send track listen logs to Deezer, enable it for features like Flow to work properly":
-        "Invia i log delle canzioni ascoltate a Deezer, abilitalo affinché features come Flow funzionino correttamente",
+    "Invia i log delle canzioni ascoltate a Deezer, abilitalo affinché features come Flow funzionino correttamente",
     "Offline mode": "Modalità Offline",
     "Will be overwritten on start.": "Sarà sovrascritto all'avvio.",
     "Error logging in, check your internet connections.":
-        "Errore durante l'accesso, controlla la tua connessione Internet.",
+    "Errore durante l'accesso, controlla la tua connessione Internet.",
     "Logging in...": "Accesso in corso...",
     "Download path": "Percorso di download",
     "Downloads naming": "Denominazione dei download",
@@ -172,11 +172,11 @@ const language_it_it = {
     "Overwrite already downloaded files": "Sovrascrivi i file già scaricati",
     "Copy ARL": "Copia ARL",
     "Copy userToken/ARL Cookie for use in other apps.":
-        "Copia userToken / ARL Cookie da utilizzare in altre app.",
+    "Copia userToken / ARL Cookie da utilizzare in altre app.",
     "Copied": "Copiato",
     "Log out": "Disconnettiti",
     "Due to plugin incompatibility, login using browser is unavailable without restart.":
-        "A causa dell'incompatibilità del plug-in, l'accesso tramite browser non è disponibile senza riavvio.",
+    "A causa dell'incompatibilità del plug-in, l'accesso tramite browser non è disponibile senza riavvio.",
     "(ARL ONLY) Continue": "(SOLO ARL) Continua",
     "Log out & Exit": "Disconnettiti e Esci",
     "Pick-a-Path": "Scegli un percorso",
@@ -185,7 +185,7 @@ const language_it_it = {
     "Permission denied": "Permesso negato",
     "Language": "Lingua",
     "Language changed, please restart Freezer to apply!":
-        "Lingua cambiata, riavvia Freezer per applicare la modifica!",
+    "Lingua cambiata, riavvia Freezer per applicare la modifica!",
     "Importing...": "Importando...",
     "Radio": "Radio"
   }

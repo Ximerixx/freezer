@@ -132,10 +132,23 @@ class DownloadManager {
         }
       ).catchError((e, st) async {
         if (stopped) return;
-        print('Download error: $e\n$st');
-        //Catch download errors
-        _download = null;
         _cancelNotifications = true;
+
+        //Deezer error - track is unavailable
+        if (queue[0].state == DownloadState.DEEZER_ERROR) {
+          await db.rawUpdate('UPDATE downloads SET state = 4 WHERE trackId = ?', [queue[0].track.id]);
+          queue.removeAt(0);
+          _cancelNotifications = false;
+          _download = null;
+          updateQueue();
+          return;
+        }
+
+        //Clean
+        _download = null;
+        stopped = true;
+        print('Download error: $e\n$st');
+
         queue[0].state = DownloadState.NONE;
         //Shift to end
         queue.add(queue[0]);
@@ -442,7 +455,7 @@ class DownloadManager {
 
   Future<List<Download>> getFinishedDownloads() async {
     //Fetch from db
-    List<Map> data = await db.rawQuery("SELECT * FROM downloads INNER JOIN tracks ON tracks.id = downloads.trackId WHERE downloads.state = 1");
+    List<Map> data = await db.rawQuery("SELECT * FROM downloads INNER JOIN tracks ON tracks.id = downloads.trackId WHERE downloads.state = 1 OR downloads.state > 3");
     List<Download> downloads = data.map<Download>((d) => Download.fromSQL(d, parseTrack: true)).toList();
     return downloads;
   }
@@ -545,6 +558,12 @@ class Download {
       try {rawTrackPublic = await deezerAPI.callPublicApi('track/${this.track.id}');} catch (e) {rawTrackPublic = {};}
       try {rawAlbumPublic = await deezerAPI.callPublicApi('album/${this.track.album.id}');} catch (e) {rawAlbumPublic = {};}
 
+      //Global block check
+      if (rawTrackPublic['available_countries'] != null && rawTrackPublic['available_countries'].length == 0) {
+        this.state = DownloadState.DEEZER_ERROR;
+        throw Exception('Download error - not on Deezer');
+      }
+      
       //Get path if public
       RegExp sanitize = RegExp(r'[\/\\\?\%\*\:\|\"\<\>]');
       //Download path
@@ -608,6 +627,10 @@ class Download {
     //Download
     this.state = DownloadState.DOWNLOADING;
 
+    //Quality fallback
+    if (this.url == null)
+      await _fallback();
+
     //Create download file
     File downloadFile = File(this.path + '.ENC');
     //Get start position
@@ -616,26 +639,32 @@ class Download {
       FileStat stat = await downloadFile.stat();
       start = stat.size;
     } else {
-      //Create file if doesnt exist
+      //Create file if doesn't exist
       await downloadFile.create(recursive: true);
     }
 
-    //Quality fallback
-    if (this.url == null)
-      await _fallback();
-
     //Download
     _cancel = CancelToken();
-    Response response = await dio.get(
-      this.url,
-      options: Options(
-        responseType: ResponseType.stream,
-        headers: {
-          'Range': 'bytes=$start-'
-        },
-      ),
-      cancelToken: _cancel
-    );
+    Response response;
+    try {
+      response = await dio.get(
+        this.url,
+        options: Options(
+          responseType: ResponseType.stream,
+          headers: {
+            'Range': 'bytes=$start-'
+          },
+        ),
+        cancelToken: _cancel
+      );
+    } on DioError catch (e) {
+      //Deezer fetch error
+      if (e.response.statusCode == 403 || e.response.statusCode == 404) {
+        this.state = DownloadState.DEEZER_ERROR;
+      }
+      throw Exception('Download error - Deezer blocked.');
+    }
+
     //Size
     this.total = int.parse(response.headers['Content-Length'][0]) + start;
     this.received = start;
@@ -654,7 +683,6 @@ class Download {
     }
       await _outSink.close();
     _cancel = null;
-
 
     this.state = DownloadState.POST;
     //Decrypt
@@ -754,21 +782,23 @@ class Download {
     'trackId': track.id,
     'path': path,
     'url': url,
-    'state': state == DownloadState.DONE ? 1:0,
+    'state': state.index,
     'private': private?1:0
   };
   factory Download.fromSQL(Map<String, dynamic> data, {parseTrack = false}) => Download(
     track: parseTrack?Track.fromSQL(data):Track(id: data['trackId']),
     path: data['path'],
     url: data['url'],
-    state: data['state'] == 1 ? DownloadState.DONE:DownloadState.NONE,
+    state: DownloadState.values[data['state']],
     private: data['private'] == 1
   );
 }
 
 enum DownloadState {
   NONE,
+  DONE,
   DOWNLOADING,
   POST,
-  DONE
+  DEEZER_ERROR,
+  ERROR
 }

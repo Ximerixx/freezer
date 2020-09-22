@@ -43,6 +43,21 @@ class _SettingsScreenState extends State<SettingsScreen> {
     super.initState();
   }
 
+  List<Map<String, String>> _languages() {
+    defaultLanguagesList.add({
+      'name': 'Filipino',
+      'isoCode': 'fil'
+    });
+    List<Map<String, String>> _l = supportedLocales.map<Map<String, String>>((l) {
+      Map _lang = defaultLanguagesList.firstWhere((lang) => lang['isoCode'] == l.languageCode);
+      return {
+        'name': _lang['name'] + ' (${l.toString()})',
+        'isoCode': _lang['isoCode']
+      };
+    }).toList();
+    return _l;
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -90,11 +105,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   titlePadding: EdgeInsets.all(8.0),
                   title: Text('Select language'.i18n),
                   isSearchable: false,
-                  languagesList: supportedLocales.map<Map<String, String>>((l) {
-                    Map _lang = defaultLanguagesList.firstWhere((lang) => lang['isoCode'] == l.languageCode);
-                    _lang['name'] = _lang['name'] + ' (${l.toString()})';
-                    return _lang;
-                  }).toList(),
+                  languagesList: _languages(),
                   onValuePicked: (Language l) async {
                     setState(()  {
                       Locale locale = supportedLocales.firstWhere((_l) => _l.languageCode == l.isoCode);
@@ -407,6 +418,9 @@ class _DeezerSettingsState extends State<DeezerSettings> {
                   titlePadding: EdgeInsets.all(8.0),
                   isSearchable: true,
                   title: Text('Select language'.i18n),
+                  languagesList: defaultLanguagesList.map<Map<String, String>>((l) => {
+                    'isoCode': l['isoCode'], 'name': l['name'] + ' (${l["isoCode"]})'
+                  }).toList(),
                   onValuePicked: (Language language) {
                     setState(() => settings.deezerLanguage = language.isoCode);
                     settings.save();

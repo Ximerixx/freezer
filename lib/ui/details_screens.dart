@@ -80,6 +80,16 @@ class AlbumDetails extends StatelessWidget {
                           color: Theme.of(context).primaryColor
                       ),
                     ),
+                    Container(height: 4.0),
+                    if (album.releaseDate != null && album.releaseDate.length >= 4)
+                      Text(
+                        album.releaseDate,
+                        textAlign: TextAlign.center,
+                        style: TextStyle(
+                          fontSize: 12.0,
+                          color: Theme.of(context).disabledColor
+                        ),
+                      ),
                     Container(height: 8.0,),
                   ],
                 ),

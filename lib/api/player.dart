@@ -485,7 +485,9 @@ class AudioPlayerTask extends BackgroundAudioTask {
     //Load queue after some initialization in frontend
     if (name == 'load') await this._loadQueueFile();
     //Shuffle
-    if (name == 'shuffle') await _player.setShuffleModeEnabled(args);
+    if (name == 'shuffle') {
+      await _player.setShuffleModeEnabled(args);
+    }
     //Android auto callback
     if (name == 'screenAndroidAuto' && _androidAutoCallback != null) {
       _androidAutoCallback.complete(jsonDecode(args).map<MediaItem>((m) => MediaItem.fromJson(m)).toList());

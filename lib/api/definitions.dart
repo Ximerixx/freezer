@@ -186,10 +186,12 @@ class Album {
   int fans;
   bool offline; //If the album is offline, or just saved in db as metadata
   bool library;
+
   //TODO: Not in DB
   AlbumType type;
+  String releaseDate;
 
-  Album({this.id, this.title, this.art, this.artists, this.tracks, this.fans, this.offline, this.library, this.type});
+  Album({this.id, this.title, this.art, this.artists, this.tracks, this.fans, this.offline, this.library, this.type, this.releaseDate});
 
   String get artistString => artists.map<String>((art) => art.name).join(', ');
   Duration get duration => Duration(seconds: tracks.fold(0, (v, t) => v += t.duration.inSeconds));
@@ -210,7 +212,8 @@ class Album {
       tracks: (songsJson['data']??[]).map<Track>((dynamic track) => Track.fromPrivateJson(track)).toList(),
       fans: json['NB_FAN'],
       library: library,
-      type: type
+      type: type,
+      releaseDate: json['DIGITAL_RELEASE_DATE']??json['PHYSICAL_RELEASE_DATE']
     );
   }
   Map<String, dynamic> toSQL({off = false}) => {
@@ -281,7 +284,7 @@ class Artist {
       albums: (albumsJson['data']??[]).map<Album>((dynamic data) => Album.fromPrivateJson(data)).toList(),
       topTracks: (topJson['data']??[]).map<Track>((dynamic data) => Track.fromPrivateJson(data)).toList(),
       library: library,
-      radio: _radio
+      radio: _radio,
     );
   }
   Map<String, dynamic> toSQL({off = false}) => {

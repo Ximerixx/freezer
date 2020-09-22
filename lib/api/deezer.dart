@@ -123,7 +123,7 @@ class DeezerAPI {
       Map<dynamic, dynamic> data = await callApi('deezer.pageAlbum', params: {
         'alb_id': id,
         'header': true,
-        'lang': 'us'
+        'lang': settings.deezerLanguage??'en'
       });
       return Album.fromPrivateJson(data['results']['DATA'], songsJson: data['results']['SONGS']);
   }
@@ -132,7 +132,7 @@ class DeezerAPI {
   Future<Artist> artist(String id) async {
     Map<dynamic, dynamic> data = await callApi('deezer.pageArtist', params: {
       'art_id': id,
-      'lang': 'us',
+      'lang': settings.deezerLanguage??'en',
     });
     return Artist.fromPrivateJson(
       data['results']['DATA'],
@@ -145,7 +145,7 @@ class DeezerAPI {
   Future<List<Track>> playlistTracksPage(String id, int start, {int nb = 50}) async {
     Map data = await callApi('deezer.pagePlaylist', params: {
       'playlist_id': id,
-      'lang': 'us',
+      'lang': settings.deezerLanguage??'en',
       'nb': nb,
       'tags': true,
       'start': start
@@ -157,7 +157,7 @@ class DeezerAPI {
   Future<Playlist> playlist(String id, {int nb = 100}) async {
     Map<dynamic, dynamic> data = await callApi('deezer.pagePlaylist', params: {
       'playlist_id': id,
-      'lang': 'us',
+      'lang': settings.deezerLanguage??'en',
       'nb': nb,
       'tags': true,
       'start': 0
@@ -167,6 +167,10 @@ class DeezerAPI {
 
   //Get playlist with all tracks
   Future<Playlist> fullPlaylist(String id) async {
+    return await playlist(id, nb: 100000);
+
+    //OLD WORKAROUND
+    /*
     Playlist p = await playlist(id, nb: 200);
     for (int i=200; i<p.trackCount; i++) {
       //Get another page of tracks
@@ -176,6 +180,7 @@ class DeezerAPI {
       continue;
     }
     return p;
+   */
   }
 
   //Add track to favorites
@@ -305,7 +310,7 @@ class DeezerAPI {
         "large-card": ["album", "playlist", "show", "video-link"],
         "ads": [] //Nope
       },
-      "LANG": "us",
+      "LANG": settings.deezerLanguage??'en',
       "OPTIONS": []
     }));
     return HomePage.fromPrivateJson(data['results']);
@@ -336,7 +341,7 @@ class DeezerAPI {
         "large-card": ["album", "playlist", "show", "video-link"],
         "ads": [] //Nope
       },
-      "LANG": "us",
+      "LANG": settings.deezerLanguage??'en',
       "OPTIONS": []
     }));
     return HomePage.fromPrivateJson(data['results']);

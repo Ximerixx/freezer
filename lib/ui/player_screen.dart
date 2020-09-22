@@ -42,7 +42,6 @@ class _PlayerScreenState extends State<PlayerScreen> {
               playerHelper.startService();
               return Center(child: CircularProgressIndicator(),);
             }
-
             return OrientationBuilder(
               builder: (context, orientation) {
                 //Landscape

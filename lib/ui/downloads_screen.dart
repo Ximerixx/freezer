@@ -21,6 +21,10 @@ class DownloadTile extends StatelessWidget {
         return 'Post processing...'.i18n;
       case DownloadState.DONE:
         return 'Done'.i18n; //Shouldn't be visible
+      case DownloadState.DEEZER_ERROR:
+        return 'Track is not available on Deezer!'.i18n;
+      case DownloadState.ERROR:
+        return 'Failed to download track! Please restart.'.i18n;
     }
     return '';
   }
@@ -28,7 +32,6 @@ class DownloadTile extends StatelessWidget {
   Widget get progressBar {
     switch (download.state) {
       case DownloadState.DOWNLOADING:
-        print(download.track.id);
         return LinearProgressIndicator(value: download.received / download.total);
       case DownloadState.POST:
         return LinearProgressIndicator();
