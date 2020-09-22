@@ -44,6 +44,8 @@ Markus: German
 Andrea: Italian  
 Diego Hiro: Portuguese  
 Annexhack: Russian  
+Chino Pacia: Filipino  
+ArcherDelta & PetFix: Spanish
 
 ### just_audio, audio_service
 This app depends on modified just_audio and audio_service plugins with Deezer support.  
