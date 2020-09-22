@@ -10,7 +10,7 @@ const language_ru_ru = {
     "Search": "Поиск",
     "Library": "Библиотека",
     "Offline mode, can't play flow or smart track lists.":
-        "Автономный режим, нельзя воспроизводить потоки или умные списки треков.",
+    "Автономный режим, нельзя воспроизводить потоки или умные списки треков.",
     "Added to library": "Добавить в библиотеку",
     "Download": "Скачать",
     "Disk": "Disk",
@@ -29,30 +29,30 @@ const language_ru_ru = {
     "Done": "Готово",
     "Delete": "Удалить",
     "Are you sure you want to delete this download?":
-        "Вы действительно хотите удалить эту загрузку??",
+    "Вы действительно хотите удалить эту загрузку??",
     "Cancel": "Отмена",
     "Downloads": "Загрузки",
     "Clear queue": "Очистить очередь",
     "This won't delete currently downloading item":
-        "Это не удалит загружаемый в данный момент элемент",
+    "Это не удалит загружаемый в данный момент элемент",
     "Are you sure you want to delete all queued downloads?":
-        "Вы действительно хотите удалить все загрузки в очереди?",
+    "Вы действительно хотите удалить все загрузки в очереди?",
     "Clear downloads history": "Очистить историю загрузок",
     "WARNING: This will only clear non-offline (external downloads)":
-        "ВНИМАНИЕ: Это очистит только не офлайн(external downloads)",
+    "ВНИМАНИЕ: Это очистит только не офлайн(external downloads)",
     "Please check your connection and try again later...":
-        "Пожалуйста, проверьте ваше соединение и повторите попытку позже...",
+    "Пожалуйста, проверьте ваше соединение и повторите попытку позже...",
     "Show more": "Показать больше",
     "Importer": "Импортер",
     "Currently supporting only Spotify, with 100 tracks limit":
-        "В настоящее время поддерживается только Spotify с ограничением 100 треков",
+    "В настоящее время поддерживается только Spotify с ограничением 100 треков",
     "Due to API limitations": "Из-за ограничений API",
     "Enter your playlist link below": "Введите ссылку на свой плейлист ниже",
     "Error loading URL!": "Ошибка загрузки URL!",
     "Convert": "Перерабатывать",
     "Download only": "Только скачиные",
     "Downloading is currently stopped, click here to resume.":
-        "В настоящее время загрузка остановлена, нажмите здесь, чтобы возобновить.",
+    "В настоящее время загрузка остановлена, нажмите здесь, чтобы возобновить.",
     "Tracks": "Треки",
     "Albums": "Альбомы",
     "Artists": "Артисты",
@@ -70,24 +70,24 @@ const language_ru_ru = {
     "All offline tracks": "Все оффлайн треки",
     "Create new playlist": "Создать новый плейлист",
     "Cannot create playlists in offline mode":
-        "Невозможно создавать плейлисты в автономном режиме",
+    "Невозможно создавать плейлисты в автономном режиме",
     "Error": "Ошибка",
     "Error logging in! Please check your token and internet connection and try again.":
-        "Ошибка входа! Проверьте свой токен и подключение к Интернету и повторите попытку.",
+    "Ошибка входа! Проверьте свой токен и подключение к Интернету и повторите попытку.",
     "Dismiss": "Отклонить",
     "Welcome to": "Добро пожаловать в",
     "Please login using your Deezer account.":
-        "Пожалуйста, войдите, используя свою учетную запись Deezer.",
+    "Пожалуйста, войдите, используя свою учетную запись Deezer.",
     "Login using browser": "Войти через браузер",
     "Login using token": "Войти с помощью токена",
     "Enter ARL": "Введите ARL",
     "Token (ARL)": "Токен (ARL)",
     "Save": "Сохранить",
     "If you don't have account, you can register on deezer.com for free.":
-        "Если у вас нет учетной записи, вы можете бесплатно зарегистрироваться на deezer.com.",
+    "Если у вас нет учетной записи, вы можете бесплатно зарегистрироваться на deezer.com.",
     "Open in browser": "Открыть в браузере",
     "By using this app, you don't agree with the Deezer ToS":
-        "Используя это приложение, вы не соглашаетесь с Условиями использования Deezer.",
+    "Используя это приложение, вы не соглашаетесь с Условиями использования Deezer.",
     "Play next": "Следующая песня",
     "Add to queue": "Добавить в очередь",
     "Add track to favorites": "Добавить в избранное",
@@ -146,17 +146,17 @@ const language_ru_ru = {
     "External downloads": "Внешние загрузки",
     "Content language": "Язык содержания",
     "Not app language, used in headers. Now":
-        "Не язык приложения, используемый в заголовках. Сейчас",
+    "Не язык приложения, используемый в заголовках. Сейчас",
     "Select language": "Выберите язык",
     "Content country": "Страна содержания",
     "Country used in headers. Now": "Страна, используемая в заголовках. Сейчас",
     "Log tracks": "Журнал треков",
     "Send track listen logs to Deezer, enable it for features like Flow to work properly":
-        "Отправьте журналы прослушивания треков в Deezer, включите его, чтобы такие функции, как Flow, работали правильно",
+    "Отправьте журналы прослушивания треков в Deezer, включите его, чтобы такие функции, как Flow, работали правильно",
     "Offline mode": "Автономный режим",
     "Will be overwritten on start.": "Будет перезаписан при запуске.",
     "Error logging in, check your internet connections.":
-        "Ошибка при входе, проверьте свои интернет-соединения.",
+    "Ошибка при входе, проверьте свои интернет-соединения.",
     "Logging in...": "Происходит вход в систему...",
     "Download path": "Скачать путь",
     "Downloads naming": "Именование загрузок",
@@ -170,11 +170,11 @@ const language_ru_ru = {
     "Overwrite already downloaded files": "Перезаписать уже загруженные файлы",
     "Copy ARL": "Копировать ARL",
     "Copy userToken/ARL Cookie for use in other apps.":
-        "Копировать userToken/ARL Cookie для использования в других приложениях.",
+    "Копировать userToken/ARL Cookie для использования в других приложениях.",
     "Copied": "Скопировано",
     "Log out": "Выйти",
     "Due to plugin incompatibility, login using browser is unavailable without restart.":
-        "Из-за несовместимости плагинов вход через браузер без перезапуска невозможен.",
+    "Из-за несовместимости плагинов вход через браузер без перезапуска невозможен.",
     "(ARL ONLY) Continue": "(ARL ONLY) Продолжать",
     "Log out & Exit": "Выйти и закрыть",
     "Pick-a-Path": "Выбери путь",
@@ -182,8 +182,7 @@ const language_ru_ru = {
     "Go up": "Подниматься",
     "Permission denied": "Доступ запрещен",
     "Language": "Язык",
-    "Language changed, please restart Freezer to apply!":
-        "Язык изменен, перезапустите Freezer, чтобы применить!",
+    "Language changed, please restart Freezer to apply!": "Язык изменен, перезапустите Freezer, чтобы применить!",
     "Importing...": "Импорт...",
     "Radio": "Радио"
   }

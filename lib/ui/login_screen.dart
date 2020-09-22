@@ -224,10 +224,15 @@ class LoginBrowser extends StatelessWidget {
       children: <Widget>[
         Expanded(
           child: Container(
-
             child: InAppWebView(
               initialUrl: 'https://deezer.com/login',
               onLoadStart: (InAppWebViewController controller, String url) async {
+
+                //Offers URL
+                if (url.contains('/offers')) {
+                  controller.evaluateJavascript(source: 'window.location.href = "/open_app"');
+                }
+
                 //Parse arl from url
                 if (url.startsWith('intent://deezer.page.link')) {
                   try {
