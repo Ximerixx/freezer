@@ -40,7 +40,7 @@ Deemix: https://notabug.org/RemixDev/deemix
 Annexhack: Android Auto help and resources  
 
 ### Translators:
-Homam Al-Rawi: Arabic  
+Xandar Null: Arabic  
 Markus: German  
 Andrea: Italian  
 Diego Hiro: Portuguese  
