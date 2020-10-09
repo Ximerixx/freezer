@@ -1,6 +1,6 @@
 /*
 
-Translated by: Homam Al-Rawi
+Translated by: Xandar Null
 
 */
 
@@ -11,7 +11,7 @@ const language_ar_ar = {
     "Library": "المكتبة",
     "Offline mode, can't play flow or smart track lists.": "وضع خارج الشبكة, لا تستطيع تشغيل اغاني من قوائم ديزر فلو",
     "Added to library": "تمت الاضافة الى المكتبة",
-    "Download": "تحميل",
+    "Download": "تنزيل",
     "Disk": "القرص",
     "Offline": "خارج الشبكة",
     "Top Tracks": "افضل الاغاني",
@@ -19,7 +19,7 @@ const language_ar_ar = {
     "Top": "الافضل",
     "Top Albums": "افضل الالبومات",
     "Show all albums": "اضهار كل الالبومات",
-    "Discography": "كل الالومات و الاغاني",
+    "Discography": "كل الالبومات و الاغاني",
     "Default": "افتراضي",
     "Reverse": "عكس",
     "Alphabetic": "أبجدي",
@@ -29,7 +29,7 @@ const language_ar_ar = {
     "Delete": "حذف",
     "Are you sure you want to delete this download?": "هل أنت متأكد أنك تريد حذف هذا التنزيل؟",
     "Cancel": "الغاء",
-    "Downloads": "التحميلات",
+    "Downloads": "التنزيلات",
     "Clear queue": "مسح قائمة الانتظار",
     "This won't delete currently downloading item": "لن يؤدي هذا إلى حذف العنصر الذي يتم تنزيله حاليًا",
     "Are you sure you want to delete all queued downloads?": "هل أنت متأكد أنك تريد حذف كافة التنزيلات في قائمة الانتظار؟",
@@ -41,9 +41,9 @@ const language_ar_ar = {
     "Currently supporting only Spotify, with 100 tracks limit": "حاليا يدعم سبوتفاي فقط, بحد اقصى 100 اغنية",
     "Due to API limitations": "بسبب قيود API",
     "Enter your playlist link below": "أدخل رابط قائمة التشغيل أدناه",
-    "Error loading URL!": "خطأ في تحميل الرابط!",
+    "Error loading URL!": "خطأ في تنزيل الرابط!",
     "Convert": "تحويل",
-    "Download only": "تحميل فقط",
+    "Download only": "تنزيل فقط",
     "Downloading is currently stopped, click here to resume.": "التنزيل متوقف حاليًا ، انقر هنا للاستئناف.",
     "Tracks": "اغاني",
     "Albums": "البومات",
@@ -147,7 +147,7 @@ const language_ar_ar = {
     "Downloaded tracks filename": "اسم ملف الاغاني التي تم تنزيلها",
     "Valid variables are": "المتغيرات الصالحة هي",
     "Reset": "إعادة تعيين",
-    "Clear": "تنضيف",
+    "Clear": "مسح",
     "Create folders for artist": "إنشاء ملفات للفنان",
     "Create folders for albums": "إنشاء ملفات للالبوم",
     "Separate albums by discs": "افصل الالبومات عبر رقم الاقراص",
@@ -167,5 +167,32 @@ const language_ar_ar = {
     "Language changed, please restart Freezer to apply!": "تم تغيير اللغة، الرجاء إعادة تشغيل فريزر لتطبيق!",
     "Importing...": "جار الاستيراد...",
     "Radio": "راديو"
+    
+        //0.5.0 Strings:
+    "Storage permission denied!": "رفض إذن التخزين!",
+    "Failed": "فشل",
+    "Queued": "في قائمة الانتظار",
+    "External": "خارجي",
+    "Restart failed downloads": "أعد استئناف التنزيلات الفاشلة",
+    "Clear failed": "فشل المسح",
+    "Download Settings": "إعدادات التنزيل",
+    "Create folder for playlist": "إنشاء ملف لقائمة التشغيل",
+    "Download .LRC lyrics": "تنزيل ملف كلمات الاغنية .LRC",
+    "Proxy": "بروكسي",
+    "Not set": "غير محدد",
+    "Search or paste URL": "ابحث أو الصق رابط",
+    "History": "تاريخ السماع",
+    "Download threads": "عدد التنزيلات في نفس الوقت",
+    "Lyrics unavailable, empty or failed to load!": "الكلمات غير متوفرة، فارغة أو فشل تنزيلها!",
+    "About": "حول البرنامج",
+    "Telegram Channel": "قناة التلكرام",
+    "To get latest releases": "لتنزيل اخر اصدارات البرنامج",
+    "Official chat": "الدردشة الرسمية",
+    "Telegram Group": "مجموعة التلكرام",
+    "Huge thanks to all the contributors! <3": "شكرا جزيلا لجميع المساهمين! <3",
+    "Edit playlist": "تعديل قائمة التشغيل",
+    "Update": "تحديث",
+    "Playlist updated!": "تم تحديث قائمة التشغيل!",
+    "Downloads added!": "تم إضافة التنزيلات!"
   }
 };
