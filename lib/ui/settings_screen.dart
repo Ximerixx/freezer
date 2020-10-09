@@ -1009,12 +1009,12 @@ class _CreditsScreenState extends State<CreditsScreen> {
     ['exttex', 'Developer'],
     ['Bas Curtiz', 'Icon, logo, banner, design suggestions, tester'],
     ['Deemix', 'Better app <3', 'https://codeberg.org/RemixDev/deemix'],
-    ['Tobs, Homam Al-Rawi, Francesco', 'Beta testers'],
+    ['Tobs, Xandar Null, Francesco', 'Beta testers'],
     ['Annexhack', 'Android Auto help']
   ];
 
   static final List<List<String>> translators = [
-    ['Homam Al-Rawi', 'Arabic'],
+    ['Xandar Null', 'Arabic'],
     ['Markus', 'German'],
     ['Andrea', 'Italian'],
     ['Diego Hiro', 'Portuguese'],
