@@ -11,6 +11,32 @@ import '../api/deezer.dart';
 import '../api/definitions.dart';
 import 'error.dart';
 
+
+openScreenByURL(BuildContext context, String url) async {
+  DeezerLinkResponse res = await deezerAPI.parseLink(url);
+  if (res == null) return;
+
+  switch (res.type) {
+    case DeezerLinkType.TRACK:
+      Track t = await deezerAPI.track(res.id);
+      MenuSheet(context).defaultTrackMenu(t);
+      break;
+    case DeezerLinkType.ALBUM:
+      Album a = await deezerAPI.album(res.id);
+      Navigator.of(context).push(MaterialPageRoute(builder: (context) => AlbumDetails(a)));
+      break;
+    case DeezerLinkType.ARTIST:
+      Artist a = await deezerAPI.artist(res.id);
+      Navigator.of(context).push(MaterialPageRoute(builder: (context) => ArtistDetails(a)));
+      break;
+    case DeezerLinkType.PLAYLIST:
+      Playlist p = await deezerAPI.playlist(res.id);
+      Navigator.of(context).push(MaterialPageRoute(builder: (context) => PlaylistDetails(p)));
+      break;
+  }
+
+}
+
 class SearchScreen extends StatefulWidget {
   @override
   _SearchScreenState createState() => _SearchScreenState();
@@ -20,11 +46,23 @@ class _SearchScreenState extends State<SearchScreen> {
 
   String _query;
   bool _offline = false;
+  bool _loading = false;
   TextEditingController _controller = new TextEditingController();
   List _suggestions = [];
 
-  void _submit(BuildContext context, {String query}) {
+  void _submit(BuildContext context, {String query}) async {
     if (query != null) _query = query;
+
+    //URL
+    if (_query.startsWith('http')) {
+      setState(() => _loading = true);
+      try {
+        await openScreenByURL(context, _query);
+      } catch (e) {}
+      setState(() => _loading = false);
+      return;
+    }
+
     Navigator.of(context).push(
         MaterialPageRoute(builder: (context) => SearchResultsScreen(_query, offline: _offline,))
     );
@@ -45,7 +83,7 @@ class _SearchScreenState extends State<SearchScreen> {
 
   //Load search suggestions
   Future<List<String>> _loadSuggestions() async {
-    if (_query == null || _query.length < 2) return null;
+    if (_query == null || _query.length < 2 || _query.startsWith('http')) return null;
     String q = _query;
     await Future.delayed(Duration(milliseconds: 300));
     if (q != _query) return null;
@@ -75,7 +113,7 @@ class _SearchScreenState extends State<SearchScreen> {
                           _loadSuggestions();
                         },
                         decoration: InputDecoration(
-                          labelText: 'Search'.i18n
+                          labelText: 'Search or paste URL'.i18n
                         ),
                         controller: _controller,
                         onSubmitted: (String s) => _submit(context, query: s),
@@ -112,6 +150,8 @@ class _SearchScreenState extends State<SearchScreen> {
               },
             ),
           ),
+          if (_loading)
+            LinearProgressIndicator(),
           Divider(),
           ...List.generate((_suggestions??[]).length, (i) => ListTile(
             title: Text(_suggestions[i]),

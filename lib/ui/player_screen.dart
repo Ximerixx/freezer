@@ -42,6 +42,7 @@ class _PlayerScreenState extends State<PlayerScreen> {
               playerHelper.startService();
               return Center(child: CircularProgressIndicator(),);
             }
+
             return OrientationBuilder(
               builder: (context, orientation) {
                 //Landscape
@@ -388,9 +389,19 @@ class _LyricsWidgetState extends State<LyricsWidget> {
         _l = await deezerAPI.lyrics(_trackId);
         setState(() => _loading = false);
       } catch (e) {
+        print(e);
         //Error Lyrics
-        setState(() => _l = Lyrics().error);
+        setState(() => _l = Lyrics.error());
       }
+
+      //Empty lyrics
+      if (_l.lyrics.length == 0) {
+        setState(() {
+          _l = Lyrics.error();
+          _loading = false;
+        });
+      }
+
     } else {
       //Use provided lyrics
       _l = widget.lyrics;

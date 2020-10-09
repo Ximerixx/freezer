@@ -6,9 +6,12 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_material_color_picker/flutter_material_color_picker.dart';
+import 'package:fluttericon/font_awesome5_icons.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import 'package:freezer/api/deezer.dart';
+import 'package:freezer/api/download.dart';
 import 'package:freezer/ui/error.dart';
+import 'package:freezer/ui/home_screen.dart';
 import 'package:i18n_extension/i18n_widget.dart';
 import 'package:language_pickers/language_pickers.dart';
 import 'package:language_pickers/languages.dart';
@@ -17,6 +20,7 @@ import 'package:path_provider_ex/path_provider_ex.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:freezer/translations.i18n.dart';
 import 'package:clipboard/clipboard.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 import '../settings.dart';
 import '../main.dart';
@@ -30,20 +34,8 @@ class SettingsScreen extends StatefulWidget {
 
 class _SettingsScreenState extends State<SettingsScreen> {
 
-  String _about = '';
-
-  @override
-  void initState() {
-    //Load about text
-    PackageInfo.fromPlatform().then((PackageInfo info) {
-      setState(() {
-        _about = '${info.appName}';
-      });
-    });
-    super.initState();
-  }
-
   List<Map<String, String>> _languages() {
+    //Missing language
     defaultLanguagesList.add({
       'name': 'Filipino',
       'isoCode': 'fil'
@@ -69,6 +61,13 @@ class _SettingsScreenState extends State<SettingsScreen> {
             leading: Icon(Icons.settings),
             onTap: () => Navigator.of(context).push(MaterialPageRoute(
                 builder: (context) => GeneralSettings()
+            )),
+          ),
+          ListTile(
+            title: Text('Download Settings'.i18n),
+            leading: Icon(Icons.cloud_download),
+            onTap: () => Navigator.of(context).push(MaterialPageRoute(
+              builder: (context) => DownloadsSettings()
             )),
           ),
           ListTile(
@@ -132,11 +131,13 @@ class _SettingsScreenState extends State<SettingsScreen> {
               );
             },
           ),
-          Divider(),
-          Text(
-            _about,
-            textAlign: TextAlign.center,
-          )
+          ListTile(
+            title: Text('About'.i18n),
+            leading: Icon(Icons.info),
+            onTap: () => Navigator.push(context, MaterialPageRoute(
+                builder: (context) => CreditsScreen()
+            )),
+          ),
         ],
       ),
     );
@@ -149,6 +150,10 @@ class AppearanceSettings extends StatefulWidget {
 }
 
 class _AppearanceSettingsState extends State<AppearanceSettings> {
+
+
+  ColorSwatch<dynamic> _swatch(int c) => ColorSwatch(c, {500: Color(c)});
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -224,8 +229,19 @@ class _AppearanceSettingsState extends State<AppearanceSettings> {
                   return AlertDialog(
                     title: Text('Primary color'.i18n),
                     content: Container(
-                      height: 200,
+                      height: 240,
                       child: MaterialColorPicker(
+                        colors: [
+                          ...Colors.primaries,
+                          //Logo colors
+                          _swatch(0xffeca704),
+                          _swatch(0xffbe3266),
+                          _swatch(0xff4b2e7e),
+                          _swatch(0xff384697),
+                          _swatch(0xff0880b5),
+                          _swatch(0xff009a85),
+                          _swatch(0xff2ba766)
+                        ],
                         allowShades: false,
                         selectedColor: settings.primaryColor,
                         onMainColorChange: (ColorSwatch color) {
@@ -246,9 +262,12 @@ class _AppearanceSettingsState extends State<AppearanceSettings> {
           ListTile(
             title: Text('Use album art primary color'.i18n),
             subtitle: Text('Warning: might be buggy'.i18n),
-            leading: Switch(
-              value: settings.useArtColor,
-              onChanged: (v) => setState(() => settings.updateUseArtColor(v)),
+            leading: Container(
+              width: 30.0,
+              child: Checkbox(
+                value: settings.useArtColor,
+                onChanged: (v) => setState(() => settings.updateUseArtColor(v)),
+              ),
             ),
           )
         ],
@@ -450,19 +469,277 @@ class _DeezerSettingsState extends State<DeezerSettings> {
           ListTile(
             title: Text('Log tracks'.i18n),
             subtitle: Text('Send track listen logs to Deezer, enable it for features like Flow to work properly'.i18n),
-            leading: Checkbox(
-              value: settings.logListen,
-              onChanged: (bool v) {
-                setState(() => settings.logListen = v);
-                settings.save();
-              },
+            leading: Container(
+              width: 30,
+              child: Checkbox(
+                value: settings.logListen,
+                onChanged: (bool v) {
+                  setState(() => settings.logListen = v);
+                  settings.save();
+                },
+              ),
             ),
+          ),
+          ListTile(
+            title: Text('Proxy'.i18n),
+            leading: Icon(Icons.vpn_key),
+            subtitle: Text(settings.proxyAddress??'Not set'),
+            onTap: () {
+              String _new;
+              showDialog(
+                context: context,
+                builder: (BuildContext context) {
+                  return AlertDialog(
+                    title: Text('Proxy'.i18n),
+                    content: TextField(
+                      onChanged: (String v) => _new = v,
+                      decoration: InputDecoration(
+                        hintText: 'IP:PORT'
+                      ),
+                    ),
+                    actions: [
+                      FlatButton(
+                        child: Text('Cancel'.i18n),
+                        onPressed: () => Navigator.of(context).pop(),
+                      ),
+                      FlatButton(
+                        child: Text('Reset'.i18n),
+                        onPressed: () async {
+                          setState(() {
+                            settings.proxyAddress = null;
+                          });
+                          await settings.save();
+                          Navigator.of(context).pop();
+                        },
+                      ),
+                      FlatButton(
+                        child: Text('Save'.i18n),
+                        onPressed: () async {
+                          setState(() {
+                            settings.proxyAddress = _new;
+                          });
+                          await settings.save();
+                          Navigator.of(context).pop();
+                        },
+                      )
+                    ],
+                  );
+                }
+              );
+            },
           )
         ],
       ),
     );
   }
 }
+
+class DownloadsSettings extends StatefulWidget {
+  @override
+  _DownloadsSettingsState createState() => _DownloadsSettingsState();
+}
+
+class _DownloadsSettingsState extends State<DownloadsSettings> {
+
+  double _downloadThreads = settings.downloadThreads.toDouble();
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(title: Text('Download Settings'.i18n),),
+      body: ListView(
+        children: [
+          ListTile(
+            title: Text('Download path'.i18n),
+            leading: Icon(Icons.folder),
+            subtitle: Text(settings.downloadPath),
+            onTap: () async {
+              //Check permissions
+              if (!(await Permission.storage.request().isGranted)) return;
+              //Navigate
+              Navigator.of(context).push(MaterialPageRoute(
+                  builder: (context) => DirectoryPicker(settings.downloadPath, onSelect: (String p) {
+                    setState(() => settings.downloadPath = p);
+                  },)
+              ));
+            },
+          ),
+          ListTile(
+            title: Text('Downloads naming'.i18n),
+            subtitle: Text('Currently'.i18n + ': ${settings.downloadFilename}'),
+            leading: Icon(Icons.text_format),
+            onTap: () {
+              showDialog(
+                  context: context,
+                  builder: (context) {
+
+                    TextEditingController _controller = TextEditingController();
+                    String filename = settings.downloadFilename;
+                    _controller.value = _controller.value.copyWith(text: filename);
+                    String _new = _controller.value.text;
+
+                    //Dialog with filename format
+                    return AlertDialog(
+                      title: Text('Downloaded tracks filename'.i18n),
+                      content: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          TextField(
+                            controller: _controller,
+                            onChanged: (String s) => _new = s,
+                          ),
+                          Container(height: 8.0),
+                          Text(
+                            'Valid variables are'.i18n + ': %artists%, %artist%, %title%, %album%, %trackNumber%, %0trackNumber%, %feats%, %playlistTrackNumber%, %0playlistTrackNumber%, %year%',
+                            style: TextStyle(
+                              fontSize: 12.0,
+                            ),
+                          )
+                        ],
+                      ),
+                      actions: [
+                        FlatButton(
+                          child: Text('Cancel'.i18n),
+                          onPressed: () => Navigator.of(context).pop(),
+                        ),
+                        FlatButton(
+                          child: Text('Reset'.i18n),
+                          onPressed: () {
+                            _controller.value = _controller.value.copyWith(
+                                text: '%artists% - %title%'
+                            );
+                            _new = '%artists% - %title%';
+                          },
+                        ),
+                        FlatButton(
+                          child: Text('Clear'.i18n),
+                          onPressed: () => _controller.clear(),
+                        ),
+                        FlatButton(
+                          child: Text('Save'.i18n),
+                          onPressed: () async {
+                            setState(() {
+                              settings.downloadFilename = _new;
+                            });
+                            await settings.save();
+                            Navigator.of(context).pop();
+                          },
+                        )
+                      ],
+                    );
+                  }
+              );
+            },
+          ),
+          Padding(
+            padding: EdgeInsets.symmetric(horizontal: 16.0),
+            child: Text(
+              'Download threads'.i18n + ': ${_downloadThreads.round().toString()}',
+              style: TextStyle(
+                fontSize: 16.0
+              ),
+            ),
+          ),
+          Slider(
+            min: 1,
+            max: 6,
+            divisions: 5,
+            value: _downloadThreads,
+            label: _downloadThreads.round().toString(),
+            onChanged: (double v) => setState(() => _downloadThreads = v),
+            onChangeEnd: (double val) async {
+              _downloadThreads = val;
+              setState(() {
+                settings.downloadThreads = _downloadThreads.round();
+                _downloadThreads = settings.downloadThreads.toDouble();
+              });
+              await settings.save();
+            }
+          ),
+          ListTile(
+            title: Text('Create folders for artist'.i18n),
+            leading: Container(
+              width: 30.0,
+              child: Checkbox(
+                value: settings.artistFolder,
+                onChanged: (v) {
+                  setState(() => settings.artistFolder = v);
+                  settings.save();
+                },
+              ),
+            ),
+          ),
+          ListTile(
+            title: Text('Create folders for albums'.i18n),
+            leading: Container(
+              width: 30.0,
+              child: Checkbox(
+                value: settings.albumFolder,
+                onChanged: (v) {
+                  setState(() => settings.albumFolder = v);
+                  settings.save();
+                },
+              ),
+            ),
+          ),
+          ListTile(
+            title: Text('Separate albums by discs'.i18n),
+            leading: Container(
+              width: 30.0,
+              child: Checkbox(
+                value: settings.albumDiscFolder,
+                onChanged: (v) {
+                  setState(() => settings.albumDiscFolder = v);
+                  settings.save();
+                },
+              ),
+            ),
+          ),
+          ListTile(
+            title: Text('Overwrite already downloaded files'.i18n),
+            leading: Container(
+              width: 30.0,
+              child: Checkbox(
+                value: settings.overwriteDownload,
+                onChanged: (v) {
+                  setState(() => settings.overwriteDownload = v);
+                  settings.save();
+                },
+              ),
+            ),
+          ),
+          ListTile(
+            title: Text('Create folder for playlist'.i18n),
+            leading: Container(
+              width: 30.0,
+              child: Checkbox(
+                value: settings.playlistFolder,
+                onChanged: (v) {
+                  setState(() => settings.playlistFolder = v);
+                  settings.save();
+                },
+              ),
+            ),
+          ),
+          ListTile(
+            title: Text('Download .LRC lyrics'.i18n),
+            leading: Container(
+              width: 30.0,
+              child: Checkbox(
+                value: settings.downloadLyrics,
+                onChanged: (v) {
+                  setState(() => settings.downloadLyrics = v);
+                  settings.save();
+                },
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
 
 class GeneralSettings extends StatefulWidget {
   @override
@@ -479,163 +756,44 @@ class _GeneralSettingsState extends State<GeneralSettings> {
           ListTile(
             title: Text('Offline mode'.i18n),
             subtitle: Text('Will be overwritten on start.'.i18n),
-            leading: Switch(
-              value: settings.offlineMode,
-              onChanged: (bool v) {
-                if (v) {
-                  setState(() => settings.offlineMode = true);
-                  return;
-                }
-                showDialog(
-                  context: context,
-                  builder: (context) {
-                    deezerAPI.authorize().then((v) {
-                      if (v) {
-                        setState(() => settings.offlineMode = false);
-                      } else {
-                        Fluttertoast.showToast(
-                          msg: 'Error logging in, check your internet connections.'.i18n,
-                          gravity: ToastGravity.BOTTOM,
-                          toastLength: Toast.LENGTH_SHORT
+            leading: Container(
+              width: 30.0,
+              child: Checkbox(
+                value: settings.offlineMode,
+                onChanged: (bool v) {
+                  if (v) {
+                    setState(() => settings.offlineMode = true);
+                    return;
+                  }
+                  showDialog(
+                      context: context,
+                      builder: (context) {
+                        deezerAPI.authorize().then((v) {
+                          if (v) {
+                            setState(() => settings.offlineMode = false);
+                          } else {
+                            Fluttertoast.showToast(
+                                msg: 'Error logging in, check your internet connections.'.i18n,
+                                gravity: ToastGravity.BOTTOM,
+                                toastLength: Toast.LENGTH_SHORT
+                            );
+                          }
+                          Navigator.of(context).pop();
+                        });
+                        return AlertDialog(
+                            title: Text('Logging in...'.i18n),
+                            content: Row(
+                              mainAxisSize: MainAxisSize.max,
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: <Widget>[
+                                CircularProgressIndicator()
+                              ],
+                            )
                         );
                       }
-                      Navigator.of(context).pop();
-                    });
-                    return AlertDialog(
-                      title: Text('Logging in...'.i18n),
-                      content: Row(
-                        mainAxisSize: MainAxisSize.max,
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: <Widget>[
-                          CircularProgressIndicator()
-                        ],
-                      )
-                    );
-                  }
-                );
-              },
-            ),
-          ),
-          ListTile(
-            title: Text('Download path'.i18n),
-            leading: Icon(Icons.folder),
-            subtitle: Text(settings.downloadPath),
-            onTap: () async {
-              //Check permissions
-              if (!(await Permission.storage.request().isGranted)) return;
-              //Navigate
-              Navigator.of(context).push(MaterialPageRoute(
-                builder: (context) => DirectoryPicker(settings.downloadPath, onSelect: (String p) {
-                  setState(() => settings.downloadPath = p);
-                },)
-              ));
-            },
-          ),
-          ListTile(
-            title: Text('Downloads naming'.i18n),
-            subtitle: Text('Currently'.i18n + ': ${settings.downloadFilename}'),
-            leading: Icon(Icons.text_format),
-            onTap: () {
-              showDialog(
-                context: context,
-                builder: (context) {
-
-                  TextEditingController _controller = TextEditingController();
-                  String filename = settings.downloadFilename;
-                  _controller.value = _controller.value.copyWith(text: filename);
-                  String _new = _controller.value.text;
-
-                  //Dialog with filename format
-                  return AlertDialog(
-                    title: Text('Downloaded tracks filename'.i18n),
-                    content: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        TextField(
-                          controller: _controller,
-                          onChanged: (String s) => _new = s,
-                        ),
-                        Container(height: 8.0),
-                        Text(
-                          'Valid variables are'.i18n + ': %artists%, %artist%, %title%, %album%, %trackNumber%, %0trackNumber%, %feats%',
-                          style: TextStyle(
-                            fontSize: 12.0,
-                          ),
-                        )
-                      ],
-                    ),
-                    actions: [
-                      FlatButton(
-                        child: Text('Cancel'.i18n),
-                        onPressed: () => Navigator.of(context).pop(),
-                      ),
-                      FlatButton(
-                        child: Text('Reset'.i18n),
-                        onPressed: () {
-                          _controller.value = _controller.value.copyWith(
-                            text: '%artists% - %title%'
-                          );
-                          _new = '%artists% - %title%';
-                        },
-                      ),
-                      FlatButton(
-                        child: Text('Clear'.i18n),
-                        onPressed: () => _controller.clear(),
-                      ),
-                      FlatButton(
-                        child: Text('Save'.i18n),
-                        onPressed: () async {
-                          setState(() {
-                            settings.downloadFilename = _new;
-                          });
-                          await settings.save();
-                          Navigator.of(context).pop();
-                        },
-                      )
-                    ],
                   );
-                }
-              );
-            },
-          ),
-          ListTile(
-            title: Text('Create folders for artist'.i18n),
-            leading: Switch(
-              value: settings.artistFolder,
-              onChanged: (v) {
-                setState(() => settings.artistFolder = v);
-                settings.save();
-              },
-            ),
-          ),
-          ListTile(
-            title: Text('Create folders for albums'.i18n),
-            leading: Switch(
-              value: settings.albumFolder,
-              onChanged: (v) {
-                setState(() => settings.albumFolder = v);
-                settings.save();
-              },
-            ),
-          ),
-          ListTile(
-            title: Text('Separate albums by discs'.i18n),
-            leading: Switch(
-              value: settings.albumDiscFolder,
-              onChanged: (v) {
-                setState(() => settings.albumDiscFolder = v);
-                settings.save();
-              },
-            ),
-          ),
-          ListTile(
-            title: Text('Overwrite already downloaded files'.i18n),
-            leading: Switch(
-              value: settings.overwriteDownload,
-              onChanged: (v) {
-                setState(() => settings.overwriteDownload = v);
-                settings.save();
-              },
+                },
+              ),
             ),
           ),
           ListTile(
@@ -832,6 +990,113 @@ class _DirectoryPickerState extends State<DirectoryPicker> {
             ],
           );
         },
+      ),
+    );
+  }
+}
+
+class CreditsScreen extends StatefulWidget {
+  @override
+  _CreditsScreenState createState() => _CreditsScreenState();
+}
+
+class _CreditsScreenState extends State<CreditsScreen> {
+
+  String _version = '';
+
+  //Title, Subtitle, URL
+  static final List<List<String>> credits = [
+    ['exttex', 'Developer'],
+    ['Bas Curtiz', 'Icon, logo, banner, design suggestions, tester'],
+    ['Deemix', 'Better app <3', 'https://codeberg.org/RemixDev/deemix'],
+    ['Tobs, Homam Al-Rawi, Francesco', 'Beta testers'],
+    ['Annexhack', 'Android Auto help']
+  ];
+
+  static final List<List<String>> translators = [
+    ['Homam Al-Rawi', 'Arabic'],
+    ['Markus', 'German'],
+    ['Andrea', 'Italian'],
+    ['Diego Hiro', 'Portuguese'],
+    ['Annexhack', 'Russian'],
+    ['Chino Pacia', 'Filipino'],
+    ['ArcherDelta & PetFix', 'Spanish'],
+    ['Shazzaam', 'Croatian'],
+    ['VIRGIN_KLM', 'Greek'],
+    ['koreezzz', 'Korean'],
+    ['Fwwwwwwwwwweze', 'French'],
+    ['kobyrevah', 'Hebrew']
+  ];
+
+  @override
+  void initState() {
+    PackageInfo.fromPlatform().then((info) {
+      setState(() {
+        _version = 'v${info.version}';
+      });
+    });
+    super.initState();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: Text('About'.i18n),
+      ),
+      body: ListView(
+        children: [
+          FreezerTitle(),
+          Text(
+            _version,
+            textAlign: TextAlign.center,
+            style: TextStyle(
+              fontStyle: FontStyle.italic
+            ),
+          ),
+          Divider(),
+          ListTile(
+            title: Text('Telegram Channel'.i18n),
+            subtitle: Text('To get latest releases'.i18n),
+            leading: Icon(FontAwesome5.telegram, color: Color(0xFF27A2DF), size: 36.0),
+            onTap: () {
+              launch('https://t.me/freezereleases');
+            },
+          ),
+          ListTile(
+            title: Text('Telegram Group'.i18n),
+            subtitle: Text('Official chat'.i18n),
+            leading: Icon(FontAwesome5.telegram, color: Colors.cyan, size: 36.0),
+            onTap: () {
+              launch('https://t.me/freezerandroid');
+            },
+          ),
+          Divider(),
+          ...List.generate(credits.length, (i) => ListTile(
+            title: Text(credits[i][0]),
+            subtitle: Text(credits[i][1]),
+            onTap: () {
+              if (credits[i].length >= 3) {
+                launch(credits[i][2]);
+              }
+            },
+          )),
+          Divider(),
+          ...List.generate(translators.length, (i) => ListTile(
+            title: Text(translators[i][0]),
+            subtitle: Text(translators[i][1]),
+          )),
+          Padding(
+            padding: EdgeInsets.fromLTRB(0, 4, 0, 8),
+            child: Text(
+              'Huge thanks to all the contributors! <3'.i18n,
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                fontSize: 16.0
+              ),
+            ),
+          )
+        ],
       ),
     );
   }

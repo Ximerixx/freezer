@@ -21,6 +21,7 @@ class LoginWidget extends StatefulWidget {
 class _LoginWidgetState extends State<LoginWidget> {
 
   String _arl;
+  String _error;
 
   //Initialize deezer etc
   Future _init() async {
@@ -62,7 +63,14 @@ class _LoginWidgetState extends State<LoginWidget> {
       builder: (context) {
         return AlertDialog(
           title: Text('Error'.i18n),
-          content: Text('Error logging in! Please check your token and internet connection and try again.'.i18n),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text('Error logging in! Please check your token and internet connection and try again.'.i18n),
+              if (_error != null)
+                Text('\n\n$_error')
+            ],
+          ),
           actions: <Widget>[
             FlatButton(
               child: Text('Dismiss'.i18n),
@@ -82,13 +90,15 @@ class _LoginWidgetState extends State<LoginWidget> {
     //Try logging in
     try {
       deezerAPI.arl = settings.arl;
-      bool resp = await deezerAPI.authorize();
+      bool resp = await deezerAPI.rawAuthorize(onError: (e) => _error = e.toString());
       if (resp == false) { //false, not null
         setState(() => settings.arl = null);
         errorDialog();
       }
       //On error show dialog and reset to null
     } catch (e) {
+      _error = e;
+      print('Login error: ' + e);
       setState(() => settings.arl = null);
       errorDialog();
     }

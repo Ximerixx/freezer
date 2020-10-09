@@ -1,6 +1,9 @@
+import 'dart:math';
+
 import 'package:audio_service/audio_service.dart';
 import 'package:audio_session/audio_session.dart';
 import 'package:fluttertoast/fluttertoast.dart';
+import 'package:freezer/api/cache.dart';
 import 'package:freezer/api/deezer.dart';
 import 'package:freezer/ui/android_auto.dart';
 import 'package:just_audio/just_audio.dart';
@@ -21,6 +24,7 @@ PlayerHelper playerHelper = PlayerHelper();
 class PlayerHelper {
 
   StreamSubscription _customEventSubscription;
+  StreamSubscription _mediaItemSubscription;
   StreamSubscription _playbackStateStreamSubscription;
   QueueSource queueSource;
   LoopMode repeatType = LoopMode.off;
@@ -65,9 +69,26 @@ class PlayerHelper {
       //Log song (if allowed)
       if (event == null) return;
       if (event.processingState == AudioProcessingState.ready && event.playing) {
-        if (settings.logListen) deezerAPI.logListen(AudioService.currentMediaItem.id);
+        if (settings.logListen) {
+          //Check if duplicate
+          if (cache.loggedTrackId == AudioService.currentMediaItem.id) return;
+          cache.loggedTrackId = AudioService.currentMediaItem.id;
+          deezerAPI.logListen(AudioService.currentMediaItem.id);
+        }
       }
     });
+    _mediaItemSubscription = AudioService.currentMediaItemStream.listen((event) {
+      //Save queue
+      AudioService.customAction('saveQueue');
+
+      //Add to history
+      if (event == null) return;
+      if (cache.history == null) cache.history = [];
+      if (cache.history.length > 0 && cache.history.last.id == event.id) return;
+      cache.history.add(Track.fromMediaItem(event));
+      cache.save();
+    });
+
     //Start audio_service
     startService();
   }
@@ -79,7 +100,7 @@ class PlayerHelper {
       androidEnableQueue: true,
       androidStopForegroundOnPause: false,
       androidNotificationOngoing: false,
-      androidNotificationClickStartsActivity: true,
+      androidNotificationClickStartsActivity: false,
       androidNotificationChannelDescription: 'Freezer',
       androidNotificationChannelName: 'Freezer',
       androidNotificationIcon: 'drawable/ic_logo',
@@ -110,6 +131,7 @@ class PlayerHelper {
   Future onExit() async {
     _customEventSubscription.cancel();
     _playbackStateStreamSubscription.cancel();
+    _mediaItemSubscription.cancel();
   }
 
   //Replace queue, play specified track id
@@ -256,6 +278,13 @@ class AudioPlayerTask extends BackgroundAudioTask {
     });
     //Update state on all clients on change
     _eventSub = _player.playbackEventStream.listen((event) {
+      //Quality string
+      if (_queueIndex != -1 && _queueIndex < _queue.length) {
+        Map extras = mediaItem.extras;
+        extras['qualityString'] = event.qualityString??'';
+        _queue[_queueIndex] = mediaItem.copyWith(extras: extras);
+      }
+      //Update
       _broadcastState();
     });
     _player.processingStateStream.listen((state) {
@@ -296,6 +325,7 @@ class AudioPlayerTask extends BackgroundAudioTask {
 
     //Skip in player
     await _player.seek(Duration.zero, index: newIndex);
+    _queueIndex = newIndex;
     _skipState = null;
     onPlay();
   }
@@ -326,6 +356,40 @@ class AudioPlayerTask extends BackgroundAudioTask {
 
   @override
   Future<void> onSeekBackward(bool begin) async => _seekContinuously(begin, -1);
+
+  @override
+  Future<void> onSkipToNext() async {
+    //Shuffle
+    if (_player.shuffleModeEnabled??false) {
+      int newIndex = Random().nextInt(_queue.length)-1;
+      //Update state
+      _skipState = newIndex > _queueIndex
+          ? AudioProcessingState.skippingToNext
+          : AudioProcessingState.skippingToPrevious;
+
+      _queueIndex = newIndex;
+      await _player.seek(Duration.zero, index: _queueIndex);
+      _skipState = null;
+      return;
+    }
+
+    //Update buffering state
+    _skipState = AudioProcessingState.skippingToNext;
+    _queueIndex++;
+    await _player.seekToNext();
+    _skipState = null;
+    await _broadcastState();
+  }
+
+  @override
+  Future<void> onSkipToPrevious() async {
+    if (_queueIndex == 0) return;
+    //Update buffering state
+    _skipState = AudioProcessingState.skippingToPrevious;
+    _queueIndex--;
+    await _player.seekToPrevious();
+    _skipState = null;
+  }
 
   @override
   Future<List<MediaItem>> onLoadChildren(String parentMediaId) async {
@@ -417,12 +481,16 @@ class AudioPlayerTask extends BackgroundAudioTask {
     this._queue = q;
     AudioServiceBackground.setQueue(_queue);
     //Load
+    _queueIndex = 0;
     await _loadQueue();
-    await _player.seek(Duration.zero, index: 0);
+    //await _player.seek(Duration.zero, index: 0);
   }
 
   //Load queue to just_audio
   Future _loadQueue() async {
+    //Don't reset queue index by starting player
+    int qi = _queueIndex;
+
     List<AudioSource> sources = [];
     for(int i=0; i<_queue.length; i++) {
       sources.add(await _mediaItemToAudioSource(_queue[i]));
@@ -432,9 +500,11 @@ class AudioPlayerTask extends BackgroundAudioTask {
     //Load in just_audio
     try {
       await _player.load(_audioSource);
+      await _player.seek(Duration.zero, index: qi);
     } catch (e) {
       //Error loading tracks
     }
+    _queueIndex = qi;
     AudioServiceBackground.setMediaItem(mediaItem);
   }
 
@@ -523,13 +593,14 @@ class AudioPlayerTask extends BackgroundAudioTask {
 
   //Export queue to JSON
   Future _saveQueue() async {
+    if (_queueIndex == 0 && _queue.length == 0) return;
+
     String path = await _getQueuePath();
     File f = File(path);
-    //Create if doesnt exist
+    //Create if doesn't exist
     if (! await File(path).exists()) {
       f = await f.create();
     }
-
     Map data = {
       'index': _queueIndex,
       'queue': _queue.map<Map<String, dynamic>>((mi) => mi.toJson()).toList(),
@@ -552,7 +623,7 @@ class AudioPlayerTask extends BackgroundAudioTask {
       if (_queue != null) {
         await AudioServiceBackground.setQueue(_queue);
         await _loadQueue();
-        AudioServiceBackground.setMediaItem(mediaItem);
+        await AudioServiceBackground.setMediaItem(mediaItem);
       }
     }
     //Send restored queue source to ui
@@ -567,7 +638,6 @@ class AudioPlayerTask extends BackgroundAudioTask {
   Future onAddQueueItemAt(MediaItem mi, int index) async {
     //-1 == play next
     if (index == -1) index = _queueIndex + 1;
-
 
     _queue.insert(index, mi);
     await AudioServiceBackground.setQueue(_queue);

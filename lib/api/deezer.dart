@@ -1,8 +1,10 @@
 import 'dart:async';
 
+import 'package:dio/adapter.dart';
 import 'package:dio/dio.dart';
 import 'package:cookie_jar/cookie_jar.dart';
 import 'package:dio_cookie_manager/dio_cookie_manager.dart';
+import 'package:freezer/api/cache.dart';
 
 import 'dart:io';
 import 'dart:convert';
@@ -47,6 +49,15 @@ class DeezerAPI {
         return options;
       }
     ));
+
+    //Proxy
+    if (settings.proxyAddress != null && settings.proxyAddress != '' && settings.proxyAddress.length > 9) {
+      (dio.httpClientAdapter as DefaultHttpClientAdapter).onHttpClientCreate = (client) {
+        client.findProxy = (uri) => "PROXY ${settings.proxyAddress}";
+        client.badCertificateCallback = (X509Certificate cert, String host, int port) => true;
+      };
+    }
+
     //Add cookies
     List<Cookie> cookies = [Cookie('arl', this.arl)];
     _cookieJar.saveFromResponse(Uri.parse(this.privateUrl), cookies);
@@ -82,13 +93,13 @@ class DeezerAPI {
   //Wrapper so it can be globally awaited
   Future authorize() async {
     if (_authorizing == null) {
-      this._authorizing = this._authorize();
+      this._authorizing = this.rawAuthorize();
     }
     return _authorizing;
   }
 
   //Authorize, bool = success
-  Future<bool> _authorize() async {
+  Future<bool> rawAuthorize({Function onError}) async {
     try {
       Map<dynamic, dynamic> data = await callApi('deezer.getUserData');
       if (data['results']['USER']['USER_ID'] == 0) {
@@ -100,7 +111,31 @@ class DeezerAPI {
         this.favoritesPlaylistId = data['results']['USER']['LOVEDTRACKS_ID'];
         return true;
       }
-    } catch (e) { return false; }
+    } catch (e) {
+      if (onError != null)
+        onError(e);
+      print('Login Error (D): ' + e.toString());
+      return false;
+    }
+  }
+
+  //URL/Link parser
+  Future<DeezerLinkResponse> parseLink(String url) async {
+    Uri uri = Uri.parse(url);
+    //https://www.deezer.com/NOTHING_OR_COUNTRY/TYPE/ID
+    if (uri.host == 'www.deezer.com' || uri.host == 'deezer.com') {
+      if (uri.pathSegments.length < 2) return null;
+      DeezerLinkType type = DeezerLinkResponse.typeFromString(uri.pathSegments[uri.pathSegments.length-2]);
+      return DeezerLinkResponse(type: type, id: uri.pathSegments[uri.pathSegments.length-1]);
+    }
+    //Share URL
+    if (uri.host == 'deezer.page.link' || uri.host == 'www.deezer.page.link') {
+      Dio dio = Dio();
+      Response res = await dio.head(url, options: RequestOptions(
+        followRedirects: true
+      ));
+      return parseLink('http://deezer.com' + res.realUri.toString());
+    }
   }
 
   //Search
@@ -168,19 +203,6 @@ class DeezerAPI {
   //Get playlist with all tracks
   Future<Playlist> fullPlaylist(String id) async {
     return await playlist(id, nb: 100000);
-
-    //OLD WORKAROUND
-    /*
-    Playlist p = await playlist(id, nb: 200);
-    for (int i=200; i<p.trackCount; i++) {
-      //Get another page of tracks
-      List<Track> tracks = await playlistTracksPage(id, i, nb: 200);
-      p.tracks.addAll(tracks);
-      i += 200;
-      continue;
-    }
-    return p;
-   */
   }
 
   //Add track to favorites
@@ -271,7 +293,7 @@ class DeezerAPI {
     Map data = await callApi('song.getLyrics', params: {
       'sng_id': trackId
     });
-    if (data['error'] != null && data['error'].length > 0) return Lyrics().error;
+    if (data['error'] != null && data['error'].length > 0) return Lyrics.error();
     return Lyrics.fromPrivateJson(data['results']);
   }
 
@@ -318,7 +340,15 @@ class DeezerAPI {
 
   //Log song listen to deezer
   Future logListen(String trackId) async {
-    await callApi('log.listen', params: {'next_media': {'media': {'id': trackId, 'type': 'song'}}});
+    await callApi('log.listen', params: {
+      'params': {
+        'timestamp': DateTime.now().millisecondsSinceEpoch,
+        'ts_listen': DateTime.now().millisecondsSinceEpoch,
+        'type': 1,
+        'stat': {'seek': 0, 'pause': 0, 'sync': 1},
+        'media': {'id': trackId, 'type': 'song', 'format': 'MP3_128'}
+      }
+    });
   }
 
   Future<HomePage> getChannel(String target) async {
@@ -405,6 +435,17 @@ class DeezerAPI {
       'art_id': int.parse(artistId)
     });
     return data['results']['data'].map<Track>((t) => Track.fromPrivateJson(t)).toList();
+  }
+
+  //Update playlist metadata, status = see createPlaylist
+  Future updatePlaylist(String id, String title, String description, {int status = 1}) async {
+    await callApi('playlist.update', params: {
+      'description': description,
+      'title': title,
+      'playlist_id': int.parse(id),
+      'status': status,
+      'songs': []
+    });
   }
 }
 

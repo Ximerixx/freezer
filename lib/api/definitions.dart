@@ -10,6 +10,7 @@ import 'package:pointycastle/block/aes_fast.dart';
 import 'package:pointycastle/block/modes/ecb.dart';
 import 'package:hex/hex.dart';
 import 'package:path/path.dart' as p;
+import 'package:freezer/translations.i18n.dart';
 import 'package:crypto/crypto.dart' as crypto;
 
 import 'dart:typed_data';
@@ -30,8 +31,6 @@ class Track {
   bool offline;
   Lyrics lyrics;
   bool favorite;
-
-  //TODO: Not in DB
   int diskNumber;
   bool explicit;
 
@@ -102,6 +101,10 @@ class Track {
         artists = jsonDecode(mi.extras['artists']).map<Artist>((j) => Artist.fromJson(j)).toList();
       }
     }
+    List<String> playbackDetails;
+    if (mi.extras['playbackDetails'] != null)
+      playbackDetails = jsonDecode(mi.extras['playbackDetails']).map<String>((e) => e.toString()).toList();
+
     return Track(
       title: mi.title??mi.displayTitle,
       artists: artists,
@@ -112,7 +115,7 @@ class Track {
         thumbUrl: mi.extras['thumb']
       ),
       duration: mi.duration,
-      playbackDetails: null, // So it gets updated from api
+      playbackDetails: playbackDetails,
       lyrics: Lyrics.fromJson(jsonDecode(((mi.extras??{})['lyrics'])??"{}"))
     );
   }
@@ -149,7 +152,9 @@ class Track {
     'trackNumber': trackNumber,
     'offline': off?1:0,
     'lyrics': jsonEncode(lyrics.toJson()),
-    'favorite': (favorite??0)?1:0
+    'favorite': (favorite??0)?1:0,
+    'diskNumber': diskNumber,
+    'explicit': explicit?1:0
   };
   factory Track.fromSQL(Map<String, dynamic> data) => Track(
     id: data['trackId']??data['id'], //If loading from downloads table
@@ -163,7 +168,9 @@ class Track {
     )),
     offline: (data['offline'] == 1) ? true:false,
     lyrics: Lyrics.fromJson(jsonDecode(data['lyrics'])),
-    favorite: (data['favorite'] == 1) ? true:false
+    favorite: (data['favorite'] == 1) ? true:false,
+    diskNumber: data['diskNumber'],
+    explicit: (data['explicit'] == 1) ? true:false
   );
 
   factory Track.fromJson(Map<String, dynamic> json) => _$TrackFromJson(json);
@@ -186,8 +193,6 @@ class Album {
   int fans;
   bool offline; //If the album is offline, or just saved in db as metadata
   bool library;
-
-  //TODO: Not in DB
   AlbumType type;
   String releaseDate;
 
@@ -224,7 +229,9 @@ class Album {
     'art': art.full,
     'fans': fans,
     'offline': off?1:0,
-    'library': (library??false)?1:0
+    'library': (library??false)?1:0,
+    'type': AlbumType.values.indexOf(type),
+    'releaseDate': releaseDate
   };
   factory Album.fromSQL(Map<String, dynamic> data) => Album(
     id: data['id'],
@@ -238,7 +245,9 @@ class Album {
     art: ImageDetails(fullUrl: data['art']),
     fans: data['fans'],
     offline: (data['offline'] == 1) ? true:false,
-    library: (data['library'] == 1) ? true:false
+    library: (data['library'] == 1) ? true:false,
+    type: AlbumType.values[data['type']],
+    releaseDate: data['releaseDate']
   );
 
   factory Album.fromJson(Map<String, dynamic> json) => _$AlbumFromJson(json);
@@ -256,8 +265,6 @@ class Artist {
   int fans;
   bool offline;
   bool library;
-
-  //TODO: NOT IN DB
   bool radio;
 
   Artist({this.id, this.name, this.albums, this.albumCount, this.topTracks, this.picture, this.fans, this.offline, this.library, this.radio});
@@ -296,7 +303,8 @@ class Artist {
     'fans': fans,
     'albumCount': this.albumCount??(this.albums??[]).length,
     'offline': off?1:0,
-    'library': (library??false)?1:0
+    'library': (library??false)?1:0,
+    'radio': radio?1:0
   };
   factory Artist.fromSQL(Map<String, dynamic> data) => Artist(
     id: data['id'],
@@ -311,7 +319,8 @@ class Artist {
     picture: ImageDetails(fullUrl: data['picture']),
     fans: data['fans'],
     offline: (data['offline'] == 1)?true:false,
-    library: (data['library'] == 1)?true:false
+    library: (data['library'] == 1)?true:false,
+    radio: (data['radio'] == 1)?true:false
   );
 
   factory Artist.fromJson(Map<String, dynamic> json) => _$ArtistFromJson(json);
@@ -456,12 +465,12 @@ class Lyrics {
 
   Lyrics({this.id, this.writers, this.lyrics});
 
-  Lyrics get error => Lyrics(
-    id: id,
-    writers: writers,
+  static error() => Lyrics(
+    id: null,
+    writers: null,
     lyrics: [Lyric(
       offset: Duration(milliseconds: 0),
-      text: 'Error loading lyrics!'
+      text: 'Lyrics unavailable, empty or failed to load!'.i18n
     )]
   );
 
@@ -470,7 +479,7 @@ class Lyrics {
     Lyrics l = Lyrics(
       id: json['LYRICS_ID'],
       writers: json['LYRICS_WRITERS'],
-      lyrics: json['LYRICS_SYNC_JSON'].map<Lyric>((l) => Lyric.fromPrivateJson(l)).toList()
+      lyrics: (json['LYRICS_SYNC_JSON']??[]).map<Lyric>((l) => Lyric.fromPrivateJson(l)).toList()
     );
     //Clean empty lyrics
     l.lyrics.removeWhere((l) => l.offset == null);
@@ -723,4 +732,28 @@ enum RepeatType {
   NONE,
   LIST,
   TRACK
+}
+
+enum DeezerLinkType {
+  TRACK,
+  ALBUM,
+  ARTIST,
+  PLAYLIST
+}
+
+class DeezerLinkResponse {
+  DeezerLinkType type;
+  String id;
+
+  DeezerLinkResponse({this.type, this.id});
+
+  //String to DeezerLinkType
+  static typeFromString(String t) {
+    t = t.toLowerCase().trim();
+    if (t == 'album') return DeezerLinkType.ALBUM;
+    if (t == 'artist') return DeezerLinkType.ARTIST;
+    if (t == 'playlist') return DeezerLinkType.PLAYLIST;
+    if (t == 'track') return DeezerLinkType.TRACK;
+    return null;
+  }
 }

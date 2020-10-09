@@ -1,10 +1,16 @@
-const language_gr_el = {
-  "gr_el": {
+/*
+
+Translated by: VIRGIN_KLM
+
+ */
+
+const language_el_gr = {
+  "el_gr": {
     "Home": "Αρχική",
     "Search": "Αναζήτηση",
     "Library": "Βιβλιοθήκη",
     "Offline mode, can't play flow or smart track lists.":
-        "Λειτουργία εκτός σύνδεσης, δεν είναι δυνατή η αναπαραγωγή flow ή έξυπνων λιστών κομματιών.",
+    "Λειτουργία εκτός σύνδεσης, δεν είναι δυνατή η αναπαραγωγή flow ή έξυπνων λιστών κομματιών.",
     "Added to library": "Προστέθηκε στη βιβλιοθήκη",
     "Download": "Λήψη",
     "Disk": "Δίσκος",
@@ -23,30 +29,30 @@ const language_gr_el = {
     "Done": "Ολοκληρώθηκε",
     "Delete": "Διαγραφή",
     "Are you sure you want to delete this download?":
-        "Είστε βέβαιοι ότι θέλετε να διαγράψετε αυτήν τη λήψη;",
+    "Είστε βέβαιοι ότι θέλετε να διαγράψετε αυτήν τη λήψη;",
     "Cancel": "Άκυρο",
     "Downloads": "Λήψεις",
     "Clear queue": "Εκκαθάριση ουράς",
     "This won't delete currently downloading item":
-        "Αυτό δεν θα διαγράψει το τρέχον αντικείμενο λήψης",
+    "Αυτό δεν θα διαγράψει το τρέχον αντικείμενο λήψης",
     "Are you sure you want to delete all queued downloads?":
-        "Είστε βέβαιοι ότι θέλετε να διαγράψετε όλες τις λήψεις στην ουρά;",
+    "Είστε βέβαιοι ότι θέλετε να διαγράψετε όλες τις λήψεις στην ουρά;",
     "Clear downloads history": "Διαγραφή ιστορικού λήψεων",
     "WARNING: This will only clear non-offline (external downloads)":
-        "ΠΡΟΕΙΔΟΠΟΙΗΣΗ: Αυτό θα καθαρίσει μόνο τις εκτός σύνδεσης (εξωτερικές) λήψεις",
+    "ΠΡΟΕΙΔΟΠΟΙΗΣΗ: Αυτό θα καθαρίσει μόνο τις εκτός σύνδεσης (εξωτερικές) λήψεις",
     "Please check your connection and try again later...":
-        "Ελέγξτε τη σύνδεσή σας και δοκιμάστε ξανά αργότερα...",
+    "Ελέγξτε τη σύνδεσή σας και δοκιμάστε ξανά αργότερα...",
     "Show more": "Δείτε περισσότερα",
     "Importer": "Εισαγωγέας",
     "Currently supporting only Spotify, with 100 tracks limit":
-        "Αυτήν τη στιγμή υποστηρίζεται μόνο το Spotify, με όριο 100 κομματιών",
+    "Αυτήν τη στιγμή υποστηρίζεται μόνο το Spotify, με όριο 100 κομματιών",
     "Due to API limitations": "Λόγω περιορισμών API",
     "Enter your playlist link below": "Εισαγάγετε τον σύνδεσμο λίστας αναπαραγωγής παρακάτω",
     "Error loading URL!": "Σφάλμα φόρτωσης διεύθυνσης URL!",
     "Convert": "Μετατροπή",
     "Download only": "Μόνο λήψη",
     "Downloading is currently stopped, click here to resume.":
-        "Η λήψη έχει σταματήσει, κάντε κλικ εδώ για να συνεχίσετε.",
+    "Η λήψη έχει σταματήσει, κάντε κλικ εδώ για να συνεχίσετε.",
     "Tracks": "Κομμάτια",
     "Albums": "Album",
     "Artists": "Καλλιτέχνες",
@@ -64,24 +70,24 @@ const language_gr_el = {
     "All offline tracks": "Όλα τα κομμάτια εκτός σύνδεσης",
     "Create new playlist": "Δημιουργία λίστας αναπαραγωγής",
     "Cannot create playlists in offline mode":
-        "Δεν είναι δυνατή η δημιουργία λιστών αναπαραγωγής σε λειτουργία εκτός σύνδεσης",
+    "Δεν είναι δυνατή η δημιουργία λιστών αναπαραγωγής σε λειτουργία εκτός σύνδεσης",
     "Error": "Σφάλμα",
     "Error logging in! Please check your token and internet connection and try again.":
-        "Σφάλμα σύνδεσης! Ελέγξτε το token και τη σύνδεσή σας στο δίκτυο και δοκιμάστε ξανά.",
+    "Σφάλμα σύνδεσης! Ελέγξτε το token και τη σύνδεσή σας στο δίκτυο και δοκιμάστε ξανά.",
     "Dismiss": "Απόρριψη",
     "Welcome to": "Καλωσήρθατε στο",
     "Please login using your Deezer account.":
-        "Συνδεθείτε χρησιμοποιώντας τον λογαριασμό σας στο Deezer.",
+    "Συνδεθείτε χρησιμοποιώντας τον λογαριασμό σας στο Deezer.",
     "Login using browser": "Σύνδεση χρησιμοποιώντας το πρόγραμμα περιήγησης",
     "Login using token": "Σύνδεση χρησιμοποιώντας token",
     "Enter ARL": "Εισαγωγή ARL",
     "Token (ARL)": "Token (ARL)",
     "Save": "Αποθήκευση",
     "If you don't have account, you can register on deezer.com for free.":
-        "Εάν δεν έχετε λογαριασμό, μπορείτε να εγγραφείτε δωρεάν στο deezer.com.",
+    "Εάν δεν έχετε λογαριασμό, μπορείτε να εγγραφείτε δωρεάν στο deezer.com.",
     "Open in browser": "Ανοιγμα σε πρόγραμμα περιήγησης",
     "By using this app, you don't agree with the Deezer ToS":
-        "Χρησιμοποιώντας αυτήν την εφαρμογή, δεν συμφωνείτε με τους κανονισμούς χρήσης Deezer",
+    "Χρησιμοποιώντας αυτήν την εφαρμογή, δεν συμφωνείτε με τους κανονισμούς χρήσης Deezer",
     "Play next": "Παίξε αμέσως μετά",
     "Add to queue": "Προσθήκη στην ουρά",
     "Add track to favorites": "Προσθήκη κομμάτι στα αγαπημένα",
@@ -140,17 +146,17 @@ const language_gr_el = {
     "External downloads": "Εξωτερικές λήψεις",
     "Content language": "Γλώσσα περιεχομένου",
     "Not app language, used in headers. Now":
-        "Όχι γλώσσα εφαρμογής, χρησιμοποιείται στις κεφαλίδες. Τρέχουσα",
+    "Όχι γλώσσα εφαρμογής, χρησιμοποιείται στις κεφαλίδες. Τρέχουσα",
     "Select language": "Επιλογή γλώσσας",
     "Content country": "Χώρα περιεχομένου",
     "Country used in headers. Now": "Χώρα που χρησιμοποιείται στις κεφαλίδες. Τρέχουσα",
     "Log tracks": "Αρχεία καταγραφής",
     "Send track listen logs to Deezer, enable it for features like Flow to work properly":
-        "Αποστολή αρχείων καταγραφής ακρόασης στο Deezer, ενεργοποιήστε το για ορθή λειτουργία υπηρεσιών όπως το Flow",
+    "Αποστολή αρχείων καταγραφής ακρόασης στο Deezer, ενεργοποιήστε το για ορθή λειτουργία υπηρεσιών όπως το Flow",
     "Offline mode": "Λειτουργία εκτός σύνδεσης",
     "Will be overwritten on start.": "Θα αντικατασταθεί κατά την εκκίνηση.",
     "Error logging in, check your internet connections.":
-        "Σφάλμα σύνδεσης, ελέγξτε την σύνδεσή σας στο Δίκτυο.",
+    "Σφάλμα σύνδεσης, ελέγξτε την σύνδεσή σας στο Δίκτυο.",
     "Logging in...": "Σύνδεση...",
     "Download path": "Διαδρομή λήψεων",
     "Downloads naming": "Ονομασία λήψεων",
@@ -164,11 +170,11 @@ const language_gr_el = {
     "Overwrite already downloaded files": "Αντικατάσταση ήδη ληφθέντων αρχείων",
     "Copy ARL": "Αντιγραφή ARL",
     "Copy userToken/ARL Cookie for use in other apps.":
-        "Αντιγραφή userToken/ARL Cookie για χρήση σε άλλες εφαρμογές.",
+    "Αντιγραφή userToken/ARL Cookie για χρήση σε άλλες εφαρμογές.",
     "Copied": "Αντιγράφηκε",
     "Log out": "Αποσύνδεση",
     "Due to plugin incompatibility, login using browser is unavailable without restart.":
-        "Λόγω ασυμβατότητας προσθηκών, η σύνδεση μέσω προγράμματος περιήγησης δεν είναι διαθέσιμη χωρίς επανεκκίνηση.",
+    "Λόγω ασυμβατότητας προσθηκών, η σύνδεση μέσω προγράμματος περιήγησης δεν είναι διαθέσιμη χωρίς επανεκκίνηση.",
     "(ARL ONLY) Continue": "(ARL ΜΟΝΟ) Συνέχεια",
     "Log out & Exit": "Αποσύνδεση & Έξοδος",
     "Pick-a-Path": "Διαλέξτε ένα μονοπάτι",
@@ -177,7 +183,7 @@ const language_gr_el = {
     "Permission denied": "Η άδεια απορρίφθηκε",
     "Language": "Γλώσσα",
     "Language changed, please restart Freezer to apply!":
-        "Η γλώσσα άλλαξε, κάντε επανεκκίνηση του Freezer για εφαρμογή!",
+    "Η γλώσσα άλλαξε, κάντε επανεκκίνηση του Freezer για εφαρμογή!",
     "Importing...": "Εισαγωγή...",
     "Radio": "Ραδιόφωνο",
     "Flow": "Flow",

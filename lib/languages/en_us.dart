@@ -160,7 +160,7 @@ const language_en_us = {
     "Clear": "Clear",
     "Create folders for artist": "Create folders for artist",
     "Create folders for albums": "Create folders for albums",
-    "Separate albums by discs": "Separate albums by discs",
+    "Separate albums by discs": "Separate albums by disks",
     "Overwrite already downloaded files": "Overwrite already downloaded files",
     "Copy ARL": "Copy ARL",
     "Copy userToken/ARL Cookie for use in other apps.":
@@ -182,6 +182,33 @@ const language_en_us = {
     "Radio": "Radio",
     "Flow": "Flow",
     "Track is not available on Deezer!": "Track is not available on Deezer!",
-    "Failed to download track! Please restart.": "Failed to download track! Please restart."
+    "Failed to download track! Please restart.": "Failed to download track! Please restart.",
+
+    //0.5.0 Strings:
+    "Storage permission denied!": "Storage permission denied!",
+    "Failed": "Failed",
+    "Queued": "Queued",
+    "External": "External",
+    "Restart failed downloads": "Restart failed downloads",
+    "Clear failed": "Clear failed",
+    "Download Settings": "Download Settings",
+    "Create folder for playlist": "Create folder for playlist",
+    "Download .LRC lyrics": "Download .LRC lyrics",
+    "Proxy": "Proxy",
+    "Not set": "Not set",
+    "Search or paste URL": "Search or paste URL",
+    "History": "History",
+    "Download threads": "Download threads",
+    "Lyrics unavailable, empty or failed to load!": "Lyrics unavailable, empty or failed to load!",
+    "About": "About",
+    "Telegram Channel": "Telegram Channel",
+    "To get latest releases": "To get latest releases",
+    "Official chat": "Official chat",
+    "Telegram Group": "Telegram Group",
+    "Huge thanks to all the contributors! <3": "Huge thanks to all the contributors! <3",
+    "Edit playlist": "Edit playlist",
+    "Update": "Update",
+    "Playlist updated!": "Playlist updated!",
+    "Downloads added!": "Downloads added!"
   }
 };

@@ -30,13 +30,17 @@ Settings _$SettingsFromJson(Map<String, dynamic> json) {
     ..artistFolder = json['artistFolder'] as bool ?? true
     ..albumDiscFolder = json['albumDiscFolder'] as bool ?? false
     ..overwriteDownload = json['overwriteDownload'] as bool ?? false
+    ..downloadThreads = json['downloadThreads'] as int ?? 2
+    ..playlistFolder = json['playlistFolder'] as bool ?? false
+    ..downloadLyrics = json['downloadLyrics'] as bool ?? true
     ..theme =
         _$enumDecodeNullable(_$ThemesEnumMap, json['theme']) ?? Themes.Light
     ..primaryColor = Settings._colorFromJson(json['primaryColor'] as int)
     ..useArtColor = json['useArtColor'] as bool ?? false
     ..deezerLanguage = json['deezerLanguage'] as String ?? 'en'
     ..deezerCountry = json['deezerCountry'] as String ?? 'US'
-    ..logListen = json['logListen'] as bool ?? false;
+    ..logListen = json['logListen'] as bool ?? false
+    ..proxyAddress = json['proxyAddress'] as String;
 }
 
 Map<String, dynamic> _$SettingsToJson(Settings instance) => <String, dynamic>{
@@ -52,12 +56,16 @@ Map<String, dynamic> _$SettingsToJson(Settings instance) => <String, dynamic>{
       'artistFolder': instance.artistFolder,
       'albumDiscFolder': instance.albumDiscFolder,
       'overwriteDownload': instance.overwriteDownload,
+      'downloadThreads': instance.downloadThreads,
+      'playlistFolder': instance.playlistFolder,
+      'downloadLyrics': instance.downloadLyrics,
       'theme': _$ThemesEnumMap[instance.theme],
       'primaryColor': Settings._colorToJson(instance.primaryColor),
       'useArtColor': instance.useArtColor,
       'deezerLanguage': instance.deezerLanguage,
       'deezerCountry': instance.deezerCountry,
       'logListen': instance.logListen,
+      'proxyAddress': instance.proxyAddress,
     };
 
 T _$enumDecode<T>(

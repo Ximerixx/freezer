@@ -2,7 +2,9 @@ import 'package:audio_service/audio_service.dart';
 import 'package:custom_navigator/custom_navigator.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
+import 'package:freezer/api/cache.dart';
 import 'package:freezer/ui/library.dart';
 import 'package:freezer/ui/login_screen.dart';
 import 'package:freezer/ui/search.dart';
@@ -28,8 +30,8 @@ void main() async {
 
   //Initialize globals
   settings = await Settings().loadSettings();
-  //await imagesDatabase.init();
   await downloadManager.init();
+  cache = await Cache.load();
 
   runApp(FreezerApp());
 }
@@ -108,7 +110,7 @@ class _LoginMainWrapperState extends State<LoginMainWrapper> {
       //Load token on background
       deezerAPI.arl = settings.arl;
       settings.offlineMode = true;
-      deezerAPI.authorize().then((b) {
+      deezerAPI.authorize().then((b) async {
         if (b) setState(() => settings.offlineMode = false);
       });
     }

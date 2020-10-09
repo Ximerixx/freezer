@@ -27,7 +27,8 @@ Compile:
 ```
 flutter pub get
 flutter build apk
-```
+```  
+NOTE: You have to use own keys, or build debug using `flutter build apk --debug`
 
 ## Telegram group
 https://t.me/freezerandroid
@@ -45,7 +46,12 @@ Andrea: Italian
 Diego Hiro: Portuguese  
 Annexhack: Russian  
 Chino Pacia: Filipino  
-ArcherDelta & PetFix: Spanish
+ArcherDelta & PetFix: Spanish  
+Shazzaam: Croatian  
+VIRGIN_KLM: Greek  
+koreezzz: Korean    
+Fwwwwwwwwwweze: French    
+kobyrevah: Hebrew   
 
 ### just_audio, audio_service
 This app depends on modified just_audio and audio_service plugins with Deezer support.  

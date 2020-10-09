@@ -48,6 +48,7 @@ class SpotifyAPI {
     SpotifyPlaylist playlist = SpotifyPlaylist.fromJson(data);
     return playlist;
   }
+
   
   Future convertPlaylist(SpotifyPlaylist playlist, {bool downloadOnly = false}) async {
     doneImporting = false;

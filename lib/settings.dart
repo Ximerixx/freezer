@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:audio_service/audio_service.dart';
+import 'package:freezer/api/download.dart';
 import 'package:freezer/main.dart';
 import 'package:freezer/ui/cached_image.dart';
 import 'package:json_annotation/json_annotation.dart';
@@ -51,6 +52,12 @@ class Settings {
   bool albumDiscFolder;
   @JsonKey(defaultValue: false)
   bool overwriteDownload;
+  @JsonKey(defaultValue: 2)
+  int downloadThreads;
+  @JsonKey(defaultValue: false)
+  bool playlistFolder;
+  @JsonKey(defaultValue: true)
+  bool downloadLyrics;
 
 
   //Appearance
@@ -76,6 +83,8 @@ class Settings {
   String deezerCountry;
   @JsonKey(defaultValue: false)
   bool logListen;
+  @JsonKey(defaultValue: null)
+  String proxyAddress;
 
   Settings({this.downloadPath, this.arl});
 
@@ -138,6 +147,14 @@ class Settings {
     return ThemeData();
   }
 
+  //JSON to forward into download service
+  Map getServiceSettings() {
+    return {
+      "downloadThreads": downloadThreads,
+      "overwriteDownload": overwriteDownload,
+      "downloadLyrics": downloadLyrics
+    };
+  }
 
   void updateUseArtColor(bool v) {
     useArtColor = v;
@@ -181,6 +198,7 @@ class Settings {
   Future save() async {
     File f = File(await getPath());
     await f.writeAsString(jsonEncode(this.toJson()));
+    downloadManager.updateServiceSettings();
   }
 
   Future updateAudioServiceQuality() async {

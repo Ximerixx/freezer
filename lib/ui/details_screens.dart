@@ -1,6 +1,9 @@
+import 'dart:convert';
+
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:fluttertoast/fluttertoast.dart';
+import 'package:freezer/api/cache.dart';
 import 'package:freezer/api/deezer.dart';
 import 'package:freezer/api/download.dart';
 import 'package:freezer/api/player.dart';
@@ -692,6 +695,22 @@ class _PlaylistDetailsState extends State<PlaylistDetails> {
     }
   }
 
+  //Load cached playlist sorting
+  void _restoreSort() async {
+    if (cache.playlistSort == null) {
+      cache.playlistSort = {};
+      await cache.save();
+      return;
+    }
+    if (cache.playlistSort[playlist.id] != null) {
+      //Preload tracks
+      if (playlist.tracks.length < playlist.trackCount) {
+        playlist = await deezerAPI.fullPlaylist(playlist.id);
+      }
+      setState(() => _sort = cache.playlistSort[playlist.id]);
+    }
+  }
+
   @override
   void initState() {
     playlist = widget.playlist;
@@ -716,6 +735,8 @@ class _PlaylistDetailsState extends State<PlaylistDetails> {
         _load();
       });
     }
+
+    _restoreSort();
 
     super.initState();
   }
@@ -817,7 +838,7 @@ class _PlaylistDetailsState extends State<PlaylistDetails> {
                 IconButton(
                   icon: Icon(Icons.favorite, size: 32),
                   onPressed: () async {
-                    await deezerAPI.addFavoriteAlbum(playlist.id);
+                    await deezerAPI.addPlaylist(playlist.id);
                     Fluttertoast.showToast(
                         msg: 'Added to library'.i18n,
                         toastLength: Toast.LENGTH_SHORT,
@@ -833,7 +854,17 @@ class _PlaylistDetailsState extends State<PlaylistDetails> {
                 ),
                 PopupMenuButton(
                   child: Icon(Icons.sort, size: 32.0),
-                  onSelected: (SortType s) => setState(() => _sort = s),
+                  onSelected: (SortType s) async {
+                    if (playlist.tracks.length < playlist.trackCount) {
+                      //Preload whole playlist
+                      playlist = await deezerAPI.fullPlaylist(playlist.id);
+                    }
+                    setState(() => _sort = s);
+
+                    //Save sort type to cache
+                    cache.playlistSort[playlist.id] = s;
+                    cache.save();
+                  },
                   itemBuilder: (context) => <PopupMenuEntry<SortType>>[
                     PopupMenuItem(
                       value: SortType.DEFAULT,

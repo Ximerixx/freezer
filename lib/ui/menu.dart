@@ -1,7 +1,10 @@
+import 'dart:ffi';
+
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:audio_service/audio_service.dart';
 import 'package:fluttertoast/fluttertoast.dart';
+import 'package:freezer/api/cache.dart';
 import 'package:freezer/api/deezer.dart';
 import 'package:freezer/api/download.dart';
 import 'package:freezer/ui/details_screens.dart';
@@ -123,7 +126,7 @@ class MenuSheet {
     showWithTrack(track, [
       addToQueueNext(track),
       addToQueue(track),
-      (track.favorite??false)?removeFavoriteTrack(track, onUpdate: onRemove):addTrackFavorite(track),
+      (cache.checkTrackFavorite(track))?removeFavoriteTrack(track, onUpdate: onRemove):addTrackFavorite(track),
       addToPlaylist(track),
       downloadTrack(track),
       showAlbum(track.album),
@@ -169,6 +172,11 @@ class MenuSheet {
             gravity: ToastGravity.BOTTOM,
             toastLength: Toast.LENGTH_SHORT
         );
+        //Add to cache
+        if (cache.libraryTracks == null)
+          cache.libraryTracks = [];
+        cache.libraryTracks.add(t.id);
+
         _close();
       }
   );
@@ -179,6 +187,7 @@ class MenuSheet {
     onTap: () async {
       await downloadManager.addOfflineTrack(t, private: false);
       _close();
+      showDownloadStartedToast();
     },
   );
 
@@ -186,76 +195,24 @@ class MenuSheet {
     title: Text('Add to playlist'.i18n),
     leading: Icon(Icons.playlist_add),
     onTap: () async {
-
-      Playlist p;
-
       //Show dialog to pick playlist
       await showDialog(
-          context: context,
-          builder: (context) {
-            return AlertDialog(
-              title: Text('Select playlist'.i18n),
-              content: FutureBuilder(
-                future: deezerAPI.getPlaylists(),
-                builder: (context, snapshot) {
-
-                  if (snapshot.hasError) SizedBox(
-                    height: 100,
-                    child: ErrorScreen(),
-                  );
-                  if (snapshot.connectionState != ConnectionState.done) return SizedBox(
-                    height: 100,
-                    child: Center(child: CircularProgressIndicator(),),
-                  );
-
-                  List<Playlist> playlists = snapshot.data;
-                  return SingleChildScrollView(
-                    child: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        ...List.generate(playlists.length, (i) => ListTile(
-                          title: Text(playlists[i].title),
-                          leading: CachedImage(
-                            url: playlists[i].image.thumb,
-                          ),
-                          onTap: () {
-                            p = playlists[i];
-                            Navigator.of(context).pop();
-                          },
-                        )),
-                        ListTile(
-                          title: Text('Create new playlist'.i18n),
-                          leading: Icon(Icons.add),
-                          onTap: () {
-                            Navigator.of(context).pop();
-                            showDialog(
-                              context: context,
-                              builder: (context) => CreatePlaylistDialog(tracks: [t],)
-                            );
-                          },
-                        )
-                      ]
-                    ),
-                  );
-                },
-              ),
+        context: context,
+        builder: (context) {
+          return SelectPlaylistDialog(track: t, callback: (Playlist p) async {
+            await deezerAPI.addToPlaylist(t.id, p.id);
+            //Update the playlist if offline
+            if (await downloadManager.checkOffline(playlist: p)) {
+              downloadManager.addOfflinePlaylist(p);
+            }
+            Fluttertoast.showToast(
+              msg: "Track added to".i18n + " ${p.title}",
+              toastLength: Toast.LENGTH_SHORT,
+              gravity: ToastGravity.BOTTOM,
             );
-          }
-      );
-      //Add to playlist, show toast
-      if (p != null) {
-        await deezerAPI.addToPlaylist(t.id, p.id);
-        //Update the playlist if offline
-        if (await downloadManager.checkOffline(playlist: p)) {
-          downloadManager.addOfflinePlaylist(p);
+          });
         }
-        Fluttertoast.showToast(
-          msg: "Track added to".i18n + " ${p.title}",
-          toastLength: Toast.LENGTH_SHORT,
-          gravity: ToastGravity.BOTTOM,
-        );
-      }
-
+      );
       _close();
     },
   );
@@ -284,12 +241,16 @@ class MenuSheet {
       if (await downloadManager.checkOffline(playlist: p)) {
         await downloadManager.addOfflinePlaylist(p);
       }
+      //Remove from cache
+      if (cache.libraryTracks != null)
+        cache.libraryTracks.removeWhere((i) => i == t.id);
       Fluttertoast.showToast(
         msg: 'Track removed from library'.i18n,
         toastLength: Toast.LENGTH_SHORT,
         gravity: ToastGravity.BOTTOM
       );
-      onUpdate();
+      if (onUpdate != null)
+        onUpdate();
       _close();
     },
   );
@@ -348,8 +309,9 @@ class MenuSheet {
       title: Text('Download'.i18n),
       leading: Icon(Icons.file_download),
       onTap: () async {
-        await downloadManager.addOfflineAlbum(a, private: false);
         _close();
+        await downloadManager.addOfflineAlbum(a, private: false);
+        showDownloadStartedToast();
       }
   );
 
@@ -360,6 +322,7 @@ class MenuSheet {
       await deezerAPI.addFavoriteAlbum(a.id);
       await downloadManager.addOfflineAlbum(a, private: true);
       _close();
+      showDownloadStartedToast();
     },
   );
 
@@ -441,11 +404,13 @@ class MenuSheet {
   // PLAYLIST
   //===================
 
-  void defaultPlaylistMenu(Playlist playlist, {List<Widget> options = const [], Function onRemove}) {
+  void defaultPlaylistMenu(Playlist playlist, {List<Widget> options = const [], Function onRemove, Function onUpdate}) {
     show([
       playlist.library?removePlaylistLibrary(playlist, onRemove: onRemove):addPlaylistLibrary(playlist),
       addPlaylistOffline(playlist),
       downloadPlaylist(playlist),
+      if (playlist.user.id == deezerAPI.userId)
+        editPlaylist(playlist, onUpdate: onUpdate),
       ...options
     ]);
   }
@@ -492,6 +457,7 @@ class MenuSheet {
       await deezerAPI.addPlaylist(p.id);
       downloadManager.addOfflinePlaylist(p, private: true);
       _close();
+      showDownloadStartedToast();
     },
   );
 
@@ -501,6 +467,21 @@ class MenuSheet {
     onTap: () async {
       downloadManager.addOfflinePlaylist(p, private: false);
       _close();
+      showDownloadStartedToast();
+    },
+  );
+
+  Widget editPlaylist(Playlist p, {Function onUpdate}) => ListTile(
+    title: Text('Edit playlist'.i18n),
+    leading: Icon(Icons.edit),
+    onTap: () async {
+      await showDialog(
+        context: context,
+        builder: (context) => CreatePlaylistDialog(playlist: p)
+      );
+      _close();
+      if (onUpdate != null)
+        onUpdate();
     },
   );
 
@@ -509,9 +490,17 @@ class MenuSheet {
   // OTHER
   //===================
 
+  showDownloadStartedToast() {
+    Fluttertoast.showToast(
+      msg: 'Downloads added!'.i18n,
+      gravity: ToastGravity.BOTTOM,
+      toastLength: Toast.LENGTH_SHORT
+    );
+  }
+
   //Create playlist
-  void createPlaylist() {
-    showDialog(
+  Future createPlaylist() async {
+    await showDialog(
       context: context,
       builder: (BuildContext context) {
         return CreatePlaylistDialog();
@@ -523,11 +512,90 @@ class MenuSheet {
   void _close() => Navigator.of(context).pop();
 }
 
+class SelectPlaylistDialog extends StatefulWidget {
+
+  final Track track;
+  final Function callback;
+  SelectPlaylistDialog({this.track, this.callback, Key key}): super(key: key);
+
+  @override
+  _SelectPlaylistDialogState createState() => _SelectPlaylistDialogState();
+}
+
+class _SelectPlaylistDialogState extends State<SelectPlaylistDialog> {
+
+  bool createNew = false;
+
+  @override
+  Widget build(BuildContext context) {
+
+    //Create new playlist
+    if (createNew) {
+      if (widget.track == null) {
+        return CreatePlaylistDialog();
+      }
+      return CreatePlaylistDialog(tracks: [widget.track]);
+    }
+
+
+    return AlertDialog(
+      title: Text('Select playlist'.i18n),
+      content: FutureBuilder(
+        future: deezerAPI.getPlaylists(),
+        builder: (context, snapshot) {
+
+          if (snapshot.hasError) SizedBox(
+            height: 100,
+            child: ErrorScreen(),
+          );
+          if (snapshot.connectionState != ConnectionState.done) return SizedBox(
+            height: 100,
+            child: Center(child: CircularProgressIndicator(),),
+          );
+
+          List<Playlist> playlists = snapshot.data;
+          return SingleChildScrollView(
+            child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  ...List.generate(playlists.length, (i) => ListTile(
+                    title: Text(playlists[i].title),
+                    leading: CachedImage(
+                      url: playlists[i].image.thumb,
+                    ),
+                    onTap: () {
+                      if (widget.callback != null) {
+                        widget.callback(playlists[i]);
+                      }
+                      Navigator.of(context).pop();
+                    },
+                  )),
+                  ListTile(
+                    title: Text('Create new playlist'.i18n),
+                    leading: Icon(Icons.add),
+                    onTap: () async {
+                      setState(() {
+                        createNew = true;
+                      });
+                    },
+                  )
+                ]
+            ),
+          );
+        },
+      ),
+    );
+  }
+}
+
+
 
 class CreatePlaylistDialog extends StatefulWidget {
 
   final List<Track> tracks;
-  CreatePlaylistDialog({this.tracks, Key key}): super(key: key);
+  //If playlist not null, update
+  final Playlist playlist;
+  CreatePlaylistDialog({this.tracks, this.playlist, Key key}): super(key: key);
 
   @override
   _CreatePlaylistDialogState createState() => _CreatePlaylistDialogState();
@@ -538,11 +606,28 @@ class _CreatePlaylistDialogState extends State<CreatePlaylistDialog> {
   int _playlistType = 1;
   String _title = '';
   String _description = '';
+  TextEditingController _titleController;
+  TextEditingController _descController;
+
+  //Create or edit mode
+  bool get edit => widget.playlist != null;
+
+  @override
+  void initState() {
+
+    //Edit playlist mode
+    if (edit) {
+      _titleController = TextEditingController(text: widget.playlist.title);
+      _descController = TextEditingController(text: widget.playlist.description);
+    }
+
+    super.initState();
+  }
 
   @override
   Widget build(BuildContext context) {
     return AlertDialog(
-      title: Text('Create playlist'.i18n),
+      title: Text(edit ? 'Edit playlist'.i18n : 'Create playlist'.i18n),
       content: Column(
         mainAxisSize: MainAxisSize.min,
         children: <Widget>[
@@ -550,10 +635,12 @@ class _CreatePlaylistDialogState extends State<CreatePlaylistDialog> {
             decoration: InputDecoration(
               labelText: 'Title'.i18n
             ),
+            controller: _titleController ?? TextEditingController(),
             onChanged: (String s) => _title = s,
           ),
           TextField(
             onChanged: (String s) => _description = s,
+            controller: _descController ?? TextEditingController(),
             decoration: InputDecoration(
                 labelText: 'Description'.i18n
             ),
@@ -583,22 +670,36 @@ class _CreatePlaylistDialogState extends State<CreatePlaylistDialog> {
           onPressed: () => Navigator.of(context).pop(),
         ),
         FlatButton(
-          child: Text('Create'.i18n),
+          child: Text(edit ? 'Update'.i18n : 'Create'.i18n),
           onPressed: () async {
-            List<String> tracks = [];
-            if (widget.tracks != null) {
-              tracks = widget.tracks.map<String>((t) => t.id).toList();
+            if (edit) {
+              //Update
+              await deezerAPI.updatePlaylist(
+                widget.playlist.id,
+                _titleController.value.text,
+                _descController.value.text,
+                status: _playlistType
+              );
+              Fluttertoast.showToast(
+                  msg: 'Playlist updated!'.i18n,
+                  gravity: ToastGravity.BOTTOM
+              );
+            } else {
+              List<String> tracks = [];
+              if (widget.tracks != null) {
+                tracks = widget.tracks.map<String>((t) => t.id).toList();
+              }
+              await deezerAPI.createPlaylist(
+                  _title,
+                  status: _playlistType,
+                  description: _description,
+                  trackIds: tracks
+              );
+              Fluttertoast.showToast(
+                  msg: 'Playlist created!'.i18n,
+                  gravity: ToastGravity.BOTTOM
+              );
             }
-            await deezerAPI.createPlaylist(
-              _title,
-              status: _playlistType,
-              description: _description,
-              trackIds: tracks
-            );
-            Fluttertoast.showToast(
-              msg: 'Playlist created!'.i18n,
-              gravity: ToastGravity.BOTTOM
-            );
             Navigator.of(context).pop();
           },
         )

@@ -1,6 +1,7 @@
 import 'package:connectivity/connectivity.dart';
 import 'package:flutter/material.dart';
 import 'package:fluttertoast/fluttertoast.dart';
+import 'package:freezer/api/cache.dart';
 import 'package:freezer/api/deezer.dart';
 import 'package:freezer/api/definitions.dart';
 import 'package:freezer/api/player.dart';
@@ -57,7 +58,7 @@ class LibraryScreen extends StatelessWidget {
       body: ListView(
         children: <Widget>[
           Container(height: 4.0,),
-          if (downloadManager.stopped && downloadManager.queue.length > 0)
+          if (!downloadManager.running && downloadManager.queueSize > 0)
             ListTile(
               title: Text('Downloads'.i18n),
               leading: Icon(Icons.file_download),
@@ -70,7 +71,7 @@ class LibraryScreen extends StatelessWidget {
               },
             ),
           //Dirty if to not use columns
-          if (downloadManager.stopped && downloadManager.queue.length > 0)
+          if (!downloadManager.running && downloadManager.queueSize > 0)
             Divider(),
 
           ListTile(
@@ -106,6 +107,15 @@ class LibraryScreen extends StatelessWidget {
             onTap: () {
               Navigator.of(context).push(
                   MaterialPageRoute(builder: (context) => LibraryPlaylists())
+              );
+            },
+          ),
+          ListTile(
+            title: Text('History'.i18n),
+            leading: Icon(Icons.history),
+            onTap: () {
+              Navigator.of(context).push(
+                MaterialPageRoute(builder: (context) => HistoryScreen())
               );
             },
           ),
@@ -196,14 +206,49 @@ class _LibraryTracksState extends State<LibraryTracks> {
   ScrollController _scrollController = ScrollController();
   List<Track> tracks = [];
   List<Track> allTracks = [];
+  int trackCount;
 
   Playlist get _playlist => Playlist(id: deezerAPI.favoritesPlaylistId);
 
   Future _load() async {
+    //Already loaded
+    if (trackCount != null && tracks.length >= trackCount) {
+      //Update tracks cache if fully loaded
+      if (cache.libraryTracks == null || cache.libraryTracks.length != trackCount) {
+        setState(() {
+          cache.libraryTracks = tracks.map((t) => t.id).toList();
+        });
+        await cache.save();
+      }
+      return;
+    }
+
     ConnectivityResult connectivity = await Connectivity().checkConnectivity();
     if (connectivity != ConnectivityResult.none) {
       setState(() => _loading = true);
       int pos = tracks.length;
+
+      if (trackCount == null || tracks.length == 0) {
+        //Load tracks as a playlist
+        Playlist favPlaylist;
+        try {
+          favPlaylist = await deezerAPI.playlist(deezerAPI.favoritesPlaylistId);
+        } catch (e) {}
+        //Error loading
+        if (favPlaylist == null) {
+          setState(() => _loading = false);
+          return;
+        }
+        //Update
+        setState(() {
+          trackCount = favPlaylist.trackCount;
+          tracks = favPlaylist.tracks;
+          _makeFavorite();
+          _loading = false;
+        });
+        return;
+      }
+
       //Load another page of tracks from deezer
       List<Track> _t;
       try {
@@ -216,6 +261,7 @@ class _LibraryTracksState extends State<LibraryTracks> {
       }
       setState(() {
         tracks.addAll(_t);
+        _makeFavorite();
         _loading = false;
       });
 
@@ -234,6 +280,12 @@ class _LibraryTracksState extends State<LibraryTracks> {
     setState(() {
       allTracks = tracks;
     });
+  }
+
+  //Update tracks with favorite true
+  void _makeFavorite() {
+    for (int i=0; i<tracks.length; i++)
+      tracks[i].favorite = true;
   }
 
   @override
@@ -257,6 +309,7 @@ class _LibraryTracksState extends State<LibraryTracks> {
     return Scaffold(
       appBar: AppBar(title: Text('Tracks'.i18n),),
       body: ListView(
+        controller: _scrollController,
         children: <Widget>[
           Card(
             child: Column(
@@ -554,7 +607,7 @@ class _LibraryPlaylistsState extends State<LibraryPlaylists> {
           ListTile(
             title: Text('Create new playlist'.i18n),
             leading: Icon(Icons.playlist_add),
-            onTap: () {
+            onTap: () async {
               if (settings.offlineMode) {
                 Fluttertoast.showToast(
                   msg: 'Cannot create playlists in offline mode'.i18n,
@@ -563,7 +616,8 @@ class _LibraryPlaylistsState extends State<LibraryPlaylists> {
                 return;
               }
               MenuSheet m = MenuSheet(context);
-              m.createPlaylist();
+              await m.createPlaylist();
+              await _load();
             },
           ),
           Divider(),
@@ -586,6 +640,7 @@ class _LibraryPlaylistsState extends State<LibraryPlaylists> {
             },
             onHold: () {
               MenuSheet m = MenuSheet(context);
+              favoritesPlaylist.library = true;
               m.defaultPlaylistMenu(favoritesPlaylist);
             },
           ),
@@ -600,9 +655,10 @@ class _LibraryPlaylistsState extends State<LibraryPlaylists> {
                 )),
                 onHold: () {
                   MenuSheet m = MenuSheet(context);
-                  m.defaultPlaylistMenu(p, onRemove: () {
-                    setState(() => _playlists.remove(p));
-                  });
+                  m.defaultPlaylistMenu(
+                    p,
+                    onRemove: () {setState(() => _playlists.remove(p));},
+                    onUpdate: () {_load();});
                 },
               );
             }),
@@ -653,3 +709,49 @@ class _LibraryPlaylistsState extends State<LibraryPlaylists> {
     );
   }
 }
+
+class HistoryScreen extends StatefulWidget {
+  @override
+  _HistoryScreenState createState() => _HistoryScreenState();
+}
+
+class _HistoryScreenState extends State<HistoryScreen> {
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: Text('History'.i18n),
+        actions: [
+          IconButton(
+            icon: Icon(Icons.delete_sweep),
+            onPressed: () {
+              setState(() => cache.history = []);
+              cache.save();
+            },
+          )
+        ],
+      ),
+      body: ListView.builder(
+        itemCount: (cache.history??[]).length,
+        itemBuilder: (BuildContext context, int i) {
+          Track t = cache.history[i];
+          return TrackTile(
+            t,
+            onTap: () {
+              playerHelper.playFromTrackList(cache.history, t.id, QueueSource(
+                id: null,
+                text: 'History'.i18n,
+                source: 'history'
+              ));
+            },
+            onHold: () {
+              MenuSheet m = MenuSheet(context);
+              m.defaultTrackMenu(t);
+            },
+          );
+        },
+      ),
+    );
+  }
+}
+
