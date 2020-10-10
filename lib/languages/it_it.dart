@@ -187,6 +187,33 @@ const language_it_it = {
     "Language changed, please restart Freezer to apply!":
     "Lingua cambiata, riavvia Freezer per applicare la modifica!",
     "Importing...": "Importando...",
-    "Radio": "Radio"
+    "Radio": "Radio",
+
+    //0.5.0 Strings:
+    "Storage permission denied!": "Autorizzazione di archiviazione negata!",
+    "Failed": "Fallito",
+    "Queued": "In coda",
+    "External": "Esterno",
+    "Restart failed downloads": "Riavvia download non riusciti",
+    "Clear failed": "Pulisci fallito",
+    "Download Settings": "Scarica le impostazioni",
+    "Create folder for playlist": "Crea cartella per playlist",
+    "Download .LRC lyrics": "Scarica testi .LRC",
+    "Proxy": "Proxy",
+    "Not set": "Non impostato",
+    "Search or paste URL": "Cerca o incolla l'URL",
+    "History": "Storia",
+    "Download threads": "Scarica threads",
+    "Lyrics unavailable, empty or failed to load!": "Testi non disponibili, vuoti o caricamento non riuscito!",
+    "About": "Info",
+    "Telegram Channel": "Canale Telegram",
+    "To get latest releases": "Per ottenere le ultime versioni",
+    "Official chat": "Chat ufficiale",
+    "Telegram Group": "Gruppo Telegram",
+    "Huge thanks to all the contributors! <3": "Un enorme grazie a tutti i collaboratori! <3",
+    "Edit playlist": "Modifica playlist",
+    "Update": "Aggiorna",
+    "Playlist updated!": "Playlist aggiornata!",
+    "Downloads added!": "Download aggiunti!"
   }
 };

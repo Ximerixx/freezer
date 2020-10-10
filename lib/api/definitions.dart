@@ -103,7 +103,7 @@ class Track {
     }
     List<String> playbackDetails;
     if (mi.extras['playbackDetails'] != null)
-      playbackDetails = jsonDecode(mi.extras['playbackDetails']).map<String>((e) => e.toString()).toList();
+      playbackDetails = (jsonDecode(mi.extras['playbackDetails'])??[]).map<String>((e) => e.toString()).toList();
 
     return Track(
       title: mi.title??mi.displayTitle,

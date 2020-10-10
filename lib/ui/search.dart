@@ -88,8 +88,13 @@ class _SearchScreenState extends State<SearchScreen> {
     await Future.delayed(Duration(milliseconds: 300));
     if (q != _query) return null;
     //Load
-    List sugg = await deezerAPI.searchSuggestions(_query);
-    setState(() => _suggestions = sugg);
+    List sugg;
+    try {
+      sugg = await deezerAPI.searchSuggestions(_query);
+    } catch (e) {}
+
+    if (sugg != null)
+      setState(() => _suggestions = sugg);
   }
 
   @override

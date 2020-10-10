@@ -188,7 +188,9 @@ const language_en_us = {
     "Storage permission denied!": "Storage permission denied!",
     "Failed": "Failed",
     "Queued": "Queued",
-    "External": "External",
+    //Updated in 0.5.1 - used in context of download:
+    "External": "Storage",
+    //0.5.0
     "Restart failed downloads": "Restart failed downloads",
     "Clear failed": "Clear failed",
     "Download Settings": "Download Settings",
@@ -198,7 +200,9 @@ const language_en_us = {
     "Not set": "Not set",
     "Search or paste URL": "Search or paste URL",
     "History": "History",
-    "Download threads": "Download threads",
+    //Updated 0.5.1
+    "Download threads": "Concurrent downloads",
+    //0.5.0
     "Lyrics unavailable, empty or failed to load!": "Lyrics unavailable, empty or failed to load!",
     "About": "About",
     "Telegram Channel": "Telegram Channel",
@@ -209,6 +213,12 @@ const language_en_us = {
     "Edit playlist": "Edit playlist",
     "Update": "Update",
     "Playlist updated!": "Playlist updated!",
-    "Downloads added!": "Downloads added!"
+    "Downloads added!": "Downloads added!",
+
+    //0.5.1 Strings:
+    "Save cover file for every track": "Save cover file for every track",
+    "Download Log": "Download Log",
+    "Repository": "Repository",
+    "Source code, report issues there.": "Source code, report issues there."
   }
 };

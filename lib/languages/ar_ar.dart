@@ -166,9 +166,9 @@ const language_ar_ar = {
     "Language": "اللغة",
     "Language changed, please restart Freezer to apply!": "تم تغيير اللغة، الرجاء إعادة تشغيل فريزر لتطبيق!",
     "Importing...": "جار الاستيراد...",
-    "Radio": "راديو"
-    
-        //0.5.0 Strings:
+    "Radio": "راديو",
+
+    //0.5.0 Strings:
     "Storage permission denied!": "رفض إذن التخزين!",
     "Failed": "فشل",
     "Queued": "في قائمة الانتظار",
@@ -189,7 +189,7 @@ const language_ar_ar = {
     "To get latest releases": "لتنزيل اخر اصدارات البرنامج",
     "Official chat": "الدردشة الرسمية",
     "Telegram Group": "مجموعة التلكرام",
-    "Huge thanks to all the contributors! <3": "شكرا جزيلا لجميع المساهمين! <3",
+    "Huge thanks to all the contributors! <3": "<3 !شكرا جزيلا لجميع المساهمين",
     "Edit playlist": "تعديل قائمة التشغيل",
     "Update": "تحديث",
     "Playlist updated!": "تم تحديث قائمة التشغيل!",

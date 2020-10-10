@@ -58,7 +58,8 @@ class Settings {
   bool playlistFolder;
   @JsonKey(defaultValue: true)
   bool downloadLyrics;
-
+  @JsonKey(defaultValue: false)
+  bool trackCover;
 
   //Appearance
   @JsonKey(defaultValue: Themes.Light)
@@ -152,7 +153,8 @@ class Settings {
     return {
       "downloadThreads": downloadThreads,
       "overwriteDownload": overwriteDownload,
-      "downloadLyrics": downloadLyrics
+      "downloadLyrics": downloadLyrics,
+      "trackCover": trackCover
     };
   }
 

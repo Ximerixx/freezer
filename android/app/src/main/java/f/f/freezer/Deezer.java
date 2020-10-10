@@ -1,5 +1,6 @@
 package f.f.freezer;
 
+import android.content.Context;
 import android.util.Log;
 
 import org.jaudiotagger.audio.AudioFile;
@@ -35,6 +36,13 @@ import javax.crypto.spec.SecretKeySpec;
 import javax.net.ssl.HttpsURLConnection;
 
 public class Deezer {
+
+    DownloadLog logger;
+
+    //Initialize for logging
+    void init(DownloadLog logger) {
+        this.logger = logger;
+    }
 
     //Get guest SID cookie from deezer.com
     public static String getSidCookie() throws Exception {
@@ -102,7 +110,7 @@ public class Deezer {
         return out;
     }
 
-    public static int qualityFallback(String trackId, String md5origin, String mediaVersion, int originalQuality) throws Exception {
+    public int qualityFallback(String trackId, String md5origin, String mediaVersion, int originalQuality) throws Exception {
         //Create HEAD requests to check if exists
         URL url = new URL(getTrackUrl(trackId, md5origin, mediaVersion, originalQuality));
         HttpsURLConnection connection = (HttpsURLConnection) url.openConnection();
@@ -110,6 +118,7 @@ public class Deezer {
         int rc = connection.getResponseCode();
         //Track not available
         if (rc > 400) {
+            logger.warn("Quality fallback, response code: " + Integer.toString(rc) + ", current: " + Integer.toString(originalQuality));
             //Returns -1 if no quality available
             if (originalQuality == 1) return -1;
             if (originalQuality == 3) return qualityFallback(trackId, md5origin, mediaVersion, 1);
@@ -251,6 +260,7 @@ public class Deezer {
         original = original.replaceAll("%0trackNumber%", String.format("%02d", trackNumber));
         //Year
         original = original.replaceAll("%year%", publicTrack.getString("release_date").substring(0, 4));
+        original = original.replaceAll("%date%", publicTrack.getString("release_date"));
 
         if (newQuality == 9) return original + ".flac";
         return original + ".mp3";

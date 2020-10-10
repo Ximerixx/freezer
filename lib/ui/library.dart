@@ -203,6 +203,7 @@ class LibraryTracks extends StatefulWidget {
 class _LibraryTracksState extends State<LibraryTracks> {
 
   bool _loading = false;
+  bool _loadingTracks = false;
   ScrollController _scrollController = ScrollController();
   List<Track> tracks = [];
   List<Track> allTracks = [];
@@ -250,6 +251,9 @@ class _LibraryTracksState extends State<LibraryTracks> {
       }
 
       //Load another page of tracks from deezer
+      if (_loadingTracks) return;
+      _loadingTracks = true;
+
       List<Track> _t;
       try {
         _t = await deezerAPI.playlistTracksPage(deezerAPI.favoritesPlaylistId, pos);
@@ -263,6 +267,7 @@ class _LibraryTracksState extends State<LibraryTracks> {
         tracks.addAll(_t);
         _makeFavorite();
         _loading = false;
+        _loadingTracks = false;
       });
 
     }

@@ -1,8 +1,10 @@
 import 'dart:async';
 
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:disk_space/disk_space.dart';
 import 'package:filesize/filesize.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_cache_manager/flutter_cache_manager.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import 'package:freezer/api/deezer.dart';
 import 'package:freezer/api/definitions.dart';
@@ -117,6 +119,10 @@ class DownloadManager {
       Batch b = db.batch();
       b = await _addTrackToDB(b, track, true);
       await b.commit();
+
+      //Cache art
+      DefaultCacheManager().getSingleFile(track.albumArt.thumb);
+      DefaultCacheManager().getSingleFile(track.albumArt.full);
     }
 
     //Get path
@@ -136,6 +142,10 @@ class DownloadManager {
 
     //Add to DB
     if (private) {
+      //Cache art
+      DefaultCacheManager().getSingleFile(album.art.thumb);
+      DefaultCacheManager().getSingleFile(album.art.full);
+
       Batch b = db.batch();
       b.insert('Albums', album.toSQL(off: true), conflictAlgorithm: ConflictAlgorithm.replace);
       for (Track t in album.tracks) {
@@ -168,6 +178,9 @@ class DownloadManager {
       b.insert('Playlists', playlist.toSQL(), conflictAlgorithm: ConflictAlgorithm.replace);
       for (Track t in playlist.tracks) {
         b = await _addTrackToDB(b, t, false);
+        //Cache art
+        DefaultCacheManager().getSingleFile(t.albumArt.thumb);
+        DefaultCacheManager().getSingleFile(t.albumArt.full);
       }
       await b.commit();
     }
@@ -410,14 +423,14 @@ class DownloadManager {
         path = p.join(path, sanitize(playlistName));
 
       if (settings.artistFolder)
-        path = p.join(path, sanitize(track.artistString));
+        path = p.join(path, '%artist%');
 
       //Album folder / with disk number
       if (settings.albumFolder) {
         if (settings.albumDiscFolder) {
-          path = p.join(path, sanitize(track.album.title) + ' - Disk ' + track.diskNumber.toString());
+          path = p.join(path, '%album%' + ' - Disk ' + track.diskNumber.toString());
         } else {
-          path = p.join(path, sanitize(track.album.title));
+          path = p.join(path, '%album%');
         }
       }
       //Final path

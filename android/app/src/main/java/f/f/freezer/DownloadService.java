@@ -30,6 +30,8 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.HttpURLConnection;
 import java.net.URL;
+import java.nio.file.Files;
+import java.nio.file.StandardCopyOption;
 import java.text.DecimalFormat;
 import java.util.ArrayList;
 import javax.net.ssl.HttpsURLConnection;
@@ -54,6 +56,7 @@ public class DownloadService extends Service {
     DownloadSettings settings;
     Context context;
     SQLiteDatabase db;
+    Deezer deezer = new Deezer();
 
     Messenger serviceMessenger;
     Messenger activityMessenger;
@@ -62,12 +65,11 @@ public class DownloadService extends Service {
     ArrayList<Download> downloads = new ArrayList<>();
     ArrayList<DownloadThread> threads = new ArrayList<>();
     ArrayList<Boolean> updateRequests = new ArrayList<>();
-    ArrayList<String> pendingCovers = new ArrayList<>();
     boolean updating = false;
     Handler progressUpdateHandler = new Handler();
+    DownloadLog logger = new DownloadLog();
 
-    public DownloadService() {
-    }
+    public DownloadService() { }
 
     @Override
     public void onCreate() {
@@ -79,6 +81,10 @@ public class DownloadService extends Service {
         createNotificationChannel();
         createProgressUpdateHandler();
 
+        //Setup logger, deezer api
+        logger.open(context);
+        deezer.init(logger);
+
         //Get DB
         DownloadsDatabase dbHelper = new DownloadsDatabase(getApplicationContext());
         db = dbHelper.getWritableDatabase();
@@ -88,6 +94,9 @@ public class DownloadService extends Service {
     public void onDestroy() {
         //Cancel notifications
         notificationManager.cancelAll();
+
+        //Logger
+        logger.close();
 
         super.onDestroy();
     }
@@ -178,10 +187,11 @@ public class DownloadService extends Service {
             //Check if last download
             if (threads.size() == 0) {
                 running = false;
-                updateState();
-                return;
             }
         }
+        //Send updates to UI
+        updateProgress();
+        updateState();
     }
 
     //Send state change to UI
@@ -273,15 +283,16 @@ public class DownloadService extends Service {
             //Quality fallback
             int newQuality;
             try {
-                newQuality = Deezer.qualityFallback(download.trackId, download.md5origin, download.mediaVersion, download.quality);
+                newQuality = deezer.qualityFallback(download.trackId, download.md5origin, download.mediaVersion, download.quality);
             } catch (Exception e) {
-                Log.e("QF", "Quality fallback failed: " + e.toString());
+                logger.error("Quality fallback failed: " + e.toString(), download);
                 download.state = Download.DownloadState.ERROR;
                 exit();
                 return;
             }
             //No quality available
             if (newQuality == -1) {
+                logger.error("No available quality!", download);
                 download.state = Download.DownloadState.DEEZER_ERROR;
                 exit();
                 return;
@@ -294,7 +305,7 @@ public class DownloadService extends Service {
                     trackJson = Deezer.callPublicAPI("track", download.trackId);
                     albumJson = Deezer.callPublicAPI("album", Integer.toString(trackJson.getJSONObject("album").getInt("id")));
                 } catch (Exception e) {
-                    Log.e("ERR", "Unable to fetch track metadata.");
+                    logger.error("Unable to fetch track and album metadata! " + e.toString(), download);
                     e.printStackTrace();
                     download.state = Download.DownloadState.ERROR;
                     exit();
@@ -305,9 +316,8 @@ public class DownloadService extends Service {
                 try {
                     outFile = new File(Deezer.generateFilename(download.path, trackJson, albumJson, newQuality));
                     parentDir = new File(outFile.getParent());
-                    parentDir.mkdirs();
                 } catch (Exception e) {
-                    Log.e("ERR", "Error creating directories! TrackID: " + download.trackId);
+                    logger.error("Error generating track filename (" + download.path + "): " + e.toString(), download);
                     e.printStackTrace();
                     download.state = Download.DownloadState.ERROR;
                     exit();
@@ -351,7 +361,7 @@ public class DownloadService extends Service {
 
                 //Open streams
                 BufferedInputStream inputStream = new BufferedInputStream(connection.getInputStream());
-                OutputStream outputStream = new FileOutputStream(tmpFile.getPath());
+                OutputStream outputStream = new FileOutputStream(tmpFile.getPath(), true);
                 //Save total
                 download.filesize = start + connection.getContentLength();
                 //Download
@@ -384,7 +394,7 @@ public class DownloadService extends Service {
                 updateProgress();
             } catch (Exception e) {
                 //Download error
-                Log.e("DOWNLOAD", "Download error!");
+                logger.error("Download error: " + e.toString(), download);
                 e.printStackTrace();
                 download.state = Download.DownloadState.ERROR;
                 exit();
@@ -397,7 +407,7 @@ public class DownloadService extends Service {
             try {
                 Deezer.decryptTrack(tmpFile.getPath(), download.trackId);
             } catch (Exception e) {
-                Log.e("DEC", "Decryption failed!");
+                logger.error("Decryption error: " + e.toString(), download);
                 e.printStackTrace();
                 //Shouldn't ever fail
             }
@@ -408,53 +418,64 @@ public class DownloadService extends Service {
                 exit();
                 return;
             }
-            //Copy to destination directory
+
+            //Create dirs and copy
+            parentDir.mkdirs();
             if (!tmpFile.renameTo(outFile)) {
-                download.state = Download.DownloadState.ERROR;
-                exit();
-                return;
+                boolean error = true;
+                try {
+                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                        Files.move(tmpFile.toPath(), outFile.toPath(), StandardCopyOption.REPLACE_EXISTING);
+                        tmpFile.delete();
+                        error = false;
+                    }
+                } catch (Exception e) {
+                    logger.error("Error moving file! " + outFile.getPath() + ", " + e.toString(), download);
+                    download.state = Download.DownloadState.ERROR;
+                    exit();
+                    return;
+                }
+                if (error) {
+                    logger.error("Error moving file! " + outFile.getPath(), download);
+                    download.state = Download.DownloadState.ERROR;
+                    exit();
+                    return;
+                }
             }
 
             if (!download.priv) {
-                //Download cover
-                File coverFile = new File(parentDir, "cover.jpg");
-                //Wait for another thread to download it
-                while (pendingCovers.contains(coverFile.getPath())) {
-                    try { Thread.sleep(100); } catch (Exception ignored) {}
-                }
 
-                if (!coverFile.exists()) {
+                //Download cover for each track
+                File coverFile = new File(outFile.getPath().substring(0, outFile.getPath().lastIndexOf('.')) + ".jpg");
+
+                try {
+                    URL url = new URL("http://e-cdn-images.deezer.com/images/cover/" + trackJson.getString("md5_image") + "/1400x1400-000000-80-0-0.jpg");
+                    HttpURLConnection connection = (HttpURLConnection) url.openConnection();
+                    //Set headers
+                    connection.setRequestMethod("GET");
+                    connection.connect();
+                    //Open streams
+                    InputStream inputStream = connection.getInputStream();
+                    OutputStream outputStream = new FileOutputStream(coverFile.getPath());
+                    //Download
+                    byte[] buffer = new byte[4096];
+                    int read = 0;
+                    while ((read = inputStream.read(buffer)) != -1) {
+                        outputStream.write(buffer, 0, read);
+                    }
+                    //On done
                     try {
-                        //Create fake file so other threads don't start downloading covers
-                        coverFile.createNewFile();
-                        pendingCovers.add(coverFile.getPath());
-
-                        URL url = new URL("http://e-cdn-images.deezer.com/images/cover/" + trackJson.getString("md5_image") + "/1400x1400-000000-80-0-0.jpg");
-                        HttpURLConnection connection = (HttpURLConnection) url.openConnection();
-                        //Set headers
-                        connection.setRequestMethod("GET");
-                        connection.connect();
-                        //Open streams
-                        InputStream inputStream = connection.getInputStream();
-                        OutputStream outputStream = new FileOutputStream(coverFile.getPath());
-                        //Download
-                        byte[] buffer = new byte[4096];
-                        int read = 0;
-                        while ((read = inputStream.read(buffer)) != -1) {
-                            outputStream.write(buffer, 0, read);
-                        }
-                        //On done
                         inputStream.close();
                         outputStream.close();
                         connection.disconnect();
-                    } catch (Exception e) {
-                        Log.e("ERR", "Error downloading cover!");
-                        e.printStackTrace();
-                        coverFile.delete();
-                    }
-                    //Remove lock
-                    pendingCovers.remove(coverFile.getPath());
+                    } catch (Exception ignored) {}
+
+                } catch (Exception e) {
+                    logger.error("Error downloading cover! " + e.toString(), download);
+                    e.printStackTrace();
+                    coverFile.delete();
                 }
+
 
                 //Tag
                 try {
@@ -463,6 +484,13 @@ public class DownloadService extends Service {
                     Log.e("ERR", "Tagging error!");
                     e.printStackTrace();
                 }
+
+                //Delete cover if disabled
+                if (!settings.trackCover)
+                    coverFile.delete();
+
+                //Album cover
+                downloadAlbumCover(albumJson);
 
                 //Lyrics
                 if (settings.downloadLyrics) {
@@ -475,7 +503,7 @@ public class DownloadService extends Service {
                         fileOutputStream.write(lrcData.getBytes());
                         fileOutputStream.close();
                     } catch (Exception e) {
-                        Log.w("WAR", "Missing lyrics! " + e.toString());
+                        logger.warn("Error downloading lyrics! " + e.toString(), download);
                     }
                 }
             }
@@ -484,6 +512,46 @@ public class DownloadService extends Service {
             //Queue update
             updateQueueWrapper();
             stopSelf();
+        }
+
+        //Each track has own album art, this is to download cover.jpg
+        void downloadAlbumCover(JSONObject albumJson) {
+            //Checks
+            if (albumJson == null || !albumJson.has("md5_image")) return;
+            File coverFile = new File(parentDir, "cover.jpg");
+            if (coverFile.exists()) return;
+            //Don't download if doesn't have album
+            if (!download.path.contains("/%album%/")) return;
+
+            try {
+                //Create to lock
+                coverFile.createNewFile();
+
+                URL url = new URL("http://e-cdn-images.deezer.com/images/cover/" + albumJson.getString("md5_image") + "/1400x1400-000000-80-0-0.jpg");
+                HttpURLConnection connection = (HttpURLConnection) url.openConnection();
+                //Set headers
+                connection.setRequestMethod("GET");
+                connection.connect();
+                //Open streams
+                InputStream inputStream = connection.getInputStream();
+                OutputStream outputStream = new FileOutputStream(coverFile.getPath());
+                //Download
+                byte[] buffer = new byte[4096];
+                int read = 0;
+                while ((read = inputStream.read(buffer)) != -1) {
+                    outputStream.write(buffer, 0, read);
+                }
+                //On done
+                try {
+                    inputStream.close();
+                    outputStream.close();
+                    connection.disconnect();
+                } catch (Exception ignored) {}
+
+            } catch (Exception e) {
+                logger.warn("Error downloading album cover! " + e.toString(), download);
+                coverFile.delete();
+            }
         }
 
         void stopDownload() {
@@ -691,16 +759,18 @@ public class DownloadService extends Service {
         int downloadThreads;
         boolean overwriteDownload;
         boolean downloadLyrics;
+        boolean trackCover;
 
-        private DownloadSettings(int downloadThreads, boolean overwriteDownload, boolean downloadLyrics) {
+        private DownloadSettings(int downloadThreads, boolean overwriteDownload, boolean downloadLyrics, boolean trackCover) {
             this.downloadThreads = downloadThreads;
             this.overwriteDownload = overwriteDownload;
             this.downloadLyrics = downloadLyrics;
+            this.trackCover = trackCover;
         }
 
         //Parse settings from bundle sent from UI
         static DownloadSettings fromBundle(Bundle b) {
-            return new DownloadSettings(b.getInt("downloadThreads"), b.getBoolean("overwriteDownload"), b.getBoolean("downloadLyrics"));
+            return new DownloadSettings(b.getInt("downloadThreads"), b.getBoolean("overwriteDownload"), b.getBoolean("downloadLyrics"), b.getBoolean("trackCover"));
         }
     }
 

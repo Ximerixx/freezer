@@ -10,6 +10,7 @@ import 'package:fluttericon/font_awesome5_icons.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import 'package:freezer/api/deezer.dart';
 import 'package:freezer/api/download.dart';
+import 'package:freezer/ui/downloads_screen.dart';
 import 'package:freezer/ui/error.dart';
 import 'package:freezer/ui/home_screen.dart';
 import 'package:i18n_extension/i18n_widget.dart';
@@ -352,7 +353,7 @@ class _QualityPickerState extends State<QualityPicker> {
   }
 
   //Update quality in settings
-  void _updateQuality(AudioQuality q) {
+  void _updateQuality(AudioQuality q) async {
     setState(() {
       _quality = q;
     });
@@ -370,15 +371,8 @@ class _QualityPickerState extends State<QualityPicker> {
       case 'offline':
         settings.offlineQuality = _quality; break;
     }
-    settings.updateAudioServiceQuality();
-  }
-
-  @override
-  void dispose() {
-    //Save
-    settings.updateAudioServiceQuality();
-    settings.save();
-    super.dispose();
+    await settings.save();
+    await settings.updateAudioServiceQuality();
   }
 
   @override
@@ -558,8 +552,9 @@ class _DownloadsSettingsState extends State<DownloadsSettings> {
               if (!(await Permission.storage.request().isGranted)) return;
               //Navigate
               Navigator.of(context).push(MaterialPageRoute(
-                  builder: (context) => DirectoryPicker(settings.downloadPath, onSelect: (String p) {
+                  builder: (context) => DirectoryPicker(settings.downloadPath, onSelect: (String p) async {
                     setState(() => settings.downloadPath = p);
+                    await settings.save();
                   },)
               ));
             },
@@ -590,7 +585,7 @@ class _DownloadsSettingsState extends State<DownloadsSettings> {
                           ),
                           Container(height: 8.0),
                           Text(
-                            'Valid variables are'.i18n + ': %artists%, %artist%, %title%, %album%, %trackNumber%, %0trackNumber%, %feats%, %playlistTrackNumber%, %0playlistTrackNumber%, %year%',
+                            'Valid variables are'.i18n + ': %artists%, %artist%, %title%, %album%, %trackNumber%, %0trackNumber%, %feats%, %playlistTrackNumber%, %0playlistTrackNumber%, %year%, %date%',
                             style: TextStyle(
                               fontSize: 12.0,
                             ),
@@ -734,6 +729,26 @@ class _DownloadsSettingsState extends State<DownloadsSettings> {
               ),
             ),
           ),
+          ListTile(
+            title: Text('Save cover file for every track'.i18n),
+            leading: Container(
+              width: 30.0,
+              child: Checkbox(
+                value: settings.trackCover,
+                onChanged: (v) {
+                  setState(() => settings.trackCover = v);
+                  settings.save();
+                },
+              ),
+            ),
+          ),
+          ListTile(
+            title: Text('Download Log'.i18n),
+            leading: Icon(Icons.sticky_note_2),
+            onTap: () => Navigator.of(context).push(
+              MaterialPageRoute(builder: (context) => DownloadLogViewer())
+            ),
+          )
         ],
       ),
     );
@@ -1069,6 +1084,14 @@ class _CreditsScreenState extends State<CreditsScreen> {
             leading: Icon(FontAwesome5.telegram, color: Colors.cyan, size: 36.0),
             onTap: () {
               launch('https://t.me/freezerandroid');
+            },
+          ),
+          ListTile(
+            title: Text('Repository'.i18n),
+            subtitle: Text('Source code, report issues there.'),
+            leading: Icon(Icons.code, color: Colors.green, size: 36.0),
+            onTap: () {
+              launch('https://notabug.org/exttex/freezer');
             },
           ),
           Divider(),

@@ -1,11 +1,15 @@
-import 'dart:async';
+import 'dart:io';
 
 import 'package:filesize/filesize.dart';
 import 'package:flutter/material.dart';
 import 'package:freezer/api/download.dart';
 import 'package:freezer/translations.i18n.dart';
-
+import 'package:path/path.dart' as p;
+import 'package:path_provider/path_provider.dart';
 import 'cached_image.dart';
+
+import 'dart:async';
+
 
 class DownloadsScreen extends StatefulWidget {
   @override
@@ -189,14 +193,29 @@ class DownloadTile extends StatelessWidget {
 
   String subtitle() {
     String out = '';
-    //Download type
-    if (download.private) out += 'Offline'.i18n;
-    else out += 'External'.i18n;
-    out += ' | ';
+
+    if (download.state != DownloadState.DOWNLOADING && download.state != DownloadState.POST) {
+      //Download type
+      if (download.private) out += 'Offline'.i18n;
+      else out += 'External'.i18n;
+      out += ' | ';
+    }
+
+    if (download.state == DownloadState.POST) {
+      return 'Post processing...'.i18n;
+    }
+
     //Quality
     if (download.quality == 9) out += 'FLAC';
     if (download.quality == 3) out += 'MP3 320kbps';
     if (download.quality == 1) out += 'MP3 128kbps';
+
+    //Downloading show progress
+    if (download.state == DownloadState.DOWNLOADING) {
+      out += ' | ${filesize(download.received, 2)} / ${filesize(download.filesize, 2)}';
+      double progress = download.received.toDouble() / download.filesize.toDouble();
+      out += ' ${(progress*100.0).toStringAsFixed(2)}%';
+    }
 
     return out;
   }
@@ -279,6 +298,65 @@ class DownloadTile extends StatelessWidget {
         if (download.state == DownloadState.POST)
           LinearProgressIndicator(),
       ],
+    );
+  }
+}
+
+class DownloadLogViewer extends StatefulWidget {
+  @override
+  _DownloadLogViewerState createState() => _DownloadLogViewerState();
+}
+
+class _DownloadLogViewerState extends State<DownloadLogViewer> {
+
+  List<String> data = [];
+
+  //Load log from file
+  Future _load() async {
+    String path = p.join((await getExternalStorageDirectory()).path, 'download.log');
+    File file = File(path);
+    if (await file.exists()) {
+      String _d = await file.readAsString();
+      setState(() {
+        data = _d.replaceAll("\r", "").split("\n");
+      });
+    }
+  }
+
+  //Get color by log type
+  Color color(String line) {
+    if (line.startsWith('E:')) return Colors.red;
+    if (line.startsWith('W:')) return Colors.orange[600];
+    return null;
+  }
+
+  @override
+  void initState() {
+    _load();
+    super.initState();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: Text('Download Log'.i18n),
+      ),
+      body: ListView.builder(
+        itemCount: data.length,
+        itemBuilder: (context, i) {
+          return Padding(
+            padding: EdgeInsets.all(8.0),
+            child: Text(
+              data[i],
+              style: TextStyle(
+                fontSize: 14.0,
+                color: color(data[i])
+              ),
+            ),
+          );
+        },
+      )
     );
   }
 }

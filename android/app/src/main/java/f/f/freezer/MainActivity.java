@@ -66,7 +66,7 @@ public class MainActivity extends FlutterActivity {
                 ArrayList<HashMap> downloads = call.arguments();
                 for (int i=0; i<downloads.size(); i++) {
                     //Check if exists
-                    Cursor cursor = db.rawQuery("SELECT id, state FROM Downloads WHERE trackId == ? AND path == ?",
+                    Cursor cursor = db.rawQuery("SELECT id, state, quality FROM Downloads WHERE trackId == ? AND path == ?",
                             new String[]{(String)downloads.get(i).get("trackId"), (String)downloads.get(i).get("path")});
                     if (cursor.getCount() > 0) {
                         //If done or error, set state to NONE - they should be skipped because file exists
@@ -74,6 +74,7 @@ public class MainActivity extends FlutterActivity {
                         if (cursor.getInt(1) >= 3) {
                             ContentValues values = new ContentValues();
                             values.put("state", 0);
+                            values.put("quality", cursor.getInt(2));
                             db.update("Downloads", values, "id == ?", new String[]{Integer.toString(cursor.getInt(0))});
                             Log.d("INFO", "Already exists in DB, updating to none state!");
                         } else {
@@ -116,6 +117,7 @@ public class MainActivity extends FlutterActivity {
                 bundle.putInt("downloadThreads", (int)call.argument("downloadThreads"));
                 bundle.putBoolean("overwriteDownload", (boolean)call.argument("overwriteDownload"));
                 bundle.putBoolean("downloadLyrics", (boolean)call.argument("downloadLyrics"));
+                bundle.putBoolean("trackCover", (boolean)call.argument("trackCover"));
                 sendMessage(DownloadService.SERVICE_SETTINGS_UPDATE, bundle);
 
                 result.success(null);
