@@ -127,7 +127,6 @@ const language_en_us = {
     "Theme": "Theme",
     "Currently": "Currently",
     "Select theme": "Select theme",
-    "Light (default)": "Light (Default)",
     "Dark": "Dark",
     "Black (AMOLED)": "Black (AMOLED)",
     "Deezer (Dark)": "Deezer (Dark)",
@@ -219,6 +218,10 @@ const language_en_us = {
     "Save cover file for every track": "Save cover file for every track",
     "Download Log": "Download Log",
     "Repository": "Repository",
-    "Source code, report issues there.": "Source code, report issues there."
+    "Source code, report issues there.": "Source code, report issues there.",
+
+    //0.5.2 Strings:
+    "Use system theme": "Use system theme",
+    "Light": "Light"
   }
 };
