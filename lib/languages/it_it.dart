@@ -188,12 +188,15 @@ const language_it_it = {
     "Lingua cambiata, riavvia Freezer per applicare la modifica!",
     "Importing...": "Importando...",
     "Radio": "Radio",
+    "Flow": "Flow",
+
 
     //0.5.0 Strings:
+    
     "Storage permission denied!": "Autorizzazione di archiviazione negata!",
     "Failed": "Fallito",
     "Queued": "In coda",
-    "External": "Esterno",
+    "External": "Archiviazione",
     "Restart failed downloads": "Riavvia download non riusciti",
     "Clear failed": "Pulisci fallito",
     "Download Settings": "Scarica le impostazioni",
@@ -203,7 +206,7 @@ const language_it_it = {
     "Not set": "Non impostato",
     "Search or paste URL": "Cerca o incolla l'URL",
     "History": "Storia",
-    "Download threads": "Scarica threads",
+    "Download threads": "Download simultanei",
     "Lyrics unavailable, empty or failed to load!": "Testi non disponibili, vuoti o caricamento non riuscito!",
     "About": "Info",
     "Telegram Channel": "Canale Telegram",
@@ -215,5 +218,11 @@ const language_it_it = {
     "Update": "Aggiorna",
     "Playlist updated!": "Playlist aggiornata!",
     "Downloads added!": "Download aggiunti!"
+    "Save cover file for every track": "Salva la copertina dell'album per ogni traccia",
+    "Download Log": "Download Log",
+    "Repository": "Repository",
+    "Source code, report issues there.": "Codice sorgente, segnala i problemi lì."
+    
+    
   }
 };

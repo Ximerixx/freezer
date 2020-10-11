@@ -168,5 +168,37 @@ const language_es_es = {
     "Importing...": "Importando...",
     "Radio": "Radio",
     "Flow": "Flow",
+    
+    //0.5.0 Strings:
+    
+    "Storage permission denied!": "Permiso de almacenamiento denegado!",
+    "Failed": "Fallido",
+    "Queued": "Puesto en cola",
+    "External": "Almacenamiento",
+    "Restart failed downloads": "Reiniciar descargas fallidas",
+    "Clear failed": "Limpiar fallidas",
+    "Download Settings": "Opciones de descarga",
+    "Create folder for playlist": "Crear carpeta para lista de reproducción",
+    "Download .LRC lyrics": "Descargar archivo .LRC",
+    "Proxy": "Proxy",
+    "Not set": "No establecido",
+    "Search or paste URL": "Buscar o pegar URL",
+    "History": "Historial",
+    "Download threads": "Descargas simultáneas",
+    "Lyrics unavailable, empty or failed to load!": "Letras no disponibles, vacías o no se pudieron cargar!",
+    "About": "Acerca de",
+    "Telegram Channel": "Canal de Telegram",
+    "To get latest releases": "Para obtener los últimos lanzamientos",
+    "Official chat": "Chat oficial",
+    "Telegram Group": "Grupo de Telegram",
+    "Huge thanks to all the contributors! <3": "Muchas gracias a todos los contribuyentes contributors! <3",
+    "Edit playlist": "Editar lista de reproducción",
+    "Update": "Actualizar",
+    "Playlist updated!": "Lista de reproducción actualizada!",
+    "Downloads added!": "Descargas agregadas!"
+    "Save cover file for every track": "Guarde el archivo de portada para cada pista",
+    "Download Log": "Registro de Descarga",
+    "Repository": "Repositorio",
+    "Source code, report issues there.": "Código fuente, informe de problemas allí."
   }
 };
