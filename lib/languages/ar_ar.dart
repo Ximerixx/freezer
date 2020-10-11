@@ -167,12 +167,11 @@ const language_ar_ar = {
     "Language changed, please restart Freezer to apply!": "تم تغيير اللغة، الرجاء إعادة تشغيل فريزر لتطبيق!",
     "Importing...": "جار الاستيراد...",
     "Radio": "راديو",
-
-    //0.5.0 Strings:
+    
+        //0.5.0 Strings:
     "Storage permission denied!": "رفض إذن التخزين!",
     "Failed": "فشل",
     "Queued": "في قائمة الانتظار",
-    "External": "خارجي",
     "Restart failed downloads": "أعد استئناف التنزيلات الفاشلة",
     "Clear failed": "فشل المسح",
     "Download Settings": "إعدادات التنزيل",
@@ -189,10 +188,16 @@ const language_ar_ar = {
     "To get latest releases": "لتنزيل اخر اصدارات البرنامج",
     "Official chat": "الدردشة الرسمية",
     "Telegram Group": "مجموعة التلكرام",
-    "Huge thanks to all the contributors! <3": "<3 !شكرا جزيلا لجميع المساهمين",
+    "Huge thanks to all the contributors! <3": "شكرا جزيلا لجميع المساهمين! <3",
     "Edit playlist": "تعديل قائمة التشغيل",
     "Update": "تحديث",
     "Playlist updated!": "تم تحديث قائمة التشغيل!",
-    "Downloads added!": "تم إضافة التنزيلات!"
+    "Downloads added!": "تم إضافة التنزيلات!",
+    "External": "تخزين",
+    "Save cover file for every track": "حفظ صورة الالبوم لكل اغنية",
+    "Download Log": "سجل التنزيل",
+    "Repository": "Repository",
+    "Source code, report issues there.": "كود المصدر ، ابلغ عن المشاكل هنا.",
+    
   }
 };
