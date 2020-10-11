@@ -197,7 +197,7 @@ const language_it_it = {
     "External": "Archiviazione",
     "Restart failed downloads": "Riavvia download non riusciti",
     "Clear failed": "Pulisci fallito",
-    "Download Settings": "Scarica le impostazioni",
+    "Download Settings": "Impostazioni download",
     "Create folder for playlist": "Crea cartella per playlist",
     "Download .LRC lyrics": "Scarica testi .LRC",
     "Proxy": "Proxy",
