@@ -1,6 +1,5 @@
-import 'dart:async';
-
 import 'package:audio_service/audio_service.dart';
+import 'package:flutter/scheduler.dart';
 import 'package:freezer/api/download.dart';
 import 'package:freezer/main.dart';
 import 'package:freezer/ui/cached_image.dart';
@@ -12,6 +11,7 @@ import 'package:flutter/material.dart';
 
 import 'dart:io';
 import 'dart:convert';
+import 'dart:async';
 
 part 'settings.g.dart';
 
@@ -62,8 +62,10 @@ class Settings {
   bool trackCover;
 
   //Appearance
-  @JsonKey(defaultValue: Themes.Light)
+  @JsonKey(defaultValue: Themes.Dark)
   Themes theme;
+  @JsonKey(defaultValue: false)
+  bool useSystemTheme;
 
   //Colors
   @JsonKey(toJson: _colorToJson, fromJson: _colorFromJson)
@@ -75,7 +77,6 @@ class Settings {
   @JsonKey(defaultValue: false)
   bool useArtColor = false;
   StreamSubscription _useArtColorSub;
-
 
   //Deezer
   @JsonKey(defaultValue: 'en')
@@ -89,63 +90,18 @@ class Settings {
 
   Settings({this.downloadPath, this.arl});
 
-  static const deezerBg = Color(0xFF1F1A16);
-  static const font = 'MabryPro';
   ThemeData get themeData {
-    switch (theme??Themes.Light) {
-      case Themes.Light:
-        return ThemeData(
-          fontFamily: font,
-          primaryColor: primaryColor,
-          accentColor: primaryColor,
-          sliderTheme: _sliderTheme,
-          toggleableActiveColor: primaryColor,
-          bottomAppBarColor: Color(0xfff7f7f7)
-        );
-      case Themes.Dark:
-        return ThemeData(
-          fontFamily: font,
-          brightness: Brightness.dark,
-          primaryColor: primaryColor,
-          accentColor: primaryColor,
-          sliderTheme: _sliderTheme,
-          toggleableActiveColor: primaryColor,
-        );
-      case Themes.Deezer:
-        return ThemeData(
-          fontFamily: font,
-          brightness: Brightness.dark,
-          primaryColor: primaryColor,
-          accentColor: primaryColor,
-          sliderTheme: _sliderTheme,
-          toggleableActiveColor: primaryColor,
-          backgroundColor: deezerBg,
-          scaffoldBackgroundColor: deezerBg,
-          bottomAppBarColor: deezerBg,
-          dialogBackgroundColor: deezerBg,
-          bottomSheetTheme: BottomSheetThemeData(
-            backgroundColor: deezerBg
-          ),
-          cardColor: deezerBg
-        );
-      case Themes.Black:
-        return ThemeData(
-          fontFamily: font,
-          brightness: Brightness.dark,
-          primaryColor: primaryColor,
-          accentColor: primaryColor,
-          backgroundColor: Colors.black,
-          scaffoldBackgroundColor: Colors.black,
-          bottomAppBarColor: Colors.black,
-          dialogBackgroundColor: Colors.black,
-          sliderTheme: _sliderTheme,
-          toggleableActiveColor: primaryColor,
-          bottomSheetTheme: BottomSheetThemeData(
-            backgroundColor: Colors.black
-          )
-        );
+    //System theme
+    if (useSystemTheme) {
+      if (SchedulerBinding.instance.window.platformBrightness == Brightness.light) {
+        return _themeData[Themes.Light];
+      } else {
+        if (theme == Themes.Light) return _themeData[Themes.Dark];
+        return _themeData[theme];
+      }
     }
-    return ThemeData();
+    //Theme
+    return _themeData[theme]??ThemeData();
   }
 
   //JSON to forward into download service
@@ -154,7 +110,8 @@ class Settings {
       "downloadThreads": downloadThreads,
       "overwriteDownload": overwriteDownload,
       "downloadLyrics": downloadLyrics,
-      "trackCover": trackCover
+      "trackCover": trackCover,
+      "arl": arl
     };
   }
 
@@ -220,6 +177,57 @@ class Settings {
     }
     return 8; //default
   }
+
+  static const deezerBg = Color(0xFF1F1A16);
+  static const font = 'MabryPro';
+  Map<Themes, ThemeData> get _themeData => {
+    Themes.Light: ThemeData(
+      fontFamily: font,
+      primaryColor: primaryColor,
+      accentColor: primaryColor,
+      sliderTheme: _sliderTheme,
+      toggleableActiveColor: primaryColor,
+      bottomAppBarColor: Color(0xfff7f7f7)
+    ),
+    Themes.Dark: ThemeData(
+      fontFamily: font,
+      brightness: Brightness.dark,
+      primaryColor: primaryColor,
+      accentColor: primaryColor,
+      sliderTheme: _sliderTheme,
+      toggleableActiveColor: primaryColor,
+    ),
+    Themes.Deezer: ThemeData(
+      fontFamily: font,
+      brightness: Brightness.dark,
+      primaryColor: primaryColor,
+      accentColor: primaryColor,
+      sliderTheme: _sliderTheme,
+      toggleableActiveColor: primaryColor,
+      backgroundColor: deezerBg,
+      scaffoldBackgroundColor: deezerBg,
+      bottomAppBarColor: deezerBg,
+      dialogBackgroundColor: deezerBg,
+      bottomSheetTheme: BottomSheetThemeData(
+        backgroundColor: deezerBg
+      ),
+      cardColor: deezerBg
+    ),
+    Themes.Black: ThemeData(
+      fontFamily: font,
+      brightness: Brightness.dark,
+      primaryColor: primaryColor,
+      accentColor: primaryColor,
+      backgroundColor: Colors.black,
+      scaffoldBackgroundColor: Colors.black,
+      bottomAppBarColor: Colors.black,
+      dialogBackgroundColor: Colors.black,
+      sliderTheme: _sliderTheme,
+      toggleableActiveColor: primaryColor,
+      bottomSheetTheme: BottomSheetThemeData(
+      backgroundColor: Colors.black
+    ))
+  };
 
   Future<String> getPath() async => p.join((await getApplicationDocumentsDirectory()).path, 'settings.json');
 

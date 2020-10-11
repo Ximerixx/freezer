@@ -52,6 +52,8 @@ VIRGIN_KLM: Greek
 koreezzz: Korean    
 Fwwwwwwwwwweze: French    
 kobyrevah: Hebrew   
+MicroMihai: Romanian  
+HoScHaKaL: Turkish  
 
 ### just_audio, audio_service
 This app depends on modified just_audio and audio_service plugins with Deezer support.  

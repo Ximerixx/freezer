@@ -239,7 +239,7 @@ class LoginBrowser extends StatelessWidget {
               onLoadStart: (InAppWebViewController controller, String url) async {
 
                 //Offers URL
-                if (url.contains('/offers')) {
+                if (!url.contains('/login') && !url.contains('/register')) {
                   controller.evaluateJavascript(source: 'window.location.href = "/open_app"');
                 }
 

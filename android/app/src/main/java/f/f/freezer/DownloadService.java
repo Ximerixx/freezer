@@ -25,11 +25,13 @@ import org.json.JSONObject;
 
 import java.io.BufferedInputStream;
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.HttpURLConnection;
 import java.net.URL;
+import java.nio.channels.FileChannel;
 import java.nio.file.Files;
 import java.nio.file.StandardCopyOption;
 import java.text.DecimalFormat;
@@ -83,7 +85,7 @@ public class DownloadService extends Service {
 
         //Setup logger, deezer api
         logger.open(context);
-        deezer.init(logger);
+        deezer.init(logger, "");
 
         //Get DB
         DownloadsDatabase dbHelper = new DownloadsDatabase(getApplicationContext());
@@ -215,7 +217,9 @@ public class DownloadService extends Service {
             updating = true;
             while (updateRequests.size() > 0) {
                 updateQueue();
-                updateRequests.remove(0);
+                //Because threading
+                if (updateRequests.size() > 0)
+                    updateRequests.remove(0);
             }
         }
         updating = false;
@@ -280,6 +284,49 @@ public class DownloadService extends Service {
             //Set state
             download.state = Download.DownloadState.DOWNLOADING;
 
+            //Authorize deezer api
+            if (!deezer.authorized && !deezer.authorizing)
+                deezer.authorize();
+
+            while (deezer.authorizing)
+                try {Thread.sleep(50);} catch (Exception ignored) {}
+
+            //Fetch metadata
+            try {
+                trackJson = Deezer.callPublicAPI("track", download.trackId);
+                albumJson = Deezer.callPublicAPI("album", Integer.toString(trackJson.getJSONObject("album").getInt("id")));
+            } catch (Exception e) {
+                logger.error("Unable to fetch track and album metadata! " + e.toString(), download);
+                e.printStackTrace();
+                download.state = Download.DownloadState.ERROR;
+                exit();
+                return;
+            }
+
+            //ISRC Fallback
+            try {
+                if (trackJson.has("available_countries") && trackJson.getJSONArray("available_countries").length() == 0) {
+                    logger.warn("ISRC Fallback!", download);
+                    JSONObject newTrackJson = Deezer.callPublicAPI("track", "isrc:" + trackJson.getString("isrc"));
+                    //Same track check
+                    if (newTrackJson.getJSONArray("available_countries").length() == 0 || newTrackJson.getInt("id") == trackJson.getInt("id")) throw new Exception("No more to fallback!");
+                    //Get private data
+                    JSONObject privateJson = deezer.callGWAPI("song.getListData", "{\"sng_ids\": [" + newTrackJson.getInt("id") + "]}");
+                    JSONObject trackData = privateJson.getJSONObject("results").getJSONArray("data").getJSONObject(0);
+                    download.trackId = trackData.getString("SNG_ID");
+                    download.md5origin = trackData.getString("MD5_ORIGIN");
+                    download.mediaVersion = trackData.getString("MEDIA_VERSION");
+                    run();
+                    return;
+                }
+            } catch (Exception e) {
+                logger.error("ISRC Fallback failed, track unavailable! " + e.toString());
+                download.state = Download.DownloadState.DEEZER_ERROR;
+                exit();
+                return;
+            }
+
+
             //Quality fallback
             int newQuality;
             try {
@@ -300,18 +347,6 @@ public class DownloadService extends Service {
             download.quality = newQuality;
 
             if (!download.priv) {
-                //Fetch metadata
-                try {
-                    trackJson = Deezer.callPublicAPI("track", download.trackId);
-                    albumJson = Deezer.callPublicAPI("album", Integer.toString(trackJson.getJSONObject("album").getInt("id")));
-                } catch (Exception e) {
-                    logger.error("Unable to fetch track and album metadata! " + e.toString(), download);
-                    e.printStackTrace();
-                    download.state = Download.DownloadState.ERROR;
-                    exit();
-                    return;
-                }
-
                 //Check file
                 try {
                     outFile = new File(Deezer.generateFilename(download.path, trackJson, albumJson, newQuality));
@@ -422,21 +457,29 @@ public class DownloadService extends Service {
             //Create dirs and copy
             parentDir.mkdirs();
             if (!tmpFile.renameTo(outFile)) {
-                boolean error = true;
                 try {
                     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
                         Files.move(tmpFile.toPath(), outFile.toPath(), StandardCopyOption.REPLACE_EXISTING);
                         tmpFile.delete();
-                        error = false;
+                    } else {
+                        //Android <O copy
+                        FileInputStream inputStream = new FileInputStream(tmpFile);
+                        FileOutputStream outputStream = new FileOutputStream(outFile);
+                        FileChannel inputChannel = inputStream.getChannel();
+                        FileChannel outputChannel = outputStream.getChannel();
+                        inputChannel.transferTo(0, inputChannel.size(), outputChannel);
+                        inputStream.close();
+                        outputStream.close();
                     }
                 } catch (Exception e) {
+                    //Clean
+                    try {
+                        outFile.delete();
+                        tmpFile.delete();
+                    } catch (Exception ignored) {}
+                    //Log & Exit
                     logger.error("Error moving file! " + outFile.getPath() + ", " + e.toString(), download);
-                    download.state = Download.DownloadState.ERROR;
-                    exit();
-                    return;
-                }
-                if (error) {
-                    logger.error("Error moving file! " + outFile.getPath(), download);
+                    e.printStackTrace();
                     download.state = Download.DownloadState.ERROR;
                     exit();
                     return;
@@ -473,13 +516,28 @@ public class DownloadService extends Service {
                 } catch (Exception e) {
                     logger.error("Error downloading cover! " + e.toString(), download);
                     e.printStackTrace();
-                    coverFile.delete();
+                }
+
+                JSONObject lyricsData = null;
+                //Lyrics
+                if (settings.downloadLyrics) {
+                    try {
+                        lyricsData = deezer.callGWAPI("song.getLyrics", "{\"sng_id\": " + download.trackId + "}");
+                        String lrcData = Deezer.generateLRC(lyricsData, trackJson);
+                        //Create file
+                        String lrcFilename = outFile.getPath().substring(0, outFile.getPath().lastIndexOf(".")+1) + "lrc";
+                        FileOutputStream fileOutputStream = new FileOutputStream(lrcFilename);
+                        fileOutputStream.write(lrcData.getBytes());
+                        fileOutputStream.close();
+                    } catch (Exception e) {
+                        logger.warn("Error downloading lyrics! " + e.toString(), download);
+                    }
                 }
 
 
                 //Tag
                 try {
-                    Deezer.tagTrack(outFile.getPath(), trackJson, albumJson, coverFile.getPath());
+                    Deezer.tagTrack(outFile.getPath(), trackJson, albumJson, coverFile.getPath(), lyricsData);
                 } catch (Exception e) {
                     Log.e("ERR", "Tagging error!");
                     e.printStackTrace();
@@ -491,21 +549,6 @@ public class DownloadService extends Service {
 
                 //Album cover
                 downloadAlbumCover(albumJson);
-
-                //Lyrics
-                if (settings.downloadLyrics) {
-                    try {
-                        JSONObject lyricsData = Deezer.callMobileAPI("song.getLyrics", "{\"sng_id\": " + download.trackId + "}");
-                        String lrcData = Deezer.generateLRC(lyricsData, trackJson);
-                        //Create file
-                        String lrcFilename = outFile.getPath().substring(0, outFile.getPath().lastIndexOf(".")+1) + "lrc";
-                        FileOutputStream fileOutputStream = new FileOutputStream(lrcFilename);
-                        fileOutputStream.write(lrcData.getBytes());
-                        fileOutputStream.close();
-                    } catch (Exception e) {
-                        logger.warn("Error downloading lyrics! " + e.toString(), download);
-                    }
-                }
             }
 
             download.state = Download.DownloadState.DONE;
@@ -521,7 +564,7 @@ public class DownloadService extends Service {
             File coverFile = new File(parentDir, "cover.jpg");
             if (coverFile.exists()) return;
             //Don't download if doesn't have album
-            if (!download.path.contains("/%album%/")) return;
+            if (!download.path.matches(".*/%album%.*/.*")) return;
 
             try {
                 //Create to lock
@@ -664,6 +707,7 @@ public class DownloadService extends Service {
                 //Load settings
                 case SERVICE_SETTINGS_UPDATE:
                     settings = DownloadSettings.fromBundle(msg.getData());
+                    deezer.arl = settings.arl;
                     break;
 
                 //Stop downloads
@@ -760,17 +804,19 @@ public class DownloadService extends Service {
         boolean overwriteDownload;
         boolean downloadLyrics;
         boolean trackCover;
+        String arl;
 
-        private DownloadSettings(int downloadThreads, boolean overwriteDownload, boolean downloadLyrics, boolean trackCover) {
+        private DownloadSettings(int downloadThreads, boolean overwriteDownload, boolean downloadLyrics, boolean trackCover, String arl) {
             this.downloadThreads = downloadThreads;
             this.overwriteDownload = overwriteDownload;
             this.downloadLyrics = downloadLyrics;
             this.trackCover = trackCover;
+            this.arl = arl;
         }
 
         //Parse settings from bundle sent from UI
         static DownloadSettings fromBundle(Bundle b) {
-            return new DownloadSettings(b.getInt("downloadThreads"), b.getBoolean("overwriteDownload"), b.getBoolean("downloadLyrics"), b.getBoolean("trackCover"));
+            return new DownloadSettings(b.getInt("downloadThreads"), b.getBoolean("overwriteDownload"), b.getBoolean("downloadLyrics"), b.getBoolean("trackCover"), b.getString("arl"));
         }
     }
 

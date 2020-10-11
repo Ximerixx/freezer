@@ -118,6 +118,7 @@ public class MainActivity extends FlutterActivity {
                 bundle.putBoolean("overwriteDownload", (boolean)call.argument("overwriteDownload"));
                 bundle.putBoolean("downloadLyrics", (boolean)call.argument("downloadLyrics"));
                 bundle.putBoolean("trackCover", (boolean)call.argument("trackCover"));
+                bundle.putString("arl", (String)call.argument("arl"));
                 sendMessage(DownloadService.SERVICE_SETTINGS_UPDATE, bundle);
 
                 result.success(null);

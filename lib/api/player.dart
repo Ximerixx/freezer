@@ -34,7 +34,7 @@ class PlayerHelper {
   int get queueIndex => AudioService.queue.indexWhere((mi) => mi.id == AudioService.currentMediaItem?.id??'Random string so it returns -1');
 
   Future start() async {
-    //Subscribe to custom events
+     //Subscribe to custom events
     _customEventSubscription = AudioService.customEventStream.listen((event) async {
       if (!(event is Map)) return;
       if (event['action'] == 'onLoad') {
@@ -78,11 +78,10 @@ class PlayerHelper {
       }
     });
     _mediaItemSubscription = AudioService.currentMediaItemStream.listen((event) {
+      if (event == null) return;
       //Save queue
       AudioService.customAction('saveQueue');
-
       //Add to history
-      if (event == null) return;
       if (cache.history == null) cache.history = [];
       if (cache.history.length > 0 && cache.history.last.id == event.id) return;
       cache.history.add(Track.fromMediaItem(event));
@@ -90,21 +89,24 @@ class PlayerHelper {
     });
 
     //Start audio_service
-    startService();
+    await startService();
   }
 
   Future startService() async {
-    if (AudioService.running) return;
-    await AudioService.start(
-      backgroundTaskEntrypoint: backgroundTaskEntrypoint,
-      androidEnableQueue: true,
-      androidStopForegroundOnPause: false,
-      androidNotificationOngoing: false,
-      androidNotificationClickStartsActivity: false,
-      androidNotificationChannelDescription: 'Freezer',
-      androidNotificationChannelName: 'Freezer',
-      androidNotificationIcon: 'drawable/ic_logo',
-    );
+    if (AudioService.running && AudioService.connected) return;
+    if (!AudioService.connected)
+      await AudioService.connect();
+    if (!AudioService.running)
+      await AudioService.start(
+        backgroundTaskEntrypoint: backgroundTaskEntrypoint,
+        androidEnableQueue: true,
+        androidStopForegroundOnPause: false,
+        androidNotificationOngoing: false,
+        androidNotificationClickStartsActivity: true,
+        androidNotificationChannelDescription: 'Freezer',
+        androidNotificationChannelName: 'Freezer',
+        androidNotificationIcon: 'drawable/ic_logo',
+      );
   }
 
   Future toggleShuffle() async {

@@ -167,8 +167,8 @@ const language_ar_ar = {
     "Language changed, please restart Freezer to apply!": "تم تغيير اللغة، الرجاء إعادة تشغيل فريزر لتطبيق!",
     "Importing...": "جار الاستيراد...",
     "Radio": "راديو",
-    
-        //0.5.0 Strings:
+
+    //0.5.0 Strings:
     "Storage permission denied!": "رفض إذن التخزين!",
     "Failed": "فشل",
     "Queued": "في قائمة الانتظار",
@@ -198,6 +198,10 @@ const language_ar_ar = {
     "Download Log": "سجل التنزيل",
     "Repository": "Repository",
     "Source code, report issues there.": "كود المصدر ، ابلغ عن المشاكل هنا.",
-    
+
+    //0.5.2 Strings:
+    "Use system theme": "استخدم ثيم النظام",
+    "Light": "ابيض",
+
   }
 };

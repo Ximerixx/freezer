@@ -428,7 +428,7 @@ class DownloadManager {
       //Album folder / with disk number
       if (settings.albumFolder) {
         if (settings.albumDiscFolder) {
-          path = p.join(path, '%album%' + ' - Disk ' + track.diskNumber.toString());
+          path = p.join(path, '%album%' + ' - Disk ' + (track.diskNumber??null).toString());
         } else {
           path = p.join(path, '%album%');
         }

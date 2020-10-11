@@ -9,7 +9,8 @@ const language_es_es = {
     "Home": "Inicio",
     "Search": "Buscar",
     "Library": "Biblioteca",
-    "Offline mode, can't play flow or smart track lists.": "Modo sin conexión, no se puede reproducir el flow o las listas de pistas inteligentes.",
+    "Offline mode, can't play flow or smart track lists.":
+        "Modo sin conexión, no se puede reproducir el flow o las listas de pistas inteligentes.",
     "Added to library": "Agregado a la biblioteca",
     "Download": "Descargar",
     "Disk": "Disco",
@@ -27,30 +28,39 @@ const language_es_es = {
     "Post processing...": "Post procesamiento...",
     "Done": "Hecho",
     "Delete": "Eliminar",
-    "Are you sure you want to delete this download?": "¿Estás seguro de que quieres borrar esta descarga?",
+    "Are you sure you want to delete this download?":
+        "¿Estás seguro de que quieres borrar esta descarga?",
     "Cancel": "Cancelar",
     "Downloads": "Descargas",
     "Clear queue": "Limpiar la cola",
-    "This won't delete currently downloading item": "Esto no borrará el elemento que se está descargando actualmente",
-    "Are you sure you want to delete all queued downloads?": "¿Estás seguro de que quieres borrar todas las descargas en cola?",
+    "This won't delete currently downloading item":
+        "Esto no borrará el elemento que se está descargando actualmente",
+    "Are you sure you want to delete all queued downloads?":
+        "¿Estás seguro de que quieres borrar todas las descargas en cola?",
     "Clear downloads history": "Borrar el historial de descargas",
-    "WARNING: This will only clear non-offline (external downloads)": "ADVERTENCIA: Esto sólo borrará las descargas que no están en modo sin conexión (descargas externas).",
-    "Please check your connection and try again later...": "Por favor, compruebe su conexión y vuelva a intentarlo más tarde...",
+    "WARNING: This will only clear non-offline (external downloads)":
+        "ADVERTENCIA: Esto sólo borrará las descargas que no están en modo sin conexión (descargas externas).",
+    "Please check your connection and try again later...":
+        "Por favor, compruebe su conexión y vuelva a intentarlo más tarde...",
     "Show more": "Mostrar más",
     "Importer": "Importador",
-    "Currently supporting only Spotify, with 100 tracks limit": "Actualmente sólo se soporta Spotify, con un límite de 100 pistas",
+    "Currently supporting only Spotify, with 100 tracks limit":
+        "Actualmente sólo se soporta Spotify, con un límite de 100 pistas",
     "Due to API limitations": "Debido a limitaciones de API",
-    "Enter your playlist link below": "Ingrese el enlace de su lista de reproducción a continuación",
+    "Enter your playlist link below":
+        "Ingrese el enlace de su lista de reproducción a continuación",
     "Error loading URL!": "¡Error al cargar la URL!",
     "Convert": "Convertir",
     "Download only": "Sólo descargar",
-    "Downloading is currently stopped, click here to resume.": "La descarga está actualmente detenida, haga clic aquí para reanudarla.",
+    "Downloading is currently stopped, click here to resume.":
+        "La descarga está actualmente detenida, haga clic aquí para reanudarla.",
     "Tracks": "Pistas",
     "Albums": "Álbumes",
     "Artists": "Artistas",
     "Playlists": "Listas de reproducción",
     "Import": "Importar",
-    "Import playlists from Spotify": "Importar listas de reproducción de Spotify",
+    "Import playlists from Spotify":
+        "Importar listas de reproducción de Spotify",
     "Statistics": "Estadísticas",
     "Offline tracks": "Pistas sin conexión",
     "Offline albums": "Álbumes sin conexión",
@@ -61,20 +71,25 @@ const language_es_es = {
     "Favorites": "Favoritas",
     "All offline tracks": "Todas las pistas fuera de línea",
     "Create new playlist": "Crear nueva lista de reproducción",
-    "Cannot create playlists in offline mode": "No se pueden crear listas de reproducción en el modo sin conexión",
+    "Cannot create playlists in offline mode":
+        "No se pueden crear listas de reproducción en el modo sin conexión",
     "Error": "Error",
-    "Error logging in! Please check your token and internet connection and try again.": "¡Error al iniciar la sesión! Por favor, compruebe su token y su conexión a Internet e inténtelo de nuevo.",
+    "Error logging in! Please check your token and internet connection and try again.":
+        "¡Error al iniciar la sesión! Por favor, compruebe su token y su conexión a Internet e inténtelo de nuevo.",
     "Dismiss": "Descartar",
     "Welcome to": "Bienvenido a",
-    "Please login using your Deezer account.": "Por favor, inicie sesión con su cuenta de Deezer.",
+    "Please login using your Deezer account.":
+        "Por favor, inicie sesión con su cuenta de Deezer.",
     "Login using browser": "Ingresar usando el navegador",
     "Login using token": "Ingresar usando token",
     "Enter ARL": "Ingrese ARL",
     "Token (ARL)": "Token (ARL)",
     "Save": "Guardar",
-    "If you don't have account, you can register on deezer.com for free.": "Si no tienes una cuenta, puedes registrarte en deezer.com de forma gratuita.",
+    "If you don't have account, you can register on deezer.com for free.":
+        "Si no tienes una cuenta, puedes registrarte en deezer.com de forma gratuita.",
     "Open in browser": "Abrir en el navegador",
-    "By using this app, you don't agree with the Deezer ToS": "Al usar esta aplicación, no está de acuerdo con las Condiciones de servicio de Deezer",
+    "By using this app, you don't agree with the Deezer ToS":
+        "Al usar esta aplicación, no está de acuerdo con las Condiciones de servicio de Deezer",
     "Play next": "Reproducir siguiente",
     "Add to queue": "Añadir a la cola",
     "Add track to favorites": "Agregar pista a favoritos",
@@ -95,7 +110,8 @@ const language_es_es = {
     "Add to favorites": "Agregar a favoritos",
     "Remove from library": "Eliminar de la biblioteca",
     "Add playlist to library": "Agregar lista de reproducción a la biblioteca",
-    "Added playlist to library": "Lista de reproducción agregada a la biblioteca",
+    "Added playlist to library":
+        "Lista de reproducción agregada a la biblioteca",
     "Make playlist offline": "Hacer lista de reproducción sin conexión",
     "Download playlist": "Descargar lista de reproducción",
     "Create playlist": "Crear lista de reproducción",
@@ -126,21 +142,25 @@ const language_es_es = {
     "Deezer (Dark)": "Deezer (oscuro)",
     "Primary color": "Color primario",
     "Selected color": "Color seleccionado",
-    "Use album art primary color": "Usar el color primario de la carátula del álbum",
+    "Use album art primary color":
+        "Usar el color primario de la carátula del álbum",
     "Warning: might be buggy": "Advertencia: podría tener errores",
     "Mobile streaming": "Transmisión móvil",
     "Wifi streaming": "Transmisión WiFi",
     "External downloads": "Descargas externas",
     "Content language": "Lenguaje del contenido",
-    "Not app language, used in headers. Now": "No es un lenguaje de la aplicación, se usa en los encabezados. Ahora",
+    "Not app language, used in headers. Now":
+        "No es un lenguaje de la aplicación, se usa en los encabezados. Ahora",
     "Select language": "Seleccione el idioma",
     "Content country": "País del contenido",
     "Country used in headers. Now": "País utilizado en los encabezados. Ahora",
     "Log tracks": "Seguimiento de las pistas",
-    "Send track listen logs to Deezer, enable it for features like Flow to work properly": "Envía los registros de escucha de las pistas a Deezer, habilítalo para que funciones como Flow funcionen correctamente",
+    "Send track listen logs to Deezer, enable it for features like Flow to work properly":
+        "Envía los registros de escucha de las pistas a Deezer, habilítalo para que funciones como Flow funcionen correctamente",
     "Offline mode": "Modo sin conexión",
     "Will be overwritten on start.": "Se sobrescribirá al inicio.",
-    "Error logging in, check your internet connections.": "Error al iniciar sesión, verifique su conexión a internet.",
+    "Error logging in, check your internet connections.":
+        "Error al iniciar sesión, verifique su conexión a internet.",
     "Logging in...": "Ingresando...",
     "Download path": "Ruta de las descargas",
     "Downloads naming": "Nombramiento de las descargas",
@@ -151,12 +171,15 @@ const language_es_es = {
     "Create folders for artist": "Crear carpetas por artista",
     "Create folders for albums": "Crear carpetas por álbumes",
     "Separate albums by discs": "Separar los álbumes por discos",
-    "Overwrite already downloaded files": "Sobrescribir los archivos ya descargados",
+    "Overwrite already downloaded files":
+        "Sobrescribir los archivos ya descargados",
     "Copy ARL": "Copiar ARL",
-    "Copy userToken/ARL Cookie for use in other apps.": "Copia el Token de usuario/Cookie ARL para su uso en otras aplicaciones.",
+    "Copy userToken/ARL Cookie for use in other apps.":
+        "Copia el Token de usuario/Cookie ARL para su uso en otras aplicaciones.",
     "Copied": "Copiado",
     "Log out": "Cerrar sesión",
-    "Due to plugin incompatibility, login using browser is unavailable without restart.":  "Debido a la incompatibilidad de los plugins, no se puede iniciar la sesión con el navegador sin reiniciar.",
+    "Due to plugin incompatibility, login using browser is unavailable without restart.":
+        "Debido a la incompatibilidad de los plugins, no se puede iniciar la sesión con el navegador sin reiniciar.",
     "(ARL ONLY) Continue": "Continuar (SÓLO ARL)",
     "Log out & Exit": "Cerrar sesión y salir",
     "Pick-a-Path": "Escoja una ruta",
@@ -164,13 +187,13 @@ const language_es_es = {
     "Go up": "Subir",
     "Permission denied": "Permiso denegado",
     "Language": "Idioma",
-    "Language changed, please restart Freezer to apply!": "¡El idioma ha cambiado, por favor reinicie Freezer para aplicarlo!",
+    "Language changed, please restart Freezer to apply!":
+        "¡El idioma ha cambiado, por favor reinicie Freezer para aplicarlo!",
     "Importing...": "Importando...",
     "Radio": "Radio",
     "Flow": "Flow",
-    
+
     //0.5.0 Strings:
-    
     "Storage permission denied!": "Permiso de almacenamiento denegado!",
     "Failed": "Fallido",
     "Queued": "Puesto en cola",
@@ -185,20 +208,28 @@ const language_es_es = {
     "Search or paste URL": "Buscar o pegar URL",
     "History": "Historial",
     "Download threads": "Descargas simultáneas",
-    "Lyrics unavailable, empty or failed to load!": "Letras no disponibles, vacías o no se pudieron cargar!",
+    "Lyrics unavailable, empty or failed to load!":
+        "Letras no disponibles, vacías o no se pudieron cargar!",
     "About": "Acerca de",
     "Telegram Channel": "Canal de Telegram",
     "To get latest releases": "Para obtener los últimos lanzamientos",
     "Official chat": "Chat oficial",
     "Telegram Group": "Grupo de Telegram",
-    "Huge thanks to all the contributors! <3": "Muchas gracias a todos los contribuyentes contributors! <3",
+    "Huge thanks to all the contributors! <3":
+        "Muchas gracias a todos los contribuyentes contributors! <3",
     "Edit playlist": "Editar lista de reproducción",
     "Update": "Actualizar",
     "Playlist updated!": "Lista de reproducción actualizada!",
-    "Downloads added!": "Descargas agregadas!"
-    "Save cover file for every track": "Guarde el archivo de portada para cada pista",
+    "Downloads added!": "Descargas agregadas!",
+    "Save cover file for every track":
+        "Guarde el archivo de portada para cada pista",
     "Download Log": "Registro de Descarga",
     "Repository": "Repositorio",
-    "Source code, report issues there.": "Código fuente, informe de problemas allí."
+    "Source code, report issues there.":
+        "Código fuente, informe de problemas allí.",
+
+    //0.5.2 Strings:
+    "Use system theme": "Usar tema del sistema",
+    "Light": "blanco"
   }
 };

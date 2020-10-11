@@ -35,7 +35,8 @@ Settings _$SettingsFromJson(Map<String, dynamic> json) {
     ..downloadLyrics = json['downloadLyrics'] as bool ?? true
     ..trackCover = json['trackCover'] as bool ?? false
     ..theme =
-        _$enumDecodeNullable(_$ThemesEnumMap, json['theme']) ?? Themes.Light
+        _$enumDecodeNullable(_$ThemesEnumMap, json['theme']) ?? Themes.Dark
+    ..useSystemTheme = json['useSystemTheme'] as bool ?? false
     ..primaryColor = Settings._colorFromJson(json['primaryColor'] as int)
     ..useArtColor = json['useArtColor'] as bool ?? false
     ..deezerLanguage = json['deezerLanguage'] as String ?? 'en'
@@ -62,6 +63,7 @@ Map<String, dynamic> _$SettingsToJson(Settings instance) => <String, dynamic>{
       'downloadLyrics': instance.downloadLyrics,
       'trackCover': instance.trackCover,
       'theme': _$ThemesEnumMap[instance.theme],
+      'useSystemTheme': instance.useSystemTheme,
       'primaryColor': Settings._colorToJson(instance.primaryColor),
       'useArtColor': instance.useArtColor,
       'deezerLanguage': instance.deezerLanguage,

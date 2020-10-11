@@ -38,10 +38,30 @@ import javax.net.ssl.HttpsURLConnection;
 public class Deezer {
 
     DownloadLog logger;
+    String token;
+    String arl;
+    String sid;
+    boolean authorized = false;
+    boolean authorizing = false;
 
     //Initialize for logging
-    void init(DownloadLog logger) {
+    void init(DownloadLog logger, String arl) {
         this.logger = logger;
+        this.arl = arl;
+    }
+
+    //Authorize GWLight API
+    public void authorize() {
+        if (!authorized || sid == null || token == null) {
+            authorizing = true;
+            try {
+                callGWAPI("deezer.getUserData", "{}");
+                authorized = true;
+            } catch (Exception e) {
+                logger.warn("Error authorizing to Deezer API! " + e.toString());
+            }
+        }
+        authorizing = false;
     }
 
     //Get guest SID cookie from deezer.com
@@ -59,11 +79,18 @@ public class Deezer {
         return sid;
     }
 
-    //Same as gw_light API, but doesn't need authentication
-    public static JSONObject callMobileAPI(String method, String params) throws Exception{
-        String sid = Deezer.getSidCookie();
+    public JSONObject callGWAPI(String method, String params) throws Exception {
+        if (sid == null)
+            this.sid = Deezer.getSidCookie();
 
-        URL url = new URL("https://api.deezer.com/1.0/gateway.php?api_key=4VCYIJUCDLOUELGD1V8WBVYBNVDYOXEWSLLZDONGBBDFVXTZJRXPR29JRLQFO6ZE&sid=" + sid + "&input=3&output=3&method=" + method);
+        //Get token
+        if (token == null) {
+            token = "null";
+            callGWAPI("deezer.getUserData", "{}");
+        }
+
+        //Call
+        URL url = new URL("https://www.deezer.com/ajax/gw-light.php?method=" + method + "&input=3&api_version=1.0&api_token=" + token);
         HttpsURLConnection connection = (HttpsURLConnection) url.openConnection();
         connection.setConnectTimeout(20000);
         connection.setDoOutput(true);
@@ -73,6 +100,8 @@ public class Deezer {
         connection.setRequestProperty("Content-Type", "application/json");
         connection.setRequestProperty("Accept", "*/*");
         connection.setRequestProperty("Content-Length", Integer.toString(params.getBytes(StandardCharsets.UTF_8).length));
+        String cookies = "arl=" + arl + "; sid=" + sid;
+        connection.setRequestProperty("Cookie", cookies);
 
         //Write body
         DataOutputStream wr = new DataOutputStream(connection.getOutputStream());
@@ -87,8 +116,25 @@ public class Deezer {
 
         //Parse JSON
         JSONObject out = new JSONObject(data);
+
+        //Save token
+        if ((token == null || token.equals("null")) && method.equals("deezer.getUserData")) {
+            token = out.getJSONObject("results").getString("checkForm");
+            //SID
+            try {
+                String newSid = null;
+                for (String cookie : connection.getHeaderFields().get("Set-Cookie")) {
+                    if (cookie.startsWith("sid=")) {
+                        newSid = cookie.split(";")[0].split("=")[1];
+                    }
+                }
+                this.sid = newSid;
+            } catch (Exception ignored) {}
+        }
+
         return out;
     }
+
 
     //api.deezer.com/$method/$param
     public static JSONObject callPublicAPI(String method, String param) throws Exception {
@@ -267,7 +313,7 @@ public class Deezer {
     }
 
     //Tag track with data from API
-    public static void tagTrack(String path, JSONObject publicTrack, JSONObject publicAlbum, String cover) throws Exception {
+    public static void tagTrack(String path, JSONObject publicTrack, JSONObject publicAlbum, String cover, JSONObject lyricsData) throws Exception {
         TagOptionSingleton.getInstance().setAndroid(true);
         //Load file
         AudioFile f = AudioFileIO.read(new File(path));
@@ -281,20 +327,37 @@ public class Deezer {
         tag.setField(FieldKey.TITLE, publicTrack.getString("title"));
         tag.setField(FieldKey.ALBUM, publicTrack.getJSONObject("album").getString("title"));
         //Artist
+        String artists = "";
         for (int i=0; i<publicTrack.getJSONArray("contributors").length(); i++) {
-            tag.addField(FieldKey.ARTIST, publicTrack.getJSONArray("contributors").getJSONObject(i).getString("name"));
+            artists += ", " + publicTrack.getJSONArray("contributors").getJSONObject(i).getString("name");
         }
+        tag.addField(FieldKey.ARTIST, artists.substring(2));
         tag.setField(FieldKey.TRACK, Integer.toString(publicTrack.getInt("track_position")));
         tag.setField(FieldKey.DISC_NO, Integer.toString(publicTrack.getInt("disk_number")));
         tag.setField(FieldKey.ALBUM_ARTIST, publicAlbum.getJSONObject("artist").getString("name"));
         tag.setField(FieldKey.YEAR, publicTrack.getString("release_date").substring(0, 4));
         tag.setField(FieldKey.BPM, Integer.toString((int)publicTrack.getDouble("bpm")));
         tag.setField(FieldKey.RECORD_LABEL, publicAlbum.getString("label"));
-        //Genres
-        for (int i=0; i<publicAlbum.getJSONObject("genres").getJSONArray("data").length(); i++) {
-            String genre = publicAlbum.getJSONObject("genres").getJSONArray("data").getJSONObject(0).getString("name");
-            tag.addField(FieldKey.GENRE, genre);
+        tag.setField(FieldKey.ISRC, publicTrack.getString("isrc"));
+        tag.setField(FieldKey.BARCODE, publicAlbum.getString("upc"));
+
+        //Unsynced lyrics
+        if (lyricsData != null) {
+            try {
+                String lyrics = lyricsData.getJSONObject("results").getString("LYRICS_TEXT");
+                tag.setField(FieldKey.LYRICS, lyrics);
+            } catch (Exception e) {
+                Log.w("WARN", "Error adding unsynced lyrics!");
+            }
         }
+
+        //Genres
+        String genres = "";
+        for (int i=0; i<publicAlbum.getJSONObject("genres").getJSONArray("data").length(); i++) {
+            genres += ", " + publicAlbum.getJSONObject("genres").getJSONArray("data").getJSONObject(0).getString("name");
+        }
+        if (genres.length() > 2)
+            tag.addField(FieldKey.GENRE, genres.substring(2));
 
         File coverFile = new File(cover);
         boolean addCover = (coverFile.exists() && coverFile.length() > 0);

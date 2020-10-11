@@ -44,8 +44,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
     List<Map<String, String>> _l = supportedLocales.map<Map<String, String>>((l) {
       Map _lang = defaultLanguagesList.firstWhere((lang) => lang['isoCode'] == l.languageCode);
       return {
-        'name': _lang['name'] + ' (${l.toString()})',
-        'isoCode': _lang['isoCode']
+        'name': _lang['name'],
+        'isoCode': _lang['isoCode'],
+        'locale': l.toString()
       };
     }).toList();
     return _l;
@@ -101,33 +102,37 @@ class _SettingsScreenState extends State<SettingsScreen> {
             onTap: () {
               showDialog(
                 context: context,
-                builder: (context) => LanguagePickerDialog(
-                  titlePadding: EdgeInsets.all(8.0),
+                builder: (context) => SimpleDialog(
                   title: Text('Select language'.i18n),
-                  isSearchable: false,
-                  languagesList: _languages(),
-                  onValuePicked: (Language l) async {
-                    setState(()  {
-                      Locale locale = supportedLocales.firstWhere((_l) => _l.languageCode == l.isoCode);
-                      settings.language = locale.toString();
-                    });
-                    await settings.save();
-                    showDialog(
-                      context: context,
-                      builder: (context) {
-                        return AlertDialog(
-                          title: Text('Language'.i18n),
-                          content: Text('Language changed, please restart Freezer to apply!'.i18n),
-                          actions: [
-                            FlatButton(
-                              child: Text('OK'),
-                              onPressed: () => Navigator.of(context).pop(),
-                            )
-                          ],
+                  children: List.generate(_languages().length, (int i) {
+                    Map l = _languages()[i];
+                    return ListTile(
+                      title: Text(l['name']),
+                      subtitle: Text(l['locale']),
+                      onTap: () async {
+                        setState(() => settings.language = l['locale']);
+                        await settings.save();
+                        showDialog(
+                            context: context,
+                            builder: (context) {
+                              return AlertDialog(
+                                title: Text('Language'.i18n),
+                                content: Text('Language changed, please restart Freezer to apply!'.i18n),
+                                actions: [
+                                  FlatButton(
+                                    child: Text('OK'),
+                                    onPressed: () {
+                                      Navigator.of(context).pop();
+                                      Navigator.of(context).pop();
+                                    },
+                                  )
+                                ],
+                              );
+                            }
                         );
-                      }
+                      },
                     );
-                  },
+                  })
                 )
               );
             },
@@ -173,7 +178,7 @@ class _AppearanceSettingsState extends State<AppearanceSettings> {
                     title: Text('Select theme'.i18n),
                     children: <Widget>[
                       SimpleDialogOption(
-                        child: Text('Light (default)'.i18n),
+                        child: Text('Light'.i18n),
                         onPressed: () {
                           setState(() => settings.theme = Themes.Light);
                           settings.save();
@@ -213,6 +218,22 @@ class _AppearanceSettingsState extends State<AppearanceSettings> {
                 }
               );
             },
+          ),
+          ListTile(
+            title: Text('Use system theme'.i18n),
+            leading: Container(
+              width: 30.0,
+              child: Checkbox(
+                value: settings.useSystemTheme,
+                onChanged: (bool v) async {
+                  setState(() {
+                    settings.useSystemTheme = v;
+                  });
+                  updateTheme();
+                  await settings.save();
+                },
+              ),
+            ),
           ),
           ListTile(
             title: Text('Primary color'.i18n),
@@ -1033,14 +1054,16 @@ class _CreditsScreenState extends State<CreditsScreen> {
     ['Markus', 'German'],
     ['Andrea', 'Italian'],
     ['Diego Hiro', 'Portuguese'],
-    ['Annexhack', 'Russian'],
+    ['Orfej', 'Russian'],
     ['Chino Pacia', 'Filipino'],
     ['ArcherDelta & PetFix', 'Spanish'],
     ['Shazzaam', 'Croatian'],
     ['VIRGIN_KLM', 'Greek'],
     ['koreezzz', 'Korean'],
     ['Fwwwwwwwwwweze', 'French'],
-    ['kobyrevah', 'Hebrew']
+    ['kobyrevah', 'Hebrew'],
+    ['HoScHaKaL', 'Turkish'],
+    ['MicroMihai', 'Romanian']
   ];
 
   @override
