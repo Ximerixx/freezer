@@ -215,8 +215,7 @@ const language_es_es = {
     "To get latest releases": "Para obtener los últimos lanzamientos",
     "Official chat": "Chat oficial",
     "Telegram Group": "Grupo de Telegram",
-    "Huge thanks to all the contributors! <3":
-        "Muchas gracias a todos los contribuyentes contributors! <3",
+    "Huge thanks to all the contributors! <3": "Muchas gracias a todos los contribuyentes! <3",
     "Edit playlist": "Editar lista de reproducción",
     "Update": "Actualizar",
     "Playlist updated!": "Lista de reproducción actualizada!",
