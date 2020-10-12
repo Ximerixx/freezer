@@ -124,11 +124,11 @@ const language_ar_ar = {
     "Dark": "داكن (أفضل)",
     "Black (AMOLED)": "أسود",
     "Deezer (Dark)": "داكن (ديزر)",
-    "Primary color": "اللون اساسي",
+    "Primary color": "اللون الأساسي",
     "Selected color": "اللون المحدد",
     "Use album art primary color": "استخدم اللون الأساسي لصورة الألبوم",
     "Warning: might be buggy": "تحذير: قد يكون غير مستقر",
-    "Mobile streaming": "البث عبر شبكة الجوان",
+    "Mobile streaming": "البث عبر شبكة الجوال",
     "Wifi streaming": "البث عبر الوايفاي",
     "External downloads": "التنزيلات الخارجية",
     "Content language": "لغة المحتوى",
@@ -153,7 +153,7 @@ const language_ar_ar = {
     "Separate albums by discs": "افصل الالبومات عبر رقم الاقراص",
     "Overwrite already downloaded files": "الكتابة فوق الملفات التي تم تنزيلها",
     "Copy ARL": "نسخ الرمز المميز (ARL)",
-    "Copy userToken/ARL Cookie for use in other apps.": "انسخ ملف الرابط\الرمز المميز لاستخدامه في تطبيقات أخرى.",
+    "Copy userToken/ARL Cookie for use in other apps.": "انسخ ملف الرابط \ الرمز المميز لاستخدامه في تطبيقات أخرى.",
     "Copied": "تم النسخ",
     "Log out": "تسجيل خروج",
     "Due to plugin incompatibility, login using browser is unavailable without restart.": "نظرًا لعدم توافق المكون الإضافي ، لا يتوفر تسجيل الدخول باستخدام المتصفح بدون إعادة التشغيل.",
@@ -202,6 +202,13 @@ const language_ar_ar = {
     //0.5.2 Strings:
     "Use system theme": "استخدم ثيم النظام",
     "Light": "ابيض",
+    
+        //0.5.3 Strings:
+    "Popularity": "الشعبية",
+    "User": "المستخدم",
+    "Track count": "عدد الاغاني",
+    "If you want to use custom directory naming - use '/' as directory separator.": "إذا كنت تريد استخدام تسمية مخصصة، استخدم "/" كفاصل بين المسار."
+    
 
   }
 };
