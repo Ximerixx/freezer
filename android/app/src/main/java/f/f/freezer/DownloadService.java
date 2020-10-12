@@ -274,6 +274,7 @@ public class DownloadService extends Service {
         File outFile;
         JSONObject trackJson;
         JSONObject albumJson;
+        JSONObject privateJson;
         boolean stopDownload = false;
         DownloadThread(Download download) {
             this.download = download;
@@ -293,8 +294,13 @@ public class DownloadService extends Service {
 
             //Fetch metadata
             try {
-                trackJson = Deezer.callPublicAPI("track", download.trackId);
-                albumJson = Deezer.callPublicAPI("album", Integer.toString(trackJson.getJSONObject("album").getInt("id")));
+                JSONObject privateRaw = deezer.callGWAPI("song.getListData", "{\"sng_ids\": [" + download.trackId + "]}");
+                privateJson = privateRaw.getJSONObject("results").getJSONArray("data").getJSONObject(0);
+                //Don't fetch meta if user uploaded mp3
+                if (!download.isUserUploaded()) {
+                    trackJson = Deezer.callPublicAPI("track", download.trackId);
+                    albumJson = Deezer.callPublicAPI("album", Integer.toString(trackJson.getJSONObject("album").getInt("id")));
+                }
             } catch (Exception e) {
                 logger.error("Unable to fetch track and album metadata! " + e.toString(), download);
                 e.printStackTrace();
@@ -305,7 +311,7 @@ public class DownloadService extends Service {
 
             //ISRC Fallback
             try {
-                if (trackJson.has("available_countries") && trackJson.getJSONArray("available_countries").length() == 0) {
+                if (!download.isUserUploaded() && trackJson.has("available_countries") && trackJson.getJSONArray("available_countries").length() == 0) {
                     logger.warn("ISRC Fallback!", download);
                     JSONObject newTrackJson = Deezer.callPublicAPI("track", "isrc:" + trackJson.getString("isrc"));
                     //Same track check
@@ -349,7 +355,11 @@ public class DownloadService extends Service {
             if (!download.priv) {
                 //Check file
                 try {
-                    outFile = new File(Deezer.generateFilename(download.path, trackJson, albumJson, newQuality));
+                    if (download.isUserUploaded()) {
+                        outFile = new File(Deezer.generateUserUploadedMP3Filename(download.path, privateJson));
+                    } else {
+                        outFile = new File(Deezer.generateFilename(download.path, trackJson, albumJson, newQuality));
+                    }
                     parentDir = new File(outFile.getParent());
                 } catch (Exception e) {
                     logger.error("Error generating track filename (" + download.path + "): " + e.toString(), download);
@@ -486,7 +496,8 @@ public class DownloadService extends Service {
                 }
             }
 
-            if (!download.priv) {
+            //Cover & Tags, ignore on user uploaded
+            if (!download.priv && !download.isUserUploaded()) {
 
                 //Download cover for each track
                 File coverFile = new File(outFile.getPath().substring(0, outFile.getPath().lastIndexOf('.')) + ".jpg");
@@ -520,18 +531,18 @@ public class DownloadService extends Service {
 
                 JSONObject lyricsData = null;
                 //Lyrics
-                if (settings.downloadLyrics) {
-                    try {
-                        lyricsData = deezer.callGWAPI("song.getLyrics", "{\"sng_id\": " + download.trackId + "}");
+                try {
+                    lyricsData = deezer.callGWAPI("song.getLyrics", "{\"sng_id\": " + download.trackId + "}");
+                    if (settings.downloadLyrics) {
                         String lrcData = Deezer.generateLRC(lyricsData, trackJson);
                         //Create file
                         String lrcFilename = outFile.getPath().substring(0, outFile.getPath().lastIndexOf(".")+1) + "lrc";
                         FileOutputStream fileOutputStream = new FileOutputStream(lrcFilename);
                         fileOutputStream.write(lrcData.getBytes());
                         fileOutputStream.close();
-                    } catch (Exception e) {
-                        logger.warn("Error downloading lyrics! " + e.toString(), download);
                     }
+                } catch (Exception e) {
+                    logger.warn("Error downloading lyrics! " + e.toString(), download);
                 }
 
 

@@ -202,13 +202,11 @@ const language_ar_ar = {
     //0.5.2 Strings:
     "Use system theme": "استخدم ثيم النظام",
     "Light": "ابيض",
-    
-        //0.5.3 Strings:
+
+    //0.5.3 Strings:
     "Popularity": "الشعبية",
     "User": "المستخدم",
     "Track count": "عدد الاغاني",
     "If you want to use custom directory naming - use '/' as directory separator.": "إذا كنت تريد استخدام تسمية مخصصة، استخدم '/' كفاصل بين المسار."
-    
-
   }
 };

@@ -51,6 +51,11 @@ public class Download {
         }
     }
 
+    //Negative TrackIDs = User uploaded MP3s.
+    public boolean isUserUploaded() {
+        return trackId.startsWith("-");
+    }
+
     //Get download from SQLite cursor, HAS TO ALIGN
     static Download fromSQL(Cursor cursor) {
         return new Download(cursor.getInt(0), cursor.getString(1), cursor.getInt(2) == 1, cursor.getInt(3), DownloadState.values()[cursor.getInt(4)],

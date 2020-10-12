@@ -224,6 +224,9 @@ const language_ru_ru = {
     "Save cover file for every track": "Обложки для каждого трека отдельным файлом",
     "Download Log": "Лог загрузок (технические данные)",
     "Repository": "Репозиторий",
-    "Source code, report issues there.": "Исходный код, вопросы, предложения."
+    "Source code, report issues there.": "Исходный код, вопросы, предложения.",
+    //0.5.2 Strings:
+    "Use system theme": "Использовать тему системы",
+    "Light": "Светлая"
   }
 };

@@ -205,18 +205,21 @@ class ArtistHorizontalTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return ListTile(
-      title: Text(
-        artist.name,
-        maxLines: 1,
+    return Padding(
+      padding: EdgeInsets.symmetric(vertical: 2.0),
+      child: ListTile(
+        title: Text(
+          artist.name,
+          maxLines: 1,
+        ),
+        leading: CachedImage(
+          url: artist.picture.thumb,
+          circular: true,
+        ),
+        onTap: onTap,
+        onLongPress: onHold,
+        trailing: trailing,
       ),
-      leading: CachedImage(
-        url: artist.picture.thumb,
-        circular: true,
-      ),
-      onTap: onTap,
-      onLongPress: onHold,
-      trailing: trailing,
     );
   }
 }

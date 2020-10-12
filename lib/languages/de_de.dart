@@ -9,7 +9,7 @@ const language_de_de = {
     "Search": "Suche",
     "Library": "Mediathek",
     "Offline mode, can't play flow or smart track lists.":
-        "Offline-Modus, kann keine Flow- oder Smart Track-Listen abspielen.",
+    "Offline-Modus, kann keine Flow- oder Smart Track-Listen abspielen.",
     "Added to library": "Zur Mediathek hinzufügen",
     "Download": "Download",
     "Disk": "Disk",
@@ -28,31 +28,31 @@ const language_de_de = {
     "Done": "Erledigt",
     "Delete": "Gelöscht",
     "Are you sure you want to delete this download?":
-        "Bist du sicher, dass du diesen Download löschen willst?",
+    "Bist du sicher, dass du diesen Download löschen willst?",
     "Cancel": "Abbrechen",
     "Downloads": "Downloads",
     "Clear queue": "Warteschleife löschen",
     "This won't delete currently downloading item":
-        "Dies löscht das derzeit heruntergeladene Element nicht",
+    "Dies löscht das derzeit heruntergeladene Element nicht",
     "Are you sure you want to delete all queued downloads?":
-        "Bist du sicher, dass du alle Downloads aus der Warteschleife löschen willst?",
+    "Bist du sicher, dass du alle Downloads aus der Warteschleife löschen willst?",
     "Clear downloads history": "Download-Verlauf löschen",
     "WARNING: This will only clear non-offline (external downloads)":
-        "ACHTUNG: (Externe Downloads) werden entfernt",
+    "ACHTUNG: (Externe Downloads) werden entfernt",
     "Please check your connection and try again later...":
-        "Bitte überprüfe deine Verbindung und versuche es später noch einmal...",
+    "Bitte überprüfe deine Verbindung und versuche es später noch einmal...",
     "Show more": "Mehr anzeigen",
     "Importer": "Importieren",
     "Currently supporting only Spotify, with 100 tracks limit":
-        "Derzeit begrenzt auf maximal 100 Titel",
+    "Derzeit begrenzt auf maximal 100 Titel",
     "Due to API limitations": "Aufgrund von API-Einschränkungen",
     "Enter your playlist link below":
-        "Gebe deinen Wiedergabelisten-Link unten ein",
+    "Gebe deinen Wiedergabelisten-Link unten ein",
     "Error loading URL!": "Fehler beim Laden der URL!",
     "Convert": "Konvertieren",
     "Download only": "Nur Herunterladen",
     "Downloading is currently stopped, click here to resume.":
-        "Das Herunterladen ist derzeit gestoppt, klicke hier, um fortzufahren.",
+    "Das Herunterladen ist derzeit gestoppt, klicke hier, um fortzufahren.",
     "Tracks": "Titel",
     "Albums": "Alben",
     "Artists": "Künstler",
@@ -70,24 +70,24 @@ const language_de_de = {
     "All offline tracks": "Alle Offline-Titel",
     "Create new playlist": "Neue Wiedergabeliste erstellen",
     "Cannot create playlists in offline mode":
-        "Wiedergabelisten können im Offline-Modus nicht erstellt werden",
+    "Wiedergabelisten können im Offline-Modus nicht erstellt werden",
     "Error": "Fehler",
     "Error logging in! Please check your token and internet connection and try again.":
-        "Fehler beim Einloggen! Bitte überprüfe dein Token und deine Internetverbindung und versuche es erneut.",
+    "Fehler beim Einloggen! Bitte überprüfe dein Token und deine Internetverbindung und versuche es erneut.",
     "Dismiss": "Verwerfen",
     "Welcome to": "Willkommen bei",
     "Please login using your Deezer account.":
-        "Bitte melde dich mit deinem Deezer-Konto an.",
+    "Bitte melde dich mit deinem Deezer-Konto an.",
     "Login using browser": "Anmeldung über Browser",
     "Login using token": "Anmeldung per Token",
     "Enter ARL": "ARL eingeben",
     "Token (ARL)": "Token (ARL)",
     "Save": "Speichern",
     "If you don't have account, you can register on deezer.com for free.":
-        "Wenn Du noch kein Konto hast, kannst Du Dich kostenlos auf deezer.com registrieren.",
+    "Wenn Du noch kein Konto hast, kannst Du Dich kostenlos auf deezer.com registrieren.",
     "Open in browser": "Im Browser öffnen",
     "By using this app, you don't agree with the Deezer ToS":
-        "Wenn Du diese Anwendung verwendest, bist Du nicht mit den Deezer ToS einverstanden",
+    "Wenn Du diese Anwendung verwendest, bist Du nicht mit den Deezer ToS einverstanden",
     "Play next": "Als nächstes spielen",
     "Add to queue": "Zur Warteschleife hinzufügen",
     "Add track to favorites": "Titel zu Favoriten hinzufügen",
@@ -151,11 +151,11 @@ const language_de_de = {
     "Country used in headers. Now": "Aktuell",
     "Log tracks": "Protokolliere Titel",
     "Send track listen logs to Deezer, enable it for features like Flow to work properly":
-        "Gehörte Titel-Protokolle an Deezer senden, damit Flow richtig funktioniert",
+    "Gehörte Titel-Protokolle an Deezer senden, damit Flow richtig funktioniert",
     "Offline mode": "Offline-Modus",
     "Will be overwritten on start.": "Wird beim Start überschrieben.",
     "Error logging in, check your internet connections.":
-        "Fehler beim Anmelden, überprüfe deine Internetverbindung.",
+    "Fehler beim Anmelden, überprüfe deine Internetverbindung.",
     "Logging in...": "Angemeldet...",
     "Download path": "Download-Pfad",
     "Downloads naming": "Benennung der Downloads",
@@ -167,14 +167,14 @@ const language_de_de = {
     "Create folders for albums": "Ordner für Alben erstellen",
     "Separate albums by discs": "Alben nach Discs trennen",
     "Overwrite already downloaded files":
-        "Bereits heruntergeladene Dateien überschreiben",
+    "Bereits heruntergeladene Dateien überschreiben",
     "Copy ARL": "ARL kopieren",
     "Copy userToken/ARL Cookie for use in other apps.":
-        "UserToken / ARL-Cookie zur Verwendung in anderen Anwendungen kopieren.",
+    "UserToken / ARL-Cookie zur Verwendung in anderen Anwendungen kopieren.",
     "Copied": "Kopiert",
     "Log out": "Abmelden",
     "Due to plugin incompatibility, login using browser is unavailable without restart.":
-        "Aufgrund von Plugin-Inkompatibilität ist die Anmeldung mit dem Browser ohne Neustart nicht möglich.",
+    "Aufgrund von Plugin-Inkompatibilität ist die Anmeldung mit dem Browser ohne Neustart nicht möglich.",
     "(ARL ONLY) Continue": "(NUR ARL) Fortfahren",
     "Log out & Exit": "Abmelden & Beenden",
     "Pick-a-Path": "Wähle einen Pfad",
@@ -183,7 +183,7 @@ const language_de_de = {
     "Permission denied": "Zugriff verweigert",
     "Language": "Sprache",
     "Language changed, please restart Freezer to apply!":
-        "Sprache geändert, bitte Freezer neu starten!",
+    "Sprache geändert, bitte Freezer neu starten!",
     "Importing...": "Importiere...",
     "Radio": "Radio",
     //0.5.0 Strings:

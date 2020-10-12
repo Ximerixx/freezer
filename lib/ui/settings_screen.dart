@@ -498,7 +498,7 @@ class _DeezerSettingsState extends State<DeezerSettings> {
           ListTile(
             title: Text('Proxy'.i18n),
             leading: Icon(Icons.vpn_key),
-            subtitle: Text(settings.proxyAddress??'Not set'),
+            subtitle: Text(settings.proxyAddress??'Not set'.i18n),
             onTap: () {
               String _new;
               showDialog(
@@ -606,7 +606,8 @@ class _DownloadsSettingsState extends State<DownloadsSettings> {
                           ),
                           Container(height: 8.0),
                           Text(
-                            'Valid variables are'.i18n + ': %artists%, %artist%, %title%, %album%, %trackNumber%, %0trackNumber%, %feats%, %playlistTrackNumber%, %0playlistTrackNumber%, %year%, %date%',
+                            'Valid variables are'.i18n + ': %artists%, %artist%, %title%, %album%, %trackNumber%, %0trackNumber%, %feats%, %playlistTrackNumber%, %0playlistTrackNumber%, %year%, %date%\n\n' +
+                            "If you want to use custom directory naming - use '/' as directory separator.".i18n,
                             style: TextStyle(
                               fontSize: 12.0,
                             ),
@@ -658,8 +659,8 @@ class _DownloadsSettingsState extends State<DownloadsSettings> {
           ),
           Slider(
             min: 1,
-            max: 6,
-            divisions: 5,
+            max: 16,
+            divisions: 15,
             value: _downloadThreads,
             label: _downloadThreads.round().toString(),
             onChanged: (double v) => setState(() => _downloadThreads = v),
@@ -1040,15 +1041,6 @@ class _CreditsScreenState extends State<CreditsScreen> {
 
   String _version = '';
 
-  //Title, Subtitle, URL
-  static final List<List<String>> credits = [
-    ['exttex', 'Developer'],
-    ['Bas Curtiz', 'Icon, logo, banner, design suggestions, tester'],
-    ['Deemix', 'Better app <3', 'https://codeberg.org/RemixDev/deemix'],
-    ['Tobs, Xandar Null, Francesco', 'Beta testers'],
-    ['Annexhack', 'Android Auto help']
-  ];
-
   static final List<List<String>> translators = [
     ['Xandar Null', 'Arabic'],
     ['Markus', 'German'],
@@ -1111,22 +1103,51 @@ class _CreditsScreenState extends State<CreditsScreen> {
           ),
           ListTile(
             title: Text('Repository'.i18n),
-            subtitle: Text('Source code, report issues there.'),
+            subtitle: Text('Source code, report issues there.'.i18n),
             leading: Icon(Icons.code, color: Colors.green, size: 36.0),
             onTap: () {
               launch('https://notabug.org/exttex/freezer');
             },
           ),
           Divider(),
-          ...List.generate(credits.length, (i) => ListTile(
-            title: Text(credits[i][0]),
-            subtitle: Text(credits[i][1]),
+          ListTile(
+            title: Text('exttex'),
+            subtitle: Text('Developer'),
+          ),
+          ListTile(
+            title: Text('Bas Curtiz'),
+            subtitle: Text('Icon, logo, banner, design suggestions, tester'),
+          ),
+          ListTile(
+            title: Text('Tobs'),
+            subtitle: Text('Alpha testers'),
+          ),
+          ListTile(
+            title: Text('Deemix'),
+            subtitle: Text('Better app <3'),
             onTap: () {
-              if (credits[i].length >= 3) {
-                launch(credits[i][2]);
-              }
+              launch('https://codeberg.org/RemixDev/deemix');
             },
-          )),
+          ),
+          ListTile(
+            title: Text('Xandar Null'),
+            subtitle: Text('Tester, translations help'),
+          ),
+          ListTile(
+            title: Text('Francesco'),
+            subtitle: Text('Tester'),
+            onTap: () {
+              setState(() {
+                settings.primaryColor = Color(0xff333333);
+              });
+              updateTheme();
+              settings.save();
+            },
+          ),
+          ListTile(
+            title: Text('Annexhack'),
+            subtitle: Text('Android Auto help'),
+          ),
           Divider(),
           ...List.generate(translators.length, (i) => ListTile(
             title: Text(translators[i][0]),

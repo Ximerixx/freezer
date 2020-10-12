@@ -664,7 +664,7 @@ class _PlaylistDetailsState extends State<PlaylistDetails> {
         tracks.sort((a, b) => a.title.compareTo(b.title));
         return tracks;
       case SortType.ARTIST:
-        tracks.sort((a, b) => a.artists[0].name.compareTo(b.artists[0].name));
+        tracks.sort((a, b) => a.artists[0].name.toLowerCase().compareTo(b.artists[0].name.toLowerCase()));
         return tracks;
       case SortType.REVERSE:
         return tracks.reversed.toList();

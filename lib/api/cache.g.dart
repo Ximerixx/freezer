@@ -19,7 +19,16 @@ Cache _$CacheFromJson(Map<String, dynamic> json) {
     ..playlistSort = (json['playlistSort'] as Map<String, dynamic>)?.map(
           (k, e) => MapEntry(k, _$enumDecodeNullable(_$SortTypeEnumMap, e)),
         ) ??
-        {};
+        {}
+    ..albumSort =
+        _$enumDecodeNullable(_$AlbumSortTypeEnumMap, json['albumSort']) ??
+            AlbumSortType.DEFAULT
+    ..artistSort =
+        _$enumDecodeNullable(_$ArtistSortTypeEnumMap, json['artistSort']) ??
+            ArtistSortType.DEFAULT
+    ..libraryPlaylistSort = _$enumDecodeNullable(
+            _$PlaylistSortTypeEnumMap, json['libraryPlaylistSort']) ??
+        PlaylistSortType.DEFAULT;
 }
 
 Map<String, dynamic> _$CacheToJson(Cache instance) => <String, dynamic>{
@@ -27,6 +36,10 @@ Map<String, dynamic> _$CacheToJson(Cache instance) => <String, dynamic>{
       'history': instance.history,
       'playlistSort': instance.playlistSort
           ?.map((k, e) => MapEntry(k, _$SortTypeEnumMap[e])),
+      'albumSort': _$AlbumSortTypeEnumMap[instance.albumSort],
+      'artistSort': _$ArtistSortTypeEnumMap[instance.artistSort],
+      'libraryPlaylistSort':
+          _$PlaylistSortTypeEnumMap[instance.libraryPlaylistSort],
     };
 
 T _$enumDecode<T>(
@@ -66,4 +79,26 @@ const _$SortTypeEnumMap = {
   SortType.REVERSE: 'REVERSE',
   SortType.ALPHABETIC: 'ALPHABETIC',
   SortType.ARTIST: 'ARTIST',
+};
+
+const _$AlbumSortTypeEnumMap = {
+  AlbumSortType.DEFAULT: 'DEFAULT',
+  AlbumSortType.REVERSE: 'REVERSE',
+  AlbumSortType.ALPHABETIC: 'ALPHABETIC',
+  AlbumSortType.ARTIST: 'ARTIST',
+};
+
+const _$ArtistSortTypeEnumMap = {
+  ArtistSortType.DEFAULT: 'DEFAULT',
+  ArtistSortType.REVERSE: 'REVERSE',
+  ArtistSortType.POPULARITY: 'POPULARITY',
+  ArtistSortType.ALPHABETIC: 'ALPHABETIC',
+};
+
+const _$PlaylistSortTypeEnumMap = {
+  PlaylistSortType.DEFAULT: 'DEFAULT',
+  PlaylistSortType.REVERSE: 'REVERSE',
+  PlaylistSortType.ALPHABETIC: 'ALPHABETIC',
+  PlaylistSortType.USER: 'USER',
+  PlaylistSortType.TRACK_COUNT: 'TRACK_COUNT',
 };

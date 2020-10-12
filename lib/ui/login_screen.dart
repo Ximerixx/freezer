@@ -90,15 +90,19 @@ class _LoginWidgetState extends State<LoginWidget> {
     //Try logging in
     try {
       deezerAPI.arl = settings.arl;
-      bool resp = await deezerAPI.rawAuthorize(onError: (e) => _error = e.toString());
+      bool resp = await deezerAPI.rawAuthorize(onError: (e) => setState(() => _error = e.toString()));
       if (resp == false) { //false, not null
+        if (settings.arl.length != 192) {
+          if (_error == null) _error = '';
+            _error += 'Invalid ARL length!';
+        }
         setState(() => settings.arl = null);
         errorDialog();
       }
       //On error show dialog and reset to null
     } catch (e) {
-      _error = e;
-      print('Login error: ' + e);
+      _error = e.toString();
+      print('Login error: ' + e.toString());
       setState(() => settings.arl = null);
       errorDialog();
     }

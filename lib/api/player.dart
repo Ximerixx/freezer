@@ -246,6 +246,7 @@ class AudioPlayerTask extends BackgroundAudioTask {
 
   //Queue
   List<MediaItem> _queue = <MediaItem>[];
+  List<int> _shuffleHistory = [];
   int _queueIndex = 0;
   ConcatenatingAudioSource _audioSource;
 
@@ -363,13 +364,15 @@ class AudioPlayerTask extends BackgroundAudioTask {
   Future<void> onSkipToNext() async {
     //Shuffle
     if (_player.shuffleModeEnabled??false) {
-      int newIndex = Random().nextInt(_queue.length)-1;
+      int newIndex = Random().nextInt(_queue.length-1);
       //Update state
       _skipState = newIndex > _queueIndex
           ? AudioProcessingState.skippingToNext
           : AudioProcessingState.skippingToPrevious;
 
+      if (_shuffleHistory.length == 0) _shuffleHistory.add(_queueIndex);
       _queueIndex = newIndex;
+      _shuffleHistory.add(newIndex);
       await _player.seek(Duration.zero, index: _queueIndex);
       _skipState = null;
       return;
@@ -385,9 +388,24 @@ class AudioPlayerTask extends BackgroundAudioTask {
 
   @override
   Future<void> onSkipToPrevious() async {
-    if (_queueIndex == 0) return;
+    if (_queueIndex == 0 && !(_player.shuffleModeEnabled??false)) return;
     //Update buffering state
     _skipState = AudioProcessingState.skippingToPrevious;
+
+    //Shuffle history
+    if ((_player.shuffleModeEnabled??false) && _shuffleHistory.length > 1) {
+      _shuffleHistory.removeLast();
+      if (_shuffleHistory.last < _queue.length) {
+        _queueIndex = _shuffleHistory.last;
+        await _player.seek(Duration.zero, index: _queueIndex);
+        _skipState = null;
+        return;
+      } else {
+        _shuffleHistory = [];
+      }
+    }
+
+    //Normal skip to previous
     _queueIndex--;
     await _player.seekToPrevious();
     _skipState = null;
@@ -553,9 +571,11 @@ class AudioPlayerTask extends BackgroundAudioTask {
     if (name == 'repeatType') {
       _player.setLoopMode(LoopMode.values[args]);
     }
-    if (name == 'saveQueue') await this._saveQueue();
+    if (name == 'saveQueue')
+      await this._saveQueue();
     //Load queue after some initialization in frontend
-    if (name == 'load') await this._loadQueueFile();
+    if (name == 'load')
+      await this._loadQueueFile();
     //Shuffle
     if (name == 'shuffle') {
       await _player.setShuffleModeEnabled(args);

@@ -419,6 +419,13 @@ class _LibraryTracksState extends State<LibraryTracks> {
 }
 
 
+enum AlbumSortType {
+  DEFAULT,
+  REVERSE,
+  ALPHABETIC,
+  ARTIST
+}
+
 class LibraryAlbums extends StatefulWidget {
   @override
   _LibraryAlbumsState createState() => _LibraryAlbumsState();
@@ -427,6 +434,25 @@ class LibraryAlbums extends StatefulWidget {
 class _LibraryAlbumsState extends State<LibraryAlbums> {
 
   List<Album> _albums;
+  AlbumSortType _sort = AlbumSortType.DEFAULT;
+
+  List<Album> get _sorted {
+    List<Album> albums = List.from(_albums);
+    switch (_sort) {
+      case AlbumSortType.DEFAULT:
+        return _albums;
+      case AlbumSortType.REVERSE:
+        return _albums.reversed.toList();
+      case AlbumSortType.ALPHABETIC:
+        albums.sort((a, b) => a.title.toLowerCase().compareTo(b.title.toLowerCase()));
+        return albums;
+      case AlbumSortType.ARTIST:
+        albums.sort((a, b) => a.artists[0].name.toLowerCase().compareTo(b.artists[0].name.toLowerCase()));
+        return albums;
+    }
+    return albums;
+  }
+
 
   Future _load() async {
     if (settings.offlineMode) return;
@@ -439,13 +465,44 @@ class _LibraryAlbumsState extends State<LibraryAlbums> {
   @override
   void initState() {
     _load();
+    _sort = cache.albumSort??AlbumSortType.DEFAULT;
     super.initState();
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text('Albums'.i18n),),
+      appBar: AppBar(
+        title: Text('Albums'.i18n),
+        actions: [
+          PopupMenuButton(
+            child: Icon(Icons.sort, size: 32.0),
+            onSelected: (AlbumSortType s) async {
+              setState(() => _sort = s);
+              cache.albumSort = s;
+              await cache.save();
+            },
+            itemBuilder: (context) => <PopupMenuEntry<AlbumSortType>>[
+              PopupMenuItem(
+                value: AlbumSortType.DEFAULT,
+                child: Text('Default'.i18n),
+              ),
+              PopupMenuItem(
+                value: AlbumSortType.REVERSE,
+                child: Text('Reverse'.i18n),
+              ),
+              PopupMenuItem(
+                value: AlbumSortType.ALPHABETIC,
+                child: Text('Alphabetic'.i18n),
+              ),
+              PopupMenuItem(
+                value: AlbumSortType.ARTIST,
+                child: Text('Artist'.i18n),
+              ),
+            ],
+          ),
+        ],
+      ),
       body: ListView(
         children: <Widget>[
           Container(height: 8.0,),
@@ -459,7 +516,7 @@ class _LibraryAlbumsState extends State<LibraryAlbums> {
 
           if (_albums != null)
             ...List.generate(_albums.length, (int i) {
-              Album a = _albums[i];
+              Album a = _sorted[i];
               return AlbumTile(
                 a,
                 onTap: () {
@@ -523,50 +580,148 @@ class _LibraryAlbumsState extends State<LibraryAlbums> {
   }
 }
 
+enum ArtistSortType {
+  DEFAULT,
+  REVERSE,
+  POPULARITY,
+  ALPHABETIC
+}
+
 class LibraryArtists extends StatefulWidget {
   @override
   _LibraryArtistsState createState() => _LibraryArtistsState();
 }
 
 class _LibraryArtistsState extends State<LibraryArtists> {
+
+  List<Artist> _artists;
+  ArtistSortType _sort = ArtistSortType.DEFAULT;
+  bool _loading = true;
+  bool _error = false;
+
+  List<Artist> get _sorted {
+    List<Artist> artists = List.from(_artists);
+    switch (_sort) {
+      case ArtistSortType.DEFAULT:
+        return _artists;
+      case ArtistSortType.REVERSE:
+        return _artists.reversed.toList();
+      case ArtistSortType.POPULARITY:
+        artists.sort((a, b) => b.fans - a.fans);
+        return artists;
+      case ArtistSortType.ALPHABETIC:
+        artists.sort((a, b) => a.name.toLowerCase().compareTo(b.name.toLowerCase()));
+        return artists;
+    }
+  }
+
+  //Load data
+  Future _load() async {
+    setState(() => _loading = true);
+    //Fetch
+    List<Artist> data;
+    try {
+      data = await deezerAPI.getArtists();
+    } catch (e) {}
+    //Update UI
+    setState(() {
+      if (data != null) {
+        _artists = data;
+      } else {
+        _error = true;
+      }
+      _loading = false;
+    });
+  }
+
+  @override
+  void initState() {
+    _sort = cache.artistSort;
+    _load();
+    super.initState();
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text('Artists'.i18n),),
-      body: FutureBuilder(
-        future: deezerAPI.getArtists(),
-        builder: (BuildContext context, AsyncSnapshot snapshot) {
-
-          if (snapshot.hasError) return ErrorScreen();
-          if (!snapshot.hasData) return Center(child: CircularProgressIndicator(),);
-
-          return ListView(
-            children: <Widget>[
-              ...List.generate(snapshot.data.length, (i) {
-                Artist a = snapshot.data[i];
-                return ArtistHorizontalTile(
-                  a,
-                  onTap: () {
-                    Navigator.of(context).push(
-                        MaterialPageRoute(builder: (context) => ArtistDetails(a))
-                    );
-                  },
-                  onHold: () {
-                    MenuSheet m = MenuSheet(context);
-                    m.defaultArtistMenu(a, onRemove: () {
-                      setState(() => {});
-                    });
-                  },
-                );
-              }),
+      appBar: AppBar(
+        title: Text('Artists'.i18n),
+        actions: [
+          PopupMenuButton(
+            child: Icon(Icons.sort, size: 32.0),
+            onSelected: (ArtistSortType s) async {
+              setState(() => _sort = s);
+              cache.artistSort = s;
+              await cache.save();
+            },
+            itemBuilder: (context) => <PopupMenuEntry<ArtistSortType>>[
+              PopupMenuItem(
+                value: ArtistSortType.DEFAULT,
+                child: Text('Default'.i18n),
+              ),
+              PopupMenuItem(
+                value: ArtistSortType.REVERSE,
+                child: Text('Reverse'.i18n),
+              ),
+              PopupMenuItem(
+                value: ArtistSortType.ALPHABETIC,
+                child: Text('Alphabetic'.i18n),
+              ),
+              PopupMenuItem(
+                value: ArtistSortType.POPULARITY,
+                child: Text('Popularity'.i18n),
+              ),
             ],
-          );
-        },
+          )
+        ],
+      ),
+      body: ListView(
+        children: <Widget>[
+          if (_loading)
+            Padding(
+              padding: EdgeInsets.all(8.0),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [CircularProgressIndicator()],
+              ),
+            ),
+
+          if (_error)
+            Center(child: ErrorScreen()),
+
+          if (!_loading && !_error)
+            ...List.generate(_artists.length, (i) {
+              Artist a = _sorted[i];
+              return ArtistHorizontalTile(
+                a,
+                onTap: () {
+                  Navigator.of(context).push(
+                      MaterialPageRoute(builder: (context) => ArtistDetails(a))
+                  );
+                },
+                onHold: () {
+                  MenuSheet m = MenuSheet(context);
+                  m.defaultArtistMenu(a, onRemove: () {
+                    setState(() {
+                      _artists.remove(a);
+                    });
+                  });
+                },
+              );
+            }),
+        ],
       ),
     );
   }
 }
 
+enum PlaylistSortType {
+  DEFAULT,
+  REVERSE,
+  ALPHABETIC,
+  USER,
+  TRACK_COUNT
+}
 
 class LibraryPlaylists extends StatefulWidget {
   @override
@@ -576,6 +731,26 @@ class LibraryPlaylists extends StatefulWidget {
 class _LibraryPlaylistsState extends State<LibraryPlaylists> {
 
   List<Playlist> _playlists;
+  PlaylistSortType _sort = PlaylistSortType.DEFAULT;
+
+  List<Playlist> get _sorted {
+    List<Playlist> playlists = List.from(_playlists);
+    switch (_sort) {
+      case PlaylistSortType.DEFAULT:
+        return _playlists;
+      case PlaylistSortType.REVERSE:
+        return _playlists.reversed.toList();
+      case PlaylistSortType.USER:
+        playlists.sort((a, b) => (a.user.name??deezerAPI.userName).toLowerCase().compareTo((b.user.name??deezerAPI.userName).toLowerCase()));
+        return playlists;
+      case PlaylistSortType.TRACK_COUNT:
+        playlists.sort((a, b) => b.trackCount - a.trackCount);
+        return playlists;
+      case PlaylistSortType.ALPHABETIC:
+        playlists.sort((a, b) => a.title.toLowerCase().compareTo(b.title.toLowerCase()));
+        return playlists;
+    }
+  }
 
   Future _load() async {
     if (!settings.offlineMode) {
@@ -588,6 +763,7 @@ class _LibraryPlaylistsState extends State<LibraryPlaylists> {
 
   @override
   void initState() {
+    _sort = cache.libraryPlaylistSort;
     _load();
     super.initState();
   }
@@ -606,7 +782,41 @@ class _LibraryPlaylistsState extends State<LibraryPlaylists> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text('Playlists'.i18n),),
+      appBar: AppBar(
+        title: Text('Playlists'.i18n),
+        actions: [
+          PopupMenuButton(
+            child: Icon(Icons.sort, size: 32.0),
+            onSelected: (PlaylistSortType s) async {
+              setState(() => _sort = s);
+              cache.libraryPlaylistSort = s;
+              await cache.save();
+            },
+            itemBuilder: (context) => <PopupMenuEntry<PlaylistSortType>>[
+              PopupMenuItem(
+                value: PlaylistSortType.DEFAULT,
+                child: Text('Default'.i18n),
+              ),
+              PopupMenuItem(
+                value: PlaylistSortType.REVERSE,
+                child: Text('Reverse'.i18n),
+              ),
+              PopupMenuItem(
+                value: PlaylistSortType.USER,
+                child: Text('User'.i18n),
+              ),
+              PopupMenuItem(
+                value: PlaylistSortType.TRACK_COUNT,
+                child: Text('Track count'.i18n),
+              ),
+              PopupMenuItem(
+                value: PlaylistSortType.ALPHABETIC,
+                child: Text('Alphabetic'.i18n),
+              ),
+            ],
+          )
+        ],
+      ),
       body: ListView(
         children: <Widget>[
           ListTile(
@@ -652,7 +862,7 @@ class _LibraryPlaylistsState extends State<LibraryPlaylists> {
 
           if (_playlists != null)
             ...List.generate(_playlists.length, (int i) {
-              Playlist p = _playlists[i];
+              Playlist p = _sorted[i];
               return PlaylistTile(
                 p,
                 onTap: () => Navigator.of(context).push(MaterialPageRoute(

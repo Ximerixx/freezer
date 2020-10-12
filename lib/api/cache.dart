@@ -1,6 +1,7 @@
 import 'package:freezer/api/deezer.dart';
 import 'package:freezer/api/definitions.dart';
 import 'package:freezer/ui/details_screens.dart';
+import 'package:freezer/ui/library.dart';
 import 'package:json_annotation/json_annotation.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:path/path.dart' as p;
@@ -29,6 +30,14 @@ class Cache {
   //Cache playlist sort type {id: sort}
   @JsonKey(defaultValue: {})
   Map<String, SortType> playlistSort;
+
+  //Sort
+  @JsonKey(defaultValue: AlbumSortType.DEFAULT)
+  AlbumSortType albumSort;
+  @JsonKey(defaultValue: ArtistSortType.DEFAULT)
+  ArtistSortType artistSort;
+  @JsonKey(defaultValue: PlaylistSortType.DEFAULT)
+  PlaylistSortType libraryPlaylistSort;
 
 
   Cache({this.libraryTracks});

@@ -312,6 +312,20 @@ public class Deezer {
         return original + ".mp3";
     }
 
+    public static String generateUserUploadedMP3Filename(String original, JSONObject privateJson) throws Exception {
+        //Remove unavailable tags
+        String[] ignored = {"%feats%", "%trackNumber%", "%0trackNumber%", "%year%", "%date%"};
+        for (String i : ignored) {
+            original = original.replaceAll(i, "");
+        }
+        //Basic tags
+        original = original.replaceAll("%title%", privateJson.getString("SNG_TITLE"));
+        original = original.replaceAll("%album%", privateJson.getString("ALB_TITLE"));
+        original = original.replaceAll("%artist%", privateJson.getString("ART_NAME"));
+        original = original.replaceAll("%artists%", privateJson.getString("ART_NAME"));
+        return original;
+    }
+
     //Tag track with data from API
     public static void tagTrack(String path, JSONObject publicTrack, JSONObject publicAlbum, String cover, JSONObject lyricsData) throws Exception {
         TagOptionSingleton.getInstance().setAndroid(true);
