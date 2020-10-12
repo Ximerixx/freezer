@@ -185,6 +185,46 @@ const language_de_de = {
     "Language changed, please restart Freezer to apply!":
         "Sprache geändert, bitte Freezer neu starten!",
     "Importing...": "Importiere...",
-    "Radio": "Radio"
+    "Radio": "Radio",
+    //0.5.0 Strings:
+    "Storage permission denied!": "Speicherzugriff verweigert!",
+    "Failed": "Fehlgeschlagen",
+    "Queued": "Warteschleife",
+    //Updated in 0.5.1 - used in context of download:
+    "External": "Speicherplatz",
+    //0.5.0
+    "Restart failed downloads": "Fehlgeschlagene Downloads neu starten",
+    "Clear failed": "Fehlgeschlagene Downloads löschen",
+    "Download Settings": "Download-Einstellungen",
+    "Create folder for playlist": "Ordner für Wiedergabelisten erstellen",
+    "Download .LRC lyrics": "Download .LRC lyrics",
+    "Proxy": "Proxy",
+    "Not set": "Nicht festgelegt",
+    "Search or paste URL": "Suchen oder Einfügen von URLs",
+    "History": "Verlauf",
+    //Updated 0.5.1
+    "Download threads": "Gleichzeitige Downloads",
+    //0.5.0
+    "Lyrics unavailable, empty or failed to load!": "Lyrics nicht verfügbar, leer oder laden fehlgeschlagen!",
+    "About": "Über",
+    "Telegram Channel": "Telegram Kanal",
+    "To get latest releases": "Um die neuesten Versionen zu erhalten",
+    "Official chat": "Offizieller Chat",
+    "Telegram Group": "Telegram Gruppe",
+    "Huge thanks to all the contributors! <3": "Großer Dank an alle Mitwirkenden! <3",
+    "Edit playlist": "Wiedergabeliste bearbeiten",
+    "Update": "Update",
+    "Playlist updated!": "Wiedergabeliste aktualisiert!",
+    "Downloads added!": "Downloads hinzugefügt!",
+
+    //0.5.1 Strings:
+    "Save cover file for every track": "Albumcover für jeden Titel speichern",
+    "Download Log": "Download-Log",
+    "Repository": "Repository",
+    "Source code, report issues there.": "Quellcode, Probleme dort melden.",
+
+    //0.5.2 Strings:
+    "Use system theme": "Systemvorgabe benutzen",
+    "Light": "Hell"
   }
 };
