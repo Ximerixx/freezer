@@ -207,7 +207,7 @@ const language_ar_ar = {
     "Popularity": "الشعبية",
     "User": "المستخدم",
     "Track count": "عدد الاغاني",
-    "If you want to use custom directory naming - use '/' as directory separator.": "إذا كنت تريد استخدام تسمية مخصصة، استخدم "/" كفاصل بين المسار."
+    "If you want to use custom directory naming - use '/' as directory separator.": "إذا كنت تريد استخدام تسمية مخصصة، استخدم '/' كفاصل بين المسار."
     
 
   }
