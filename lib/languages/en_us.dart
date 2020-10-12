@@ -222,6 +222,11 @@ const language_en_us = {
 
     //0.5.2 Strings:
     "Use system theme": "Use system theme",
-    "Light": "Light"
+    "Light": "Light",
+
+    //0.5.3 Strings:
+    "Popularity": "Popularity",
+    "User": "User",
+    "Track count": "Track count"
   }
 };
