@@ -227,6 +227,7 @@ const language_en_us = {
     //0.5.3 Strings:
     "Popularity": "Popularity",
     "User": "User",
-    "Track count": "Track count"
+    "Track count": "Track count",
+    "If you want to use custom directory naming - use '/' as directory separator.": "If you want to use custom directory naming - use '/' as directory separator."
   }
 };
