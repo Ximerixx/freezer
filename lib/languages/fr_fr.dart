@@ -244,7 +244,3 @@ const language_fr_fr = {
     "If you want to use custom directory naming - use '/' as directory separator.": "Si vous souhaitez utiliser un nom de répertoire personnalisé, utilisez '/' comme séparateur."
   }
 };
-
-
-  }
-};
