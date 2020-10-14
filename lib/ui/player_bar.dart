@@ -15,55 +15,73 @@ class PlayerBar extends StatelessWidget {
   }
 
   double iconSize = 32;
+  bool _gestureRegistered = false;
 
   @override
   Widget build(BuildContext context) {
-    return StreamBuilder(
-      stream: Stream.periodic(Duration(milliseconds: 250)),
-      builder: (BuildContext context, AsyncSnapshot snapshot) {
-        if (AudioService.currentMediaItem == null) return Container(width: 0, height: 0,);
-        return Column(
-          mainAxisSize: MainAxisSize.min,
-          children: <Widget>[
-            Container(
-              color: Theme.of(context).bottomAppBarColor,
-              child: ListTile(
-                  onTap: () => Navigator.of(context).push(MaterialPageRoute(builder: (BuildContext context) => PlayerScreen())),
-                  leading: CachedImage(
-                    width: 50,
-                    height: 50,
-                    url: AudioService.currentMediaItem.extras['thumb'] ?? AudioService.currentMediaItem.artUri,
-                  ),
-                  title: Text(
-                    AudioService.currentMediaItem.displayTitle,
-                    overflow: TextOverflow.clip,
-                    maxLines: 1,
-                  ),
-                  subtitle: Text(
-                    AudioService.currentMediaItem.displaySubtitle,
-                    overflow: TextOverflow.clip,
-                    maxLines: 1,
-                  ),
-                  trailing: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: <Widget>[
-                      PrevNextButton(iconSize, prev: true, hidePrev: true,),
-                      PlayPauseButton(iconSize),
-                      PrevNextButton(iconSize)
-                    ],
-                  )
-              ),
-            ),
-            Container(
-              height: 3.0,
-              child: LinearProgressIndicator(
-                backgroundColor: Theme.of(context).primaryColor.withOpacity(0.1),
-                value: progress,
-              ),
-            )
-          ],
-        );
+    return GestureDetector(
+      onHorizontalDragUpdate: (details) async {
+        if (_gestureRegistered) return;
+        final double sensitivity = 12.69;
+        //Right swipe
+        _gestureRegistered = true;
+        if (details.delta.dx > sensitivity) {
+          await AudioService.skipToPrevious();
+        }
+        //Left
+        if (details.delta.dx < -sensitivity) {
+          await AudioService.skipToNext();
+        }
+        _gestureRegistered = false;
+        return;
       },
+      child: StreamBuilder(
+        stream: Stream.periodic(Duration(milliseconds: 250)),
+        builder: (BuildContext context, AsyncSnapshot snapshot) {
+          if (AudioService.currentMediaItem == null) return Container(width: 0, height: 0,);
+          return Column(
+            mainAxisSize: MainAxisSize.min,
+            children: <Widget>[
+              Container(
+                color: Theme.of(context).bottomAppBarColor,
+                child: ListTile(
+                    onTap: () => Navigator.of(context).push(MaterialPageRoute(builder: (BuildContext context) => PlayerScreen())),
+                    leading: CachedImage(
+                      width: 50,
+                      height: 50,
+                      url: AudioService.currentMediaItem.extras['thumb'] ?? AudioService.currentMediaItem.artUri,
+                    ),
+                    title: Text(
+                      AudioService.currentMediaItem.displayTitle,
+                      overflow: TextOverflow.clip,
+                      maxLines: 1,
+                    ),
+                    subtitle: Text(
+                      AudioService.currentMediaItem.displaySubtitle,
+                      overflow: TextOverflow.clip,
+                      maxLines: 1,
+                    ),
+                    trailing: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: <Widget>[
+                        PrevNextButton(iconSize, prev: true, hidePrev: true,),
+                        PlayPauseButton(iconSize),
+                        PrevNextButton(iconSize)
+                      ],
+                    )
+                ),
+              ),
+              Container(
+                height: 3.0,
+                child: LinearProgressIndicator(
+                  backgroundColor: Theme.of(context).primaryColor.withOpacity(0.1),
+                  value: progress,
+                ),
+              )
+            ],
+          );
+        },
+      ),
     );
   }
 }

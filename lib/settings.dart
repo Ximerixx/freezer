@@ -60,6 +60,8 @@ class Settings {
   bool downloadLyrics;
   @JsonKey(defaultValue: false)
   bool trackCover;
+  @JsonKey(defaultValue: true)
+  bool albumCover;
 
   //Appearance
   @JsonKey(defaultValue: Themes.Dark)
@@ -111,7 +113,8 @@ class Settings {
       "overwriteDownload": overwriteDownload,
       "downloadLyrics": downloadLyrics,
       "trackCover": trackCover,
-      "arl": arl
+      "arl": arl,
+      "albumCover": albumCover
     };
   }
 

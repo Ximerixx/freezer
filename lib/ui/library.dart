@@ -208,8 +208,26 @@ class _LibraryTracksState extends State<LibraryTracks> {
   List<Track> tracks = [];
   List<Track> allTracks = [];
   int trackCount;
+  SortType _sort = SortType.DEFAULT;
 
   Playlist get _playlist => Playlist(id: deezerAPI.favoritesPlaylistId);
+
+  List<Track> get _sorted {
+    List<Track> tcopy = List.from(tracks);
+    switch (_sort) {
+      case SortType.ALPHABETIC:
+        tcopy.sort((a, b) => a.title.compareTo(b.title));
+        return tcopy;
+      case SortType.ARTIST:
+        tcopy.sort((a, b) => a.artists[0].name.toLowerCase().compareTo(b.artists[0].name.toLowerCase()));
+        return tcopy;
+      case SortType.REVERSE:
+        return tcopy.reversed.toList();
+      case SortType.DEFAULT:
+      default:
+        return tcopy;
+    }
+  }
 
   Future _load() async {
     //Already loaded
@@ -273,6 +291,22 @@ class _LibraryTracksState extends State<LibraryTracks> {
     }
   }
 
+  //Load all tracks
+  Future _loadFull() async {
+    if (tracks.length < (trackCount??0)) {
+      Playlist p;
+      try {
+        p = await deezerAPI.fullPlaylist(deezerAPI.favoritesPlaylistId);
+      } catch (e) {}
+      if (p != null) {
+        setState(() {
+          tracks = p.tracks;
+          trackCount = p.trackCount;
+        });
+      }
+    }
+  }
+
   Future _loadOffline() async {
     Playlist p = await downloadManager.getPlaylist(deezerAPI.favoritesPlaylistId);
     if (p != null) setState(() {
@@ -280,7 +314,7 @@ class _LibraryTracksState extends State<LibraryTracks> {
     });
   }
 
-  Future _loadAll() async {
+  Future _loadAllOffline() async {
     List tracks = await downloadManager.allOfflineTracks();
     setState(() {
       allTracks = tracks;
@@ -301,10 +335,14 @@ class _LibraryTracksState extends State<LibraryTracks> {
       if (_scrollController.position.pixels > off) _load();
     });
 
-    _load();
+    _sort = cache.trackSort??SortType.DEFAULT;
 
-    //Load all tracks
-    _loadAll();
+    _load();
+    //Load all offline tracks
+    _loadAllOffline();
+
+    if (_sort != SortType.DEFAULT)
+      _loadFull();
 
     super.initState();
   }
@@ -312,7 +350,41 @@ class _LibraryTracksState extends State<LibraryTracks> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text('Tracks'.i18n),),
+      appBar: AppBar(
+        title: Text('Tracks'.i18n),
+        actions: [
+          PopupMenuButton(
+            child: Icon(Icons.sort, size: 32.0),
+            onSelected: (SortType s) async {
+              //Preload for sorting
+              if (tracks.length < (trackCount??0))
+                await _loadFull();
+
+              setState(() => _sort = s);
+              cache.trackSort = s;
+              await cache.save();
+            },
+            itemBuilder: (context) => <PopupMenuEntry<SortType>>[
+              PopupMenuItem(
+                value: SortType.DEFAULT,
+                child: Text('Default'.i18n),
+              ),
+              PopupMenuItem(
+                value: SortType.REVERSE,
+                child: Text('Reverse'.i18n),
+              ),
+              PopupMenuItem(
+                value: SortType.ALPHABETIC,
+                child: Text('Alphabetic'.i18n),
+              ),
+              PopupMenuItem(
+                value: SortType.ARTIST,
+                child: Text('Artist'.i18n),
+              ),
+            ],
+          ),
+        ],
+      ),
       body: ListView(
         controller: _scrollController,
         children: <Widget>[
@@ -352,11 +424,11 @@ class _LibraryTracksState extends State<LibraryTracks> {
           ),
           //Loved tracks
           ...List.generate(tracks.length, (i) {
-            Track t = tracks[i];
+            Track t = (tracks.length == (trackCount??0))?_sorted[i]:tracks[i];
             return TrackTile(
               t,
               onTap: () {
-                playerHelper.playFromTrackList(tracks, t.id, QueueSource(
+                playerHelper.playFromTrackList((tracks.length == (trackCount??0))?_sorted:tracks, t.id, QueueSource(
                   id: deezerAPI.favoritesPlaylistId,
                   text: 'Favorites'.i18n,
                   source: 'playlist'
@@ -613,6 +685,7 @@ class _LibraryArtistsState extends State<LibraryArtists> {
         artists.sort((a, b) => a.name.toLowerCase().compareTo(b.name.toLowerCase()));
         return artists;
     }
+    return artists;
   }
 
   //Load data
@@ -750,6 +823,7 @@ class _LibraryPlaylistsState extends State<LibraryPlaylists> {
         playlists.sort((a, b) => a.title.toLowerCase().compareTo(b.title.toLowerCase()));
         return playlists;
     }
+    return playlists;
   }
 
   Future _load() async {
@@ -862,7 +936,7 @@ class _LibraryPlaylistsState extends State<LibraryPlaylists> {
 
           if (_playlists != null)
             ...List.generate(_playlists.length, (int i) {
-              Playlist p = _sorted[i];
+              Playlist p = (_sorted??[])[i];
               return PlaylistTile(
                 p,
                 onTap: () => Navigator.of(context).push(MaterialPageRoute(

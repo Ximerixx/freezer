@@ -676,7 +676,7 @@ class _PlaylistDetailsState extends State<PlaylistDetails> {
 
   //Load tracks from api
   void _load() async {
-    if (playlist.tracks.length < playlist.trackCount && !_loading) {
+    if (playlist.tracks.length < (playlist.trackCount??playlist.tracks.length) && !_loading) {
       setState(() => _loading = true);
       int pos = playlist.tracks.length;
       //Get another page of tracks
@@ -794,7 +794,7 @@ class _PlaylistDetailsState extends State<PlaylistDetails> {
                             size: 32.0,
                           ),
                           Container(width: 8.0,),
-                          Text(playlist.trackCount.toString(), style: TextStyle(fontSize: 16),)
+                          Text((playlist.trackCount??playlist.tracks.length).toString(), style: TextStyle(fontSize: 16),)
                         ],
                       ),
                       Row(

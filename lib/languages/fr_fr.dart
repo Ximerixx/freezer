@@ -194,7 +194,7 @@ const language_fr_fr = {
     "Track is not available on Deezer!":
         "La piste n'est pas disponible sur Deezer!",
     "Failed to download track! Please restart.":
-        "Echec du téléchargement de la piste ! Veuillez réessayer."
+        "Echec du téléchargement de la piste ! Veuillez réessayer.",
 
     //0.5.0 Strings:
     "Storage permission denied!": "Autorisation d'accès au stockage refusée!",
@@ -215,23 +215,27 @@ const language_fr_fr = {
     //Updated 0.5.1
     "Download threads": "Téléchargements simultanés",
     //0.5.0
-    "Lyrics unavailable, empty or failed to load!": "Paroles indisponibles, vides ou erreur de chargement !",
+    "Lyrics unavailable, empty or failed to load!":
+        "Paroles indisponibles, vides ou erreur de chargement !",
     "About": "A propos",
     "Telegram Channel": "Telegram Channel",
     "To get latest releases": "Pour obtenir les dernières versions de l'app",
     "Official chat": "Chat officiel",
     "Telegram Group": "Groupe Telegram",
-    "Huge thanks to all the contributors! <3": "Un grand merci à tous les contributeurs ! <3",
+    "Huge thanks to all the contributors! <3":
+        "Un grand merci à tous les contributeurs ! <3",
     "Edit playlist": "Modifier la playlist",
     "Update": "Mettre à jour",
     "Playlist updated!": "Playlist mise à jour !",
     "Downloads added!": "Téléchargements ajoutés !",
 
     //0.5.1 Strings:
-    "Save cover file for every track": "Sauvegarder la pochette pour chaque piste",
+    "Save cover file for every track":
+        "Sauvegarder la pochette pour chaque piste",
     "Download Log": "Journal des téléchargements",
     "Repository": "Dépôt",
-    "Source code, report issues there.": "Code source, signaler les problèmes ici.",
+    "Source code, report issues there.":
+        "Code source, signaler les problèmes ici.",
 
     //0.5.2 Strings:
     "Use system theme": "Utiliser le thème du système",
@@ -241,6 +245,7 @@ const language_fr_fr = {
     "Popularity": "Popularité",
     "User": "Utilisateur",
     "Track count": "Nombre de pistes",
-    "If you want to use custom directory naming - use '/' as directory separator.": "Si vous souhaitez utiliser un nom de répertoire personnalisé, utilisez '/' comme séparateur."
+    "If you want to use custom directory naming - use '/' as directory separator.":
+        "Si vous souhaitez utiliser un nom de répertoire personnalisé, utilisez '/' comme séparateur."
   }
 };

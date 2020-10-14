@@ -54,6 +54,7 @@ Fwwwwwwwwwweze: French
 kobyrevah: Hebrew   
 MicroMihai: Romanian  
 HoScHaKaL: Turkish  
+LenteraMalam: Indonesian  
 
 ### just_audio, audio_service
 This app depends on modified just_audio and audio_service plugins with Deezer support.  

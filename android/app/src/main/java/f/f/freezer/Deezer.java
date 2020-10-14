@@ -29,6 +29,7 @@ import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.util.Arrays;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Scanner;
 
 import javax.crypto.Cipher;
@@ -44,10 +45,15 @@ public class Deezer {
     boolean authorized = false;
     boolean authorizing = false;
 
+    Deezer() {}
+
     //Initialize for logging
     void init(DownloadLog logger, String arl) {
         this.logger = logger;
         this.arl = arl;
+
+        //Load native
+        System.loadLibrary("decryptor-jni");
     }
 
     //Authorize GWLight API
@@ -63,6 +69,8 @@ public class Deezer {
         }
         authorizing = false;
     }
+
+    public native void decryptFile(String trackId, String inputFilename, String outputFilename);
 
     //Get guest SID cookie from deezer.com
     public static String getSidCookie() throws Exception {
@@ -80,9 +88,6 @@ public class Deezer {
     }
 
     public JSONObject callGWAPI(String method, String params) throws Exception {
-        if (sid == null)
-            this.sid = Deezer.getSidCookie();
-
         //Get token
         if (token == null) {
             token = "null";
@@ -232,55 +237,6 @@ public class Deezer {
         return new String(hexChars);
     }
 
-    //Calculate decryption key from track id
-    private static byte[] getKey(String id) {
-        String secret = "g4el58wc0zvf9na1";
-        String key = "";
-        try {
-            MessageDigest md5 = MessageDigest.getInstance("MD5");
-            //md5.update(id.getBytes());
-            byte[] md5id = md5.digest(id.getBytes());
-            String idmd5 = bytesToHex(md5id).toLowerCase();
-
-            for(int i=0; i<16; i++) {
-                int s0 = idmd5.charAt(i);
-                int s1 = idmd5.charAt(i+16);
-                int s2 = secret.charAt(i);
-                key += (char)(s0^s1^s2);
-            }
-        } catch (Exception e) {}
-        return key.getBytes();
-    }
-
-    //Decrypt 2048b chunk
-    private static byte[] decryptChunk(byte[] key, byte[] data) throws Exception{
-        byte[] IV = {00, 01, 02, 03, 04, 05, 06, 07};
-        SecretKeySpec Skey = new SecretKeySpec(key, "Blowfish");
-        Cipher cipher = Cipher.getInstance("Blowfish/CBC/NoPadding");
-        cipher.init(Cipher.DECRYPT_MODE, Skey, new javax.crypto.spec.IvParameterSpec(IV));
-        return cipher.doFinal(data);
-    }
-
-    public static void decryptTrack(String path, String tid) throws Exception {
-        //Load file
-        File inputFile = new File(path);
-        BufferedInputStream buffin = new BufferedInputStream(new FileInputStream(inputFile));
-        ByteArrayOutputStream buf = new ByteArrayOutputStream();
-        byte[] key = getKey(tid);
-        for (int i=0; i<(inputFile.length()/2048)+1; i++) {
-            byte[] tmp = new byte[2048];
-            int read = buffin.read(tmp, 0, tmp.length);
-            if ((i%3) == 0 && read == 2048) {
-                tmp = decryptChunk(key, tmp);
-            }
-            buf.write(tmp, 0, read);
-        }
-        //Save
-        FileOutputStream outputStream = new FileOutputStream(new File(path));
-        outputStream.write(buf.toByteArray());
-        outputStream.close();
-    }
-
     public static String sanitize(String input) {
         return input.replaceAll("[\\\\/?*:%<>|\"]", "").replace("$", "\\$");
     }
@@ -327,7 +283,7 @@ public class Deezer {
     }
 
     //Tag track with data from API
-    public static void tagTrack(String path, JSONObject publicTrack, JSONObject publicAlbum, String cover, JSONObject lyricsData) throws Exception {
+    public static void tagTrack(String path, JSONObject publicTrack, JSONObject publicAlbum, String cover, JSONObject lyricsData, JSONObject privateJson) throws Exception {
         TagOptionSingleton.getInstance().setAndroid(true);
         //Load file
         AudioFile f = AudioFileIO.read(new File(path));
@@ -354,11 +310,12 @@ public class Deezer {
         tag.setField(FieldKey.RECORD_LABEL, publicAlbum.getString("label"));
         tag.setField(FieldKey.ISRC, publicTrack.getString("isrc"));
         tag.setField(FieldKey.BARCODE, publicAlbum.getString("upc"));
+        tag.setField(FieldKey.TRACK_TOTAL, Integer.toString(publicAlbum.getInt("nb_tracks")));
 
         //Unsynced lyrics
         if (lyricsData != null) {
             try {
-                String lyrics = lyricsData.getJSONObject("results").getString("LYRICS_TEXT");
+                String lyrics = lyricsData.getString("LYRICS_TEXT");
                 tag.setField(FieldKey.LYRICS, lyrics);
             } catch (Exception e) {
                 Log.w("WARN", "Error adding unsynced lyrics!");
@@ -371,7 +328,70 @@ public class Deezer {
             genres += ", " + publicAlbum.getJSONObject("genres").getJSONArray("data").getJSONObject(0).getString("name");
         }
         if (genres.length() > 2)
-            tag.addField(FieldKey.GENRE, genres.substring(2));
+            tag.setField(FieldKey.GENRE, genres.substring(2));
+
+        //Additional tags from private api
+        if (privateJson != null && privateJson.has("SNG_CONTRIBUTORS")) {
+            JSONObject contrib = privateJson.getJSONObject("SNG_CONTRIBUTORS");
+            //Composer
+            if (contrib.has("composer")) {
+                JSONArray composers = contrib.getJSONArray("composer");
+                String composer = "";
+                for (int i=0; i<composers.length(); i++)
+                    composer += ", " + composers.getString(i);
+                if (composer.length() > 2)
+                    tag.setField(FieldKey.COMPOSER, composer.substring(2));
+            }
+            //Engineer
+            if (contrib.has("engineer")) {
+                JSONArray engineers = contrib.getJSONArray("engineer");
+                String engineer = "";
+                for (int i=0; i<engineers.length(); i++)
+                    engineer += ", " + engineers.getString(i);
+                if (engineer.length() > 2)
+                    tag.setField(FieldKey.ENGINEER, engineer.substring(2));
+            }
+            //Mixer
+            if (contrib.has("mixer")) {
+                JSONArray mixers = contrib.getJSONArray("mixer");
+                String mixer = "";
+                for (int i=0; i<mixers.length(); i++)
+                    mixer += ", " + mixers.getString(i);
+                if (mixer.length() > 2)
+                    tag.setField(FieldKey.MIXER, mixer.substring(2));
+            }
+            //Producer
+            if (contrib.has("producer")) {
+                JSONArray producers = contrib.getJSONArray("producer");
+                String producer = "";
+                for (int i=0; i<producers.length(); i++)
+                    producer += ", " + producers.getString(i);
+                if (producer.length() > 2)
+                    tag.setField(FieldKey.MIXER, producer.substring(2));
+            }
+
+            //FLAC Only
+            if (isFlac) {
+                //Author
+                if (contrib.has("author")) {
+                    JSONArray authors = contrib.getJSONArray("author");
+                    String author = "";
+                    for (int i=0; i<authors.length(); i++)
+                        author += ", " + authors.getString(i);
+                    if (author.length() > 2)
+                        ((FlacTag)tag).setField("AUTHOR", author.substring(2));
+                }
+                //Writer
+                if (contrib.has("writer")) {
+                    JSONArray writers = contrib.getJSONArray("writer");
+                    String writer = "";
+                    for (int i=0; i<writers.length(); i++)
+                        writer += ", " + writers.getString(i);
+                    if (writer.length() > 2)
+                        ((FlacTag)tag).setField("WRITER", writer.substring(2));
+                }
+            }
+        }
 
         File coverFile = new File(cover);
         boolean addCover = (coverFile.exists() && coverFile.length() > 0);
@@ -379,7 +399,6 @@ public class Deezer {
         if (isFlac) {
             //FLAC Specific tags
             ((FlacTag)tag).setField("DATE", publicTrack.getString("release_date"));
-            ((FlacTag)tag).setField("TRACKTOTAL", Integer.toString(publicAlbum.getInt("nb_tracks")));
             //Cover
             if (addCover) {
                 RandomAccessFile cf = new RandomAccessFile(coverFile, "r");
@@ -423,7 +442,7 @@ public class Deezer {
 
         //Get lyrics
         int counter = 0;
-        JSONArray syncLyrics = privateJsonData.getJSONObject("results").getJSONArray("LYRICS_SYNC_JSON");
+        JSONArray syncLyrics = privateJsonData.getJSONArray("LYRICS_SYNC_JSON");
         for (int i=0; i<syncLyrics.length(); i++) {
             JSONObject lyric = syncLyrics.getJSONObject(i);
             if (lyric.has("lrc_timestamp") && lyric.has("line")) {

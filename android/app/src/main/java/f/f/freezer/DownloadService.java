@@ -275,6 +275,7 @@ public class DownloadService extends Service {
         JSONObject trackJson;
         JSONObject albumJson;
         JSONObject privateJson;
+        JSONObject lyricsData = null;
         boolean stopDownload = false;
         DownloadThread(Download download) {
             this.download = download;
@@ -294,8 +295,11 @@ public class DownloadService extends Service {
 
             //Fetch metadata
             try {
-                JSONObject privateRaw = deezer.callGWAPI("song.getListData", "{\"sng_ids\": [" + download.trackId + "]}");
-                privateJson = privateRaw.getJSONObject("results").getJSONArray("data").getJSONObject(0);
+                JSONObject privateRaw = deezer.callGWAPI("deezer.pageTrack", "{\"sng_id\": \"" + download.trackId + "\"}");
+                privateJson = privateRaw.getJSONObject("results").getJSONObject("DATA");
+                if (privateRaw.getJSONObject("results").has("LYRICS")) {
+                    lyricsData = privateRaw.getJSONObject("results").getJSONObject("LYRICS");
+                }
                 //Don't fetch meta if user uploaded mp3
                 if (!download.isUserUploaded()) {
                     trackJson = Deezer.callPublicAPI("track", download.trackId);
@@ -401,6 +405,9 @@ public class DownloadService extends Service {
                 //Set headers
                 connection.setConnectTimeout(30000);
                 connection.setRequestMethod("GET");
+                connection.setRequestProperty("User-Agent", "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/79.0.3945.130 Safari/537.36");
+                connection.setRequestProperty("Accept-Language", "*");
+                connection.setRequestProperty("Accept", "*/*");
                 connection.setRequestProperty("Range", "bytes=" + start + "-");
                 connection.connect();
 
@@ -450,7 +457,10 @@ public class DownloadService extends Service {
 
             //Decrypt
             try {
-                Deezer.decryptTrack(tmpFile.getPath(), download.trackId);
+                File decFile = new File(tmpFile.getPath() + ".DEC");
+                deezer.decryptFile(download.trackId, tmpFile.getPath(), decFile.getPath());
+                tmpFile.delete();
+                tmpFile = decFile;
             } catch (Exception e) {
                 logger.error("Decryption error: " + e.toString(), download);
                 e.printStackTrace();
@@ -468,19 +478,16 @@ public class DownloadService extends Service {
             parentDir.mkdirs();
             if (!tmpFile.renameTo(outFile)) {
                 try {
-                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-                        Files.move(tmpFile.toPath(), outFile.toPath(), StandardCopyOption.REPLACE_EXISTING);
-                        tmpFile.delete();
-                    } else {
-                        //Android <O copy
-                        FileInputStream inputStream = new FileInputStream(tmpFile);
-                        FileOutputStream outputStream = new FileOutputStream(outFile);
-                        FileChannel inputChannel = inputStream.getChannel();
-                        FileChannel outputChannel = outputStream.getChannel();
-                        inputChannel.transferTo(0, inputChannel.size(), outputChannel);
-                        inputStream.close();
-                        outputStream.close();
-                    }
+                    //Copy file
+                    FileInputStream inputStream = new FileInputStream(tmpFile);
+                    FileOutputStream outputStream = new FileOutputStream(outFile);
+                    FileChannel inputChannel = inputStream.getChannel();
+                    FileChannel outputChannel = outputStream.getChannel();
+                    inputChannel.transferTo(0, inputChannel.size(), outputChannel);
+                    inputStream.close();
+                    outputStream.close();
+                    //Delete temp
+                    tmpFile.delete();
                 } catch (Exception e) {
                     //Clean
                     try {
@@ -529,26 +536,26 @@ public class DownloadService extends Service {
                     e.printStackTrace();
                 }
 
-                JSONObject lyricsData = null;
                 //Lyrics
-                try {
-                    lyricsData = deezer.callGWAPI("song.getLyrics", "{\"sng_id\": " + download.trackId + "}");
+                if (lyricsData != null) {
                     if (settings.downloadLyrics) {
-                        String lrcData = Deezer.generateLRC(lyricsData, trackJson);
-                        //Create file
-                        String lrcFilename = outFile.getPath().substring(0, outFile.getPath().lastIndexOf(".")+1) + "lrc";
-                        FileOutputStream fileOutputStream = new FileOutputStream(lrcFilename);
-                        fileOutputStream.write(lrcData.getBytes());
-                        fileOutputStream.close();
-                    }
-                } catch (Exception e) {
-                    logger.warn("Error downloading lyrics! " + e.toString(), download);
-                }
+                        try {
+                            String lrcData = Deezer.generateLRC(lyricsData, trackJson);
+                            //Create file
+                            String lrcFilename = outFile.getPath().substring(0, outFile.getPath().lastIndexOf(".") + 1) + "lrc";
+                            FileOutputStream fileOutputStream = new FileOutputStream(lrcFilename);
+                            fileOutputStream.write(lrcData.getBytes());
+                            fileOutputStream.close();
 
+                        } catch (Exception e) {
+                            logger.warn("Error downloading lyrics! " + e.toString(), download);
+                        }
+                    }
+                }
 
                 //Tag
                 try {
-                    Deezer.tagTrack(outFile.getPath(), trackJson, albumJson, coverFile.getPath(), lyricsData);
+                    Deezer.tagTrack(outFile.getPath(), trackJson, albumJson, coverFile.getPath(), lyricsData, privateJson);
                 } catch (Exception e) {
                     Log.e("ERR", "Tagging error!");
                     e.printStackTrace();
@@ -559,7 +566,8 @@ public class DownloadService extends Service {
                     coverFile.delete();
 
                 //Album cover
-                downloadAlbumCover(albumJson);
+                if (settings.albumCover)
+                    downloadAlbumCover(albumJson);
             }
 
             download.state = Download.DownloadState.DONE;
@@ -601,7 +609,8 @@ public class DownloadService extends Service {
                     outputStream.close();
                     connection.disconnect();
                 } catch (Exception ignored) {}
-
+                //Create .nomedia to not spam gallery
+                new File(parentDir, ".nomedia").createNewFile();
             } catch (Exception e) {
                 logger.warn("Error downloading album cover! " + e.toString(), download);
                 coverFile.delete();
@@ -816,18 +825,20 @@ public class DownloadService extends Service {
         boolean downloadLyrics;
         boolean trackCover;
         String arl;
+        boolean albumCover;
 
-        private DownloadSettings(int downloadThreads, boolean overwriteDownload, boolean downloadLyrics, boolean trackCover, String arl) {
+        private DownloadSettings(int downloadThreads, boolean overwriteDownload, boolean downloadLyrics, boolean trackCover, String arl, boolean albumCover) {
             this.downloadThreads = downloadThreads;
             this.overwriteDownload = overwriteDownload;
             this.downloadLyrics = downloadLyrics;
             this.trackCover = trackCover;
             this.arl = arl;
+            this.albumCover = albumCover;
         }
 
         //Parse settings from bundle sent from UI
         static DownloadSettings fromBundle(Bundle b) {
-            return new DownloadSettings(b.getInt("downloadThreads"), b.getBoolean("overwriteDownload"), b.getBoolean("downloadLyrics"), b.getBoolean("trackCover"), b.getString("arl"));
+            return new DownloadSettings(b.getInt("downloadThreads"), b.getBoolean("overwriteDownload"), b.getBoolean("downloadLyrics"), b.getBoolean("trackCover"), b.getString("arl"), b.getBoolean("albumCover"));
         }
     }
 

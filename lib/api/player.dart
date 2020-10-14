@@ -513,7 +513,9 @@ class AudioPlayerTask extends BackgroundAudioTask {
 
     List<AudioSource> sources = [];
     for(int i=0; i<_queue.length; i++) {
-      sources.add(await _mediaItemToAudioSource(_queue[i]));
+      AudioSource s = await _mediaItemToAudioSource(_queue[i]);
+      if (s != null)
+        sources.add(s);
     }
 
     _audioSource = ConcatenatingAudioSource(children: sources);
@@ -530,6 +532,7 @@ class AudioPlayerTask extends BackgroundAudioTask {
 
   Future<AudioSource> _mediaItemToAudioSource(MediaItem mi) async {
     String url = await _getTrackUrl(mi);
+    if (url == null) return null;
     if (url.startsWith('http')) return ProgressiveAudioSource(Uri.parse(url));
     return AudioSource.uri(Uri.parse(url));
   }
@@ -550,6 +553,7 @@ class AudioPlayerTask extends BackgroundAudioTask {
     quality = mobileQuality;
     if (conn == ConnectivityResult.wifi) quality = wifiQuality;
 
+    if ((playbackDetails??[]).length < 2) return null;
     String url = 'https://dzcdn.net/?md5=${playbackDetails[0]}&mv=${playbackDetails[1]}&q=${quality.toString()}#${mediaItem.id}';
     return url;
   }
@@ -663,7 +667,9 @@ class AudioPlayerTask extends BackgroundAudioTask {
 
     _queue.insert(index, mi);
     await AudioServiceBackground.setQueue(_queue);
-    await _audioSource.insert(index, await _mediaItemToAudioSource(mi));
+    AudioSource _newSource =  await _mediaItemToAudioSource(mi);
+    if (_newSource != null)
+      await _audioSource.insert(index,_newSource);
 
     _saveQueue();
   }
@@ -673,7 +679,9 @@ class AudioPlayerTask extends BackgroundAudioTask {
   Future onAddQueueItem(MediaItem mi) async {
     _queue.add(mi);
     await AudioServiceBackground.setQueue(_queue);
-    await _audioSource.add(await _mediaItemToAudioSource(mi));
+    AudioSource _newSource =  await _mediaItemToAudioSource(mi);
+    if (_newSource != null)
+      await _audioSource.add(_newSource);
     _saveQueue();
   }
 

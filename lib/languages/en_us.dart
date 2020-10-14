@@ -228,6 +228,12 @@ const language_en_us = {
     "Popularity": "Popularity",
     "User": "User",
     "Track count": "Track count",
-    "If you want to use custom directory naming - use '/' as directory separator.": "If you want to use custom directory naming - use '/' as directory separator."
+    "If you want to use custom directory naming - use '/' as directory separator.": "If you want to use custom directory naming - use '/' as directory separator.",
+
+    //0.5.4 Strings:
+    "Share": "Share",
+    "Save album cover": "Save album cover",
+    "Warning": "Warning",
+    "Using too many concurrent downloads on older/weaker devices might cause crashes!": "Using too many concurrent downloads on older/weaker devices might cause crashes!"
   }
 };

@@ -1,5 +1,3 @@
-import 'dart:ffi';
-
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:audio_service/audio_service.dart';
@@ -10,6 +8,7 @@ import 'package:freezer/api/download.dart';
 import 'package:freezer/ui/details_screens.dart';
 import 'package:freezer/ui/error.dart';
 import 'package:freezer/translations.i18n.dart';
+import 'package:share/share.dart';
 
 import '../api/definitions.dart';
 import 'cached_image.dart';
@@ -129,6 +128,7 @@ class MenuSheet {
       (cache.checkTrackFavorite(track))?removeFavoriteTrack(track, onUpdate: onRemove):addTrackFavorite(track),
       addToPlaylist(track),
       downloadTrack(track),
+      shareTile('track', track.id),
       showAlbum(track.album),
       ...List.generate(track.artists.length, (i) => showArtist(track.artists[i])),
       ...options
@@ -297,6 +297,7 @@ class MenuSheet {
       album.library?removeAlbum(album, onRemove: onRemove):libraryAlbum(album),
       downloadAlbum(album),
       offlineAlbum(album),
+      shareTile('album', album.id),
       ...options
     ]);
   }
@@ -363,6 +364,7 @@ class MenuSheet {
   void defaultArtistMenu(Artist artist, {List<Widget> options = const [], Function onRemove}) {
     show([
       artist.library?removeArtist(artist, onRemove: onRemove):favoriteArtist(artist),
+      shareTile('artist', artist.id),
       ...options
     ]);
   }
@@ -409,6 +411,7 @@ class MenuSheet {
       playlist.library?removePlaylistLibrary(playlist, onRemove: onRemove):addPlaylistLibrary(playlist),
       addPlaylistOffline(playlist),
       downloadPlaylist(playlist),
+      shareTile('playlist', playlist.id),
       if (playlist.user.id == deezerAPI.userId)
         editPlaylist(playlist, onUpdate: onUpdate),
       ...options
@@ -507,6 +510,14 @@ class MenuSheet {
       }
     );
   }
+
+  Widget shareTile(String type, String id) => ListTile(
+    title: Text('Share'.i18n),
+    leading: Icon(Icons.share),
+    onTap: () async {
+      Share.share('https://deezer.com/$type/$id');
+    },
+  );
 
 
   void _close() => Navigator.of(context).pop();

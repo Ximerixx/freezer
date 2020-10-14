@@ -8,6 +8,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_material_color_picker/flutter_material_color_picker.dart';
 import 'package:fluttericon/font_awesome5_icons.dart';
 import 'package:fluttertoast/fluttertoast.dart';
+import 'package:freezer/api/cache.dart';
 import 'package:freezer/api/deezer.dart';
 import 'package:freezer/api/download.dart';
 import 'package:freezer/ui/downloads_screen.dart';
@@ -671,8 +672,31 @@ class _DownloadsSettingsState extends State<DownloadsSettings> {
                 _downloadThreads = settings.downloadThreads.toDouble();
               });
               await settings.save();
+
+              //Prevent null
+              if (val > 8 && cache.threadsWarning != true) {
+                showDialog(
+                  context: context,
+                  builder: (context) {
+                    return AlertDialog(
+                      title: Text('Warning'.i18n),
+                      content: Text('Using too many concurrent downloads on older/weaker devices might cause crashes!'.i18n),
+                      actions: [
+                        FlatButton(
+                          child: Text('Dismiss'.i18n),
+                          onPressed: () => Navigator.of(context).pop(),
+                        )
+                      ],
+                    );
+                  }
+                );
+
+                cache.threadsWarning = true;
+                await cache.save();
+              }
             }
           ),
+          Divider(),
           ListTile(
             title: Text('Create folders for artist'.i18n),
             leading: Container(
@@ -700,6 +724,20 @@ class _DownloadsSettingsState extends State<DownloadsSettings> {
             ),
           ),
           ListTile(
+            title: Text('Create folder for playlist'.i18n),
+            leading: Container(
+              width: 30.0,
+              child: Checkbox(
+                value: settings.playlistFolder,
+                onChanged: (v) {
+                  setState(() => settings.playlistFolder = v);
+                  settings.save();
+                },
+              ),
+            ),
+          ),
+          Divider(),
+          ListTile(
             title: Text('Separate albums by discs'.i18n),
             leading: Container(
               width: 30.0,
@@ -726,19 +764,6 @@ class _DownloadsSettingsState extends State<DownloadsSettings> {
             ),
           ),
           ListTile(
-            title: Text('Create folder for playlist'.i18n),
-            leading: Container(
-              width: 30.0,
-              child: Checkbox(
-                value: settings.playlistFolder,
-                onChanged: (v) {
-                  setState(() => settings.playlistFolder = v);
-                  settings.save();
-                },
-              ),
-            ),
-          ),
-          ListTile(
             title: Text('Download .LRC lyrics'.i18n),
             leading: Container(
               width: 30.0,
@@ -751,6 +776,7 @@ class _DownloadsSettingsState extends State<DownloadsSettings> {
               ),
             ),
           ),
+          Divider(),
           ListTile(
             title: Text('Save cover file for every track'.i18n),
             leading: Container(
@@ -764,6 +790,20 @@ class _DownloadsSettingsState extends State<DownloadsSettings> {
               ),
             ),
           ),
+          ListTile(
+            title: Text('Save album cover'.i18n),
+            leading: Container(
+              width: 30.0,
+              child: Checkbox(
+                value: settings.albumCover,
+                onChanged: (v) {
+                  setState(() => settings.albumCover = v);
+                  settings.save();
+                },
+              ),
+            ),
+          ),
+          Divider(),
           ListTile(
             title: Text('Download Log'.i18n),
             leading: Icon(Icons.sticky_note_2),
@@ -1055,7 +1095,8 @@ class _CreditsScreenState extends State<CreditsScreen> {
     ['Fwwwwwwwwwweze', 'French'],
     ['kobyrevah', 'Hebrew'],
     ['HoScHaKaL', 'Turkish'],
-    ['MicroMihai', 'Romanian']
+    ['MicroMihai', 'Romanian'],
+    ['LenteraMalam', 'Indonesian']
   ];
 
   @override

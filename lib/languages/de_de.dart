@@ -226,8 +226,8 @@ const language_de_de = {
     //0.5.2 Strings:
     "Use system theme": "Systemvorgabe benutzen",
     "Light": "Heller Modus",
-    
-     //0.5.3 Strings:
+
+    //0.5.3 Strings:
     "Popularity": "Beliebtheit",
     "User": "Benutzer",
     "Track count": "Anzahl der Titel",

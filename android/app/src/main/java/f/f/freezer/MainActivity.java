@@ -49,8 +49,6 @@ public class MainActivity extends FlutterActivity {
     Messenger activityMessenger;
     SQLiteDatabase db;
 
-    private static final int SD_PERMISSION_REQUEST_CODE = 42;
-
     @Override
     public void configureFlutterEngine(@NonNull FlutterEngine flutterEngine) {
         GeneratedPluginRegistrant.registerWith(flutterEngine);
@@ -119,6 +117,7 @@ public class MainActivity extends FlutterActivity {
                 bundle.putBoolean("downloadLyrics", (boolean)call.argument("downloadLyrics"));
                 bundle.putBoolean("trackCover", (boolean)call.argument("trackCover"));
                 bundle.putString("arl", (String)call.argument("arl"));
+                bundle.putBoolean("albumCover", (boolean)call.argument("albumCover"));
                 sendMessage(DownloadService.SERVICE_SETTINGS_UPDATE, bundle);
 
                 result.success(null);
@@ -165,10 +164,8 @@ public class MainActivity extends FlutterActivity {
                 return;
             }
 
-
             result.error("0", "Not implemented!", "Not implemented!");
         })));
-
 
         //Event channel (for download updates)
         EventChannel eventChannel = new EventChannel(flutterEngine.getDartExecutor().getBinaryMessenger(), EVENT_CHANNEL);
@@ -291,101 +288,4 @@ public class MainActivity extends FlutterActivity {
             }
         }
     }
-
-    /*
-    @Override
-    public void configureFlutterEngine(@NonNull FlutterEngine flutterEngine) {
-        super.configureFlutterEngine(flutterEngine);
-        new MethodChannel(flutterEngine.getDartExecutor().getBinaryMessenger(), CHANNEL)
-            .setMethodCallHandler(((call, result) -> {
-                //Decrypt track
-                if (call.method.equals("decryptTrack")) {
-                    String tid = call.argument("id").toString();
-                    String path = call.argument("path");
-                    decryptTrack(path, tid);
-                    result.success(0);
-                }
-                //Android media scanner
-                if (call.method.equals("rescanLibrary")) {
-                    String path = call.argument("path");
-                    Uri uri = Uri.fromFile(new File(path));
-                    sendBroadcast(new Intent(Intent.ACTION_MEDIA_SCANNER_SCAN_FILE, uri));
-                    result.success(0);
-                }
-                //Add tags to track
-                if (call.method.equals("tagTrack")) {
-                    try {
-                        //Tag
-                        TagOptionSingleton.getInstance().setAndroid(true);
-                        AudioFile f = AudioFileIO.read(new File(call.argument("path").toString()));
-                        boolean isFlac = true;
-                        if (f.getAudioHeader().getFormat().contains("MPEG")) {
-                            f.setTag(new ID3v23Tag());
-                            isFlac = false;
-                        }
-
-                        Tag tag = f.getTag();
-                        tag.setField(FieldKey.TITLE, call.argument("title").toString());
-                        tag.setField(FieldKey.ALBUM, call.argument("album").toString());
-                        tag.setField(FieldKey.ARTIST, call.argument("artists").toString());
-                        tag.setField(FieldKey.TRACK, call.argument("trackNumber").toString());
-                        if (call.argument("albumArtist") != null)
-                            tag.setField(FieldKey.ALBUM_ARTIST, call.argument("albumArtist").toString());
-                        if (call.argument("diskNumber") != null)
-                            tag.setField(FieldKey.DISC_NO, call.argument("diskNumber").toString());
-                        if (call.argument("year") != null)
-                            tag.setField(FieldKey.YEAR, call.argument("year").toString());
-                        if (call.argument("bpm") != null)
-                            tag.setField(FieldKey.BPM, call.argument("bpm").toString());
-                        if (call.argument("label") != null)
-                            tag.setField(FieldKey.RECORD_LABEL, call.argument("label").toString());
-                        //Genres
-                        ArrayList<String> genres = call.argument("genres");
-                        for(int i=0; i<genres.size(); i++) {
-                            tag.addField(FieldKey.GENRE, genres.get(i));
-                        }
-
-                        //Album art
-                        String cover = call.argument("cover").toString();
-                        if (isFlac) {
-                            //FLAC Specific tags
-                            if (call.argument("date") != null)
-                                ((FlacTag) tag).setField("DATE", call.argument("date").toString());
-                            if (call.argument("albumTracks") != null)
-                                ((FlacTag) tag).setField("TRACKTOTAL", call.argument("albumTracks").toString());
-                            ((FlacTag) tag).setField("ITUNESADVISORY", call.argument("explicit").toString());
-
-
-                            //FLAC requires different cover adding
-                            RandomAccessFile imageFile = new RandomAccessFile(new File(cover), "r");
-                            byte[] imageData = new byte[(int) imageFile.length()];
-                            imageFile.read(imageData);
-                            tag.setField(((FlacTag) tag).createArtworkField(
-                                imageData,
-                                PictureTypes.DEFAULT_ID,
-                                ImageFormats.MIME_TYPE_JPG,
-                                "cover",
-                                1400,
-                                1400,
-                                24,
-                                0
-                            ));
-                        } else {
-                            //MP3
-                            Artwork art = Artwork.createArtworkFromFile(new File(cover));
-                            tag.addField(art);
-                        }
-                        //Save
-                        AudioFileIO.write(f);
-
-                    } catch (Exception e) {
-                        e.printStackTrace();
-                    }
-                    result.success(null);
-                }
-
-            }));
-    }
-
-    */
 }

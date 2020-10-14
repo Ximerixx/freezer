@@ -8,6 +8,7 @@ import 'package:freezer/languages/fil_ph.dart';
 import 'package:freezer/languages/fr_fr.dart';
 import 'package:freezer/languages/he_il.dart';
 import 'package:freezer/languages/hr_hr.dart';
+import 'package:freezer/languages/id_id.dart';
 import 'package:freezer/languages/it_it.dart';
 import 'package:freezer/languages/ko_ko.dart';
 import 'package:freezer/languages/pt_br.dart';
@@ -31,6 +32,7 @@ const supportedLocales = [
   const Locale('he', 'IL'),
   const Locale('tr', 'TR'),
   const Locale('ro', 'RO'),
+  const Locale('id', 'ID'),
   const Locale('fil', 'PH')
 ];
 
@@ -38,7 +40,7 @@ extension Localization on String {
   static var _t = Translations.byLocale("en_US") +
     language_en_us + language_ar_ar + language_pt_br + language_it_it + language_de_de + language_ru_ru +
     language_fil_ph + language_es_es + language_el_gr + language_hr_hr + language_ko_ko + language_fr_fr +
-    language_he_il + language_tr_tr + language_ro_ro;
+    language_he_il + language_tr_tr + language_ro_ro + language_id_id;
 
   String get i18n => localize(this, _t);
 }

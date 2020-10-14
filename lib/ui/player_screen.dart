@@ -71,6 +71,9 @@ class _PlayerScreenHorizontalState extends State<PlayerScreenHorizontal> {
 
   double iconSize = ScreenUtil().setWidth(64);
   bool _lyrics = false;
+  PageController _pageController = PageController(
+    initialPage: playerHelper.queueIndex,
+  );
 
   @override
   Widget build(BuildContext context) {
@@ -79,14 +82,20 @@ class _PlayerScreenHorizontalState extends State<PlayerScreenHorizontal> {
       mainAxisAlignment: MainAxisAlignment.spaceAround,
       children: <Widget>[
         Padding(
-            padding: EdgeInsets.fromLTRB(16, 0, 16, 8),
-            child: Container(
+          padding: EdgeInsets.fromLTRB(16, 0, 16, 8),
+          child: Container(
               width: ScreenUtil().setWidth(500),
               child: Stack(
                 children: <Widget>[
-                  CachedImage(
-                    url: AudioService.currentMediaItem.artUri,
-                    fullThumb: true,
+                  PageView(
+                    controller: _pageController,
+                    onPageChanged: (int index) {
+                      AudioService.skipToQueueItem(AudioService.queue[index].id);
+                    },
+                    children: List.generate(AudioService.queue.length, (i) => CachedImage(
+                      url: AudioService.queue[i].artUri,
+                      fullThumb: true,
+                    )),
                   ),
                   if (_lyrics) LyricsWidget(
                     artUri: AudioService.currentMediaItem.extras['thumb'],
@@ -96,7 +105,7 @@ class _PlayerScreenHorizontalState extends State<PlayerScreenHorizontal> {
                   ),
                 ],
               ),
-            )
+            ),
         ),
         //Right side
         SizedBox(
@@ -226,6 +235,9 @@ class PlayerScreenVertical extends StatefulWidget {
 class _PlayerScreenVerticalState extends State<PlayerScreenVertical> {
   double iconSize = ScreenUtil().setWidth(100);
   bool _lyrics = false;
+  PageController _pageController = PageController(
+    initialPage: playerHelper.queueIndex,
+  );
 
   @override
   Widget build(BuildContext context) {
@@ -243,9 +255,15 @@ class _PlayerScreenVerticalState extends State<PlayerScreenVertical> {
               height: ScreenUtil().setHeight(1050),
               child: Stack(
                 children: <Widget>[
-                  CachedImage(
-                    url: AudioService.currentMediaItem.artUri,
-                    fullThumb: true,
+                  PageView(
+                    controller: _pageController,
+                    onPageChanged: (int index) {
+                      AudioService.skipToQueueItem(AudioService.queue[index].id);
+                    },
+                    children: List.generate(AudioService.queue.length, (i) => CachedImage(
+                      url: AudioService.queue[i].artUri,
+                      fullThumb: true,
+                    )),
                   ),
                   if (_lyrics) LyricsWidget(
                     artUri: AudioService.currentMediaItem.extras['thumb'],
@@ -255,7 +273,7 @@ class _PlayerScreenVerticalState extends State<PlayerScreenVertical> {
                   ),
                 ],
               ),
-            )
+            ),
         ),
         Column(
           mainAxisSize: MainAxisSize.min,

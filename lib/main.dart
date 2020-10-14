@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:audio_service/audio_service.dart';
 import 'package:custom_navigator/custom_navigator.dart';
 import 'package:flutter/material.dart';
@@ -11,6 +13,7 @@ import 'package:freezer/ui/search.dart';
 import 'package:i18n_extension/i18n_widget.dart';
 import 'package:move_to_background/move_to_background.dart';
 import 'package:freezer/translations.i18n.dart';
+import 'package:uni_links/uni_links.dart';
 
 import 'api/deezer.dart';
 import 'api/download.dart';
@@ -42,6 +45,7 @@ class FreezerApp extends StatefulWidget {
 }
 
 class _FreezerAppState extends State<FreezerApp> {
+
   @override
   void initState() {
     //Make update theme global
@@ -144,15 +148,41 @@ class MainScreen extends StatefulWidget {
   _MainScreenState createState() => _MainScreenState();
 }
 
-class _MainScreenState extends State<MainScreen> {
+class _MainScreenState extends State<MainScreen> with SingleTickerProviderStateMixin{
   List<Widget> _screens = [HomeScreen(), SearchScreen(), LibraryScreen()];
   int _selected = 0;
+  StreamSubscription _urlLinkStream;
 
   @override
   void initState() {
     navigatorKey = GlobalKey<NavigatorState>();
+
+    //Setup URLs
+    setupUniLinks();
+
     super.initState();
   }
+
+  @override
+  void dispose() {
+    if (_urlLinkStream != null)
+      _urlLinkStream.cancel();
+    super.dispose();
+  }
+
+  void setupUniLinks() async {
+    //Listen to URLs
+    _urlLinkStream = getUriLinksStream().listen((Uri uri) {
+      openScreenByURL(context, uri.toString());
+    }, onError: (err) {});
+    //Get initial link on cold start
+    try {
+      String link = await getInitialLink();
+      if (link != null && link.length > 4)
+        openScreenByURL(context, link);
+    } catch (e) {}
+  }
+
 
   @override
   Widget build(BuildContext context) {

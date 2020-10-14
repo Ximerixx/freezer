@@ -38,7 +38,12 @@ class Cache {
   ArtistSortType artistSort;
   @JsonKey(defaultValue: PlaylistSortType.DEFAULT)
   PlaylistSortType libraryPlaylistSort;
+  @JsonKey(defaultValue: SortType.DEFAULT)
+  SortType trackSort;
 
+  //If download threads warning was shown
+  @JsonKey(defaultValue: false)
+  bool threadsWarning;
 
   Cache({this.libraryTracks});
 
