@@ -225,6 +225,12 @@ const language_de_de = {
 
     //0.5.2 Strings:
     "Use system theme": "Systemvorgabe benutzen",
-    "Light": "Hell"
+    "Light": "Heller Modus",
+    
+     //0.5.3 Strings:
+    "Popularity": "Beliebtheit",
+    "User": "Benutzer",
+    "Track count": "Anzahl der Titel",
+    "If you want to use custom directory naming - use '/' as directory separator.": "Wenn du eine benutzerdefinierte Verzeichnisbenennung verwenden möchtest - verwende '/' als Verzeichnistrennzeichen."
   }
 };
