@@ -14,7 +14,7 @@ const language_fr_fr = {
     "Added to library": "Ajouté à la bibliothèque",
     "Download": "Télécharger",
     "Disk": "Disque",
-    "Offline": "Hors connnexion",
+    "Offline": "Hors connexion",
     "Top Tracks": "Top Tracks",
     "Show more tracks": "Afficher plus de pistes",
     "Top": "Top",
