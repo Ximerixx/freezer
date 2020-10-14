@@ -74,6 +74,22 @@ class _PlayerScreenHorizontalState extends State<PlayerScreenHorizontal> {
   PageController _pageController = PageController(
     initialPage: playerHelper.queueIndex,
   );
+  StreamSubscription _currentItemSub;
+
+  @override
+  void initState() {
+    _currentItemSub = AudioService.currentMediaItemStream.listen((event) {
+      _pageController.animateToPage(playerHelper.queueIndex, duration: Duration(milliseconds: 300), curve: Curves.easeInOut);
+    });
+    super.initState();
+  }
+
+  @override
+  void dispose() {
+    if (_currentItemSub != null)
+      _currentItemSub.cancel();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -238,6 +254,22 @@ class _PlayerScreenVerticalState extends State<PlayerScreenVertical> {
   PageController _pageController = PageController(
     initialPage: playerHelper.queueIndex,
   );
+  StreamSubscription _currentItemSub;
+
+  @override
+  void initState() {
+    _currentItemSub = AudioService.currentMediaItemStream.listen((event) {
+      _pageController.animateToPage(playerHelper.queueIndex, duration: Duration(milliseconds: 300), curve: Curves.easeInOut);
+    });
+    super.initState();
+  }
+
+  @override
+  void dispose() {
+    if (_currentItemSub != null)
+      _currentItemSub.cancel();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
