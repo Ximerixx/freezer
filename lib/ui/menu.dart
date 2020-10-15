@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:audio_service/audio_service.dart';
@@ -8,6 +10,7 @@ import 'package:freezer/api/download.dart';
 import 'package:freezer/ui/details_screens.dart';
 import 'package:freezer/ui/error.dart';
 import 'package:freezer/translations.i18n.dart';
+import 'package:numberpicker/numberpicker.dart';
 import 'package:share/share.dart';
 
 import '../api/definitions.dart';
@@ -519,9 +522,122 @@ class MenuSheet {
     },
   );
 
+  Widget sleepTimer() => ListTile(
+    title: Text('Sleep timer'.i18n),
+    leading: Icon(Icons.access_time),
+    onTap: () async {
+      showDialog(
+        context: context,
+        builder: (context) {
+          return SleepTimerDialog();
+        }
+      );
+    },
+  );
 
   void _close() => Navigator.of(context).pop();
 }
+
+
+class SleepTimerDialog extends StatefulWidget {
+  @override
+  _SleepTimerDialogState createState() => _SleepTimerDialogState();
+}
+
+class _SleepTimerDialogState extends State<SleepTimerDialog> {
+  int hours = 0;
+  int minutes = 30;
+
+  String _endTime() {
+    return '${cache.sleepTimerTime.hour.toString().padLeft(2, '0')}:${cache.sleepTimerTime.minute.toString().padLeft(2, '0')}';
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AlertDialog(
+      title: Text('Sleep timer'.i18n),
+      content: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Row(
+            children: [
+              Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text('Hours:'.i18n),
+                  NumberPicker.integer(
+                    initialValue: hours,
+                    minValue: 0,
+                    maxValue: 69,
+                    onChanged: (v) => setState(() => hours = v),
+                    highlightSelectedValue: true,
+                  ),
+                ],
+              ),
+              Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text('Minutes:'.i18n),
+                  NumberPicker.integer(
+                      initialValue: minutes,
+                      minValue: 0,
+                      maxValue: 60,
+                      onChanged: (v) => setState(() => minutes = v),
+                      highlightSelectedValue: true
+                  ),
+                ],
+              ),
+            ],
+          ),
+          Container(height: 4.0),
+          if (cache.sleepTimerTime != null)
+            Text(
+              'Current timer ends at'.i18n + ': ' +_endTime(),
+              textAlign: TextAlign.center,
+            )
+        ],
+      ),
+      actions: [
+        FlatButton(
+          child: Text('Dismiss'.i18n),
+          onPressed: () {
+            Navigator.of(context).pop();
+          },
+        ),
+        if (cache.sleepTimer != null)
+          FlatButton(
+            child: Text('Cancel current timer'.i18n),
+            onPressed: () {
+              cache.sleepTimer.cancel();
+              cache.sleepTimer = null;
+              cache.sleepTimerTime = null;
+              Navigator.of(context).pop();
+            },
+          ),
+
+        FlatButton(
+          child: Text('Save'.i18n),
+          onPressed: () {
+            Duration duration = Duration(hours: hours, minutes: minutes);
+            if (cache.sleepTimer != null) {
+              cache.sleepTimer.cancel();
+            }
+            //Create timer
+            cache.sleepTimer = Stream.fromFuture(Future.delayed(duration)).listen((_) {
+              AudioService.pause();
+              cache.sleepTimer.cancel();
+              cache.sleepTimerTime = null;
+              cache.sleepTimer = null;
+            });
+            cache.sleepTimerTime = DateTime.now().add(duration);
+            Navigator.of(context).pop();
+          },
+        ),
+      ],
+    );
+  }
+}
+
 
 class SelectPlaylistDialog extends StatefulWidget {
 

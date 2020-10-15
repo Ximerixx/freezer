@@ -238,6 +238,13 @@ const language_en_us = {
 
     //0.5.6 Strings:
     "Create .nomedia files": "Create .nomedia files",
-    "To prevent gallery being filled with album art": "To prevent gallery being filled with album art"
+    "To prevent gallery being filled with album art": "To prevent gallery being filled with album art",
+
+    //0.5.7 Strings:
+    "Sleep timer": "Sleep timer",
+    "Minutes:": "Minutes:",
+    "Hours:": "Hours:",
+    "Cancel current timer": "Cancel current timer",
+    "Current timer ends at": "Current timer ends at"
   }
 };

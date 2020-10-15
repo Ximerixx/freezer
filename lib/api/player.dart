@@ -336,6 +336,7 @@ class AudioPlayerTask extends BackgroundAudioTask {
     //Restore position on play
     if (_lastPosition != null) {
       onSeekTo(_lastPosition);
+      _lastPosition = null;
     }
   }
 

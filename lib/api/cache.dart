@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:freezer/api/deezer.dart';
 import 'package:freezer/api/definitions.dart';
 import 'package:freezer/ui/details_screens.dart';
@@ -40,6 +42,12 @@ class Cache {
   PlaylistSortType libraryPlaylistSort;
   @JsonKey(defaultValue: SortType.DEFAULT)
   SortType trackSort;
+
+  //Sleep timer
+  @JsonKey(ignore: true)
+  DateTime sleepTimerTime;
+  @JsonKey(ignore: true)
+  StreamSubscription sleepTimer;
 
   //If download threads warning was shown
   @JsonKey(defaultValue: false)

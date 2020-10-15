@@ -197,7 +197,7 @@ class _PlayerScreenHorizontalState extends State<PlayerScreenHorizontal> {
                           onPressed: () {
                             Track t = Track.fromMediaItem(AudioService.currentMediaItem);
                             MenuSheet m = MenuSheet(context);
-                            m.defaultTrackMenu(t);
+                            m.defaultTrackMenu(t, options: [m.sleepTimer()]);
                           },
                         )
                       ],
@@ -331,7 +331,7 @@ class _PlayerScreenVerticalState extends State<PlayerScreenVertical> {
                 onPressed: () {
                   Track t = Track.fromMediaItem(AudioService.currentMediaItem);
                   MenuSheet m = MenuSheet(context);
-                  m.defaultTrackMenu(t);
+                  m.defaultTrackMenu(t, options: [m.sleepTimer()]);
                 },
               )
             ],
