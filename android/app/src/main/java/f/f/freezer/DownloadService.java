@@ -610,7 +610,8 @@ public class DownloadService extends Service {
                     connection.disconnect();
                 } catch (Exception ignored) {}
                 //Create .nomedia to not spam gallery
-                new File(parentDir, ".nomedia").createNewFile();
+                if (settings.nomediaFiles)
+                    new File(parentDir, ".nomedia").createNewFile();
             } catch (Exception e) {
                 logger.warn("Error downloading album cover! " + e.toString(), download);
                 coverFile.delete();
@@ -826,19 +827,21 @@ public class DownloadService extends Service {
         boolean trackCover;
         String arl;
         boolean albumCover;
+        boolean nomediaFiles;
 
-        private DownloadSettings(int downloadThreads, boolean overwriteDownload, boolean downloadLyrics, boolean trackCover, String arl, boolean albumCover) {
+        private DownloadSettings(int downloadThreads, boolean overwriteDownload, boolean downloadLyrics, boolean trackCover, String arl, boolean albumCover, boolean nomediaFiles) {
             this.downloadThreads = downloadThreads;
             this.overwriteDownload = overwriteDownload;
             this.downloadLyrics = downloadLyrics;
             this.trackCover = trackCover;
             this.arl = arl;
             this.albumCover = albumCover;
+            this.nomediaFiles = nomediaFiles;
         }
 
         //Parse settings from bundle sent from UI
         static DownloadSettings fromBundle(Bundle b) {
-            return new DownloadSettings(b.getInt("downloadThreads"), b.getBoolean("overwriteDownload"), b.getBoolean("downloadLyrics"), b.getBoolean("trackCover"), b.getString("arl"), b.getBoolean("albumCover"));
+            return new DownloadSettings(b.getInt("downloadThreads"), b.getBoolean("overwriteDownload"), b.getBoolean("downloadLyrics"), b.getBoolean("trackCover"), b.getString("arl"), b.getBoolean("albumCover"), b.getBoolean("nomediaFiles"));
         }
     }
 

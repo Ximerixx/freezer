@@ -30,6 +30,7 @@ class PlayerBar extends StatelessWidget {
         }
         //Left
         if (details.delta.dx < -sensitivity) {
+
           await AudioService.skipToNext();
         }
         _gestureRegistered = false;

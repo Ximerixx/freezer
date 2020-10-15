@@ -49,6 +49,16 @@ public class MainActivity extends FlutterActivity {
     Messenger activityMessenger;
     SQLiteDatabase db;
 
+    //Data if started from intent
+    String intentPreload;
+
+    @Override
+    public void onCreate(Bundle savedInstanceState) {
+        Intent intent = getIntent();
+        intentPreload = intent.getStringExtra("preload");
+        super.onCreate(savedInstanceState);
+    }
+
     @Override
     public void configureFlutterEngine(@NonNull FlutterEngine flutterEngine) {
         GeneratedPluginRegistrant.registerWith(flutterEngine);
@@ -118,6 +128,7 @@ public class MainActivity extends FlutterActivity {
                 bundle.putBoolean("trackCover", (boolean)call.argument("trackCover"));
                 bundle.putString("arl", (String)call.argument("arl"));
                 bundle.putBoolean("albumCover", (boolean)call.argument("albumCover"));
+                bundle.putBoolean("nomediaFiles", (boolean)call.argument("nomediaFiles"));
                 sendMessage(DownloadService.SERVICE_SETTINGS_UPDATE, bundle);
 
                 result.success(null);
@@ -161,6 +172,12 @@ public class MainActivity extends FlutterActivity {
                 bundle.putInt("state", (int)call.argument("state"));
                 sendMessage(DownloadService.SERVICE_REMOVE_DOWNLOADS, bundle);
                 result.success(null);
+                return;
+            }
+            //If app was started with preload info (Android Auto)
+            if (call.method.equals("getPreloadInfo")) {
+                result.success(intentPreload);
+                intentPreload = null;
                 return;
             }
 

@@ -387,17 +387,17 @@ class DownloadManager {
   Future<SearchResults> search(String query) async {
     SearchResults results = SearchResults(tracks: [], albums: [], artists: [], playlists: []);
     //Tracks
-    List tracksData = await db.rawQuery('SELECT * FROM tracks WHERE offline == 1 AND title like "%$query%"');
+    List tracksData = await db.rawQuery('SELECT * FROM Tracks WHERE offline == 1 AND title like "%$query%"');
     for (Map trackData in tracksData) {
       results.tracks.add(await getOfflineTrack(trackData['id']));
     }
     //Albums
-    List albumsData = await db.rawQuery('SELECT (id) FROM albums WHERE offline == 1 AND title like "%$query%"');
+    List albumsData = await db.rawQuery('SELECT (id) FROM Albums WHERE offline == 1 AND title like "%$query%"');
     for (Map rawAlbum in albumsData) {
       results.albums.add(await getOfflineAlbum(rawAlbum['id']));
     }
     //Playlists
-    List playlists = await db.rawQuery('SELECT * FROM playlists WHERE title like "%$query%"');
+    List playlists = await db.rawQuery('SELECT * FROM Playlists WHERE title like "%$query%"');
     for (Map playlist in playlists) {
       results.playlists.add(await getPlaylist(playlist['id']));
     }
@@ -428,7 +428,7 @@ class DownloadManager {
       //Album folder / with disk number
       if (settings.albumFolder) {
         if (settings.albumDiscFolder) {
-          path = p.join(path, '%album%' + ' - Disk ' + (track.diskNumber??null).toString());
+          path = p.join(path, '%album%' + ' - Disk ' + (track.diskNumber??1).toString());
         } else {
           path = p.join(path, '%album%');
         }
@@ -450,9 +450,9 @@ class DownloadManager {
   //Get stats for library screen
   Future<List<String>> getStats() async {
     //Get offline counts
-    int trackCount = (await db.rawQuery('SELECT COUNT(*) FROM tracks WHERE offline == 1'))[0]['COUNT(*)'];
-    int albumCount = (await db.rawQuery('SELECT COUNT(*) FROM albums WHERE offline == 1'))[0]['COUNT(*)'];
-    int playlistCount = (await db.rawQuery('SELECT COUNT(*) FROM albums WHERE offline == 1'))[0]['COUNT(*)'];
+    int trackCount = (await db.rawQuery('SELECT COUNT(*) FROM Tracks WHERE offline == 1'))[0]['COUNT(*)'];
+    int albumCount = (await db.rawQuery('SELECT COUNT(*) FROM Albums WHERE offline == 1'))[0]['COUNT(*)'];
+    int playlistCount = (await db.rawQuery('SELECT COUNT(*) FROM Playlists'))[0]['COUNT(*)'];
     //Free space
     double diskSpace = await DiskSpace.getFreeDiskSpace;
     //Used space

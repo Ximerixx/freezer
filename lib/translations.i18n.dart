@@ -1,20 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:freezer/languages/ar_ar.dart';
-import 'package:freezer/languages/de_de.dart';
-import 'package:freezer/languages/el_gr.dart';
+import 'package:freezer/languages/crowdin.dart';
 import 'package:freezer/languages/en_us.dart';
-import 'package:freezer/languages/es_es.dart';
-import 'package:freezer/languages/fil_ph.dart';
-import 'package:freezer/languages/fr_fr.dart';
-import 'package:freezer/languages/he_il.dart';
-import 'package:freezer/languages/hr_hr.dart';
-import 'package:freezer/languages/id_id.dart';
-import 'package:freezer/languages/it_it.dart';
-import 'package:freezer/languages/ko_ko.dart';
-import 'package:freezer/languages/pt_br.dart';
-import 'package:freezer/languages/ro_ro.dart';
-import 'package:freezer/languages/ru_ru.dart';
-import 'package:freezer/languages/tr_tr.dart';
 import 'package:i18n_extension/i18n_extension.dart';
 
 const supportedLocales = [
@@ -33,14 +19,13 @@ const supportedLocales = [
   const Locale('tr', 'TR'),
   const Locale('ro', 'RO'),
   const Locale('id', 'ID'),
+  const Locale('fa', 'IR'),
+  const Locale('pl', 'PL'),
   const Locale('fil', 'PH')
 ];
 
 extension Localization on String {
-  static var _t = Translations.byLocale("en_US") +
-    language_en_us + language_ar_ar + language_pt_br + language_it_it + language_de_de + language_ru_ru +
-    language_fil_ph + language_es_es + language_el_gr + language_hr_hr + language_ko_ko + language_fr_fr +
-    language_he_il + language_tr_tr + language_ro_ro + language_id_id;
+  static var _t = Translations.byLocale("en_US") + language_en_us + crowdin;
 
   String get i18n => localize(this, _t);
 }

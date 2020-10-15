@@ -7,6 +7,7 @@ import 'package:flutter/rendering.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:freezer/api/cache.dart';
+import 'package:freezer/api/definitions.dart';
 import 'package:freezer/ui/library.dart';
 import 'package:freezer/ui/login_screen.dart';
 import 'package:freezer/ui/search.dart';
@@ -160,7 +161,26 @@ class _MainScreenState extends State<MainScreen> with SingleTickerProviderStateM
     //Setup URLs
     setupUniLinks();
 
+    _loadPreloadInfo();
+
     super.initState();
+  }
+
+  void _loadPreloadInfo() async {
+    String info = await DownloadManager.platform.invokeMethod('getPreloadInfo');
+    if (info != null) {
+      //Used if started from android auto
+
+      await deezerAPI.authorize();
+      if (info == 'flow') {
+        await playerHelper.playFromSmartTrackList(SmartTrackList(id: 'flow'));
+        return;
+      }
+      if (info == 'favorites') {
+        Playlist p = await deezerAPI.fullPlaylist(deezerAPI.favoritesPlaylistId);
+        playerHelper.playFromPlaylist(p, p.tracks[0].id);
+      }
+    }
   }
 
   @override

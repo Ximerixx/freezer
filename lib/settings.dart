@@ -62,6 +62,8 @@ class Settings {
   bool trackCover;
   @JsonKey(defaultValue: true)
   bool albumCover;
+  @JsonKey(defaultValue: false)
+  bool nomediaFiles;
 
   //Appearance
   @JsonKey(defaultValue: Themes.Dark)
@@ -114,7 +116,8 @@ class Settings {
       "downloadLyrics": downloadLyrics,
       "trackCover": trackCover,
       "arl": arl,
-      "albumCover": albumCover
+      "albumCover": albumCover,
+      "nomediaFiles": nomediaFiles
     };
   }
 

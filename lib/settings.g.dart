@@ -35,6 +35,7 @@ Settings _$SettingsFromJson(Map<String, dynamic> json) {
     ..downloadLyrics = json['downloadLyrics'] as bool ?? true
     ..trackCover = json['trackCover'] as bool ?? false
     ..albumCover = json['albumCover'] as bool ?? true
+    ..nomediaFiles = json['nomediaFiles'] as bool ?? false
     ..theme =
         _$enumDecodeNullable(_$ThemesEnumMap, json['theme']) ?? Themes.Dark
     ..useSystemTheme = json['useSystemTheme'] as bool ?? false
@@ -64,6 +65,7 @@ Map<String, dynamic> _$SettingsToJson(Settings instance) => <String, dynamic>{
       'downloadLyrics': instance.downloadLyrics,
       'trackCover': instance.trackCover,
       'albumCover': instance.albumCover,
+      'nomediaFiles': instance.nomediaFiles,
       'theme': _$ThemesEnumMap[instance.theme],
       'useSystemTheme': instance.useSystemTheme,
       'primaryColor': Settings._colorToJson(instance.primaryColor),

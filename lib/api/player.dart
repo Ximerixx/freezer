@@ -28,8 +28,6 @@ class PlayerHelper {
   StreamSubscription _playbackStateStreamSubscription;
   QueueSource queueSource;
   LoopMode repeatType = LoopMode.off;
-  bool shuffle = false;
-
   //Find queue index by id
   int get queueIndex => AudioService.queue.indexWhere((mi) => mi.id == AudioService.currentMediaItem?.id??'Random string so it returns -1');
 
@@ -49,8 +47,8 @@ class PlayerHelper {
       }
       if (event['action'] == 'queueEnd') {
         //If last song is played, load more queue
-        onQueueEnd();
         this.queueSource = QueueSource.fromJson(event['queueSource']);
+        onQueueEnd();
         return;
       }
       //Android auto get screen
@@ -110,8 +108,7 @@ class PlayerHelper {
   }
 
   Future toggleShuffle() async {
-    this.shuffle = !this.shuffle;
-    await AudioService.customAction('shuffle', this.shuffle);
+    await AudioService.customAction('shuffle');
   }
   
   //Repeat toggle
@@ -148,6 +145,7 @@ class PlayerHelper {
   Future onQueueEnd() async {
     //Flow
     if (queueSource == null) return;
+    print('test');
     if (queueSource.id == 'flow') {
       List<Track> tracks = await deezerAPI.flow();
       List<MediaItem> mi = tracks.map<MediaItem>((t) => t.toMediaItem()).toList();
@@ -246,7 +244,6 @@ class AudioPlayerTask extends BackgroundAudioTask {
 
   //Queue
   List<MediaItem> _queue = <MediaItem>[];
-  List<int> _shuffleHistory = [];
   int _queueIndex = 0;
   ConcatenatingAudioSource _audioSource;
 
@@ -294,10 +291,11 @@ class AudioPlayerTask extends BackgroundAudioTask {
         switch(state) {
           case ProcessingState.completed:
             //Player ended, get more songs
-            AudioServiceBackground.sendCustomEvent({
-              'action': 'queueEnd',
-              'queueSource': (queueSource??QueueSource()).toJson()
-            });
+            if (_queueIndex == _queue.length - 1)
+              AudioServiceBackground.sendCustomEvent({
+                'action': 'queueEnd',
+                'queueSource': (queueSource??QueueSource()).toJson()
+              });
             break;
           case ProcessingState.ready:
             //Ready to play
@@ -320,7 +318,6 @@ class AudioPlayerTask extends BackgroundAudioTask {
     //Calculate new index
     final newIndex = _queue.indexWhere((i) => i.id == mediaId);
     if (newIndex == -1) return;
-
     //Update buffering state
     _skipState = newIndex > _queueIndex
       ? AudioProcessingState.skippingToNext
@@ -362,22 +359,8 @@ class AudioPlayerTask extends BackgroundAudioTask {
 
   @override
   Future<void> onSkipToNext() async {
-    //Shuffle
-    if (_player.shuffleModeEnabled??false) {
-      int newIndex = Random().nextInt(_queue.length-1);
-      //Update state
-      _skipState = newIndex > _queueIndex
-          ? AudioProcessingState.skippingToNext
-          : AudioProcessingState.skippingToPrevious;
-
-      if (_shuffleHistory.length == 0) _shuffleHistory.add(_queueIndex);
-      _queueIndex = newIndex;
-      _shuffleHistory.add(newIndex);
-      await _player.seek(Duration.zero, index: _queueIndex);
-      _skipState = null;
-      return;
-    }
-
+    print('skipping');
+    if (_queueIndex == _queue.length-1) return;
     //Update buffering state
     _skipState = AudioProcessingState.skippingToNext;
     _queueIndex++;
@@ -388,22 +371,9 @@ class AudioPlayerTask extends BackgroundAudioTask {
 
   @override
   Future<void> onSkipToPrevious() async {
-    if (_queueIndex == 0 && !(_player.shuffleModeEnabled??false)) return;
+    if (_queueIndex == 0) return;
     //Update buffering state
     _skipState = AudioProcessingState.skippingToPrevious;
-
-    //Shuffle history
-    if ((_player.shuffleModeEnabled??false) && _shuffleHistory.length > 1) {
-      _shuffleHistory.removeLast();
-      if (_shuffleHistory.last < _queue.length) {
-        _queueIndex = _shuffleHistory.last;
-        await _player.seek(Duration.zero, index: _queueIndex);
-        _skipState = null;
-        return;
-      } else {
-        _shuffleHistory = [];
-      }
-    }
 
     //Normal skip to previous
     _queueIndex--;
@@ -582,7 +552,10 @@ class AudioPlayerTask extends BackgroundAudioTask {
       await this._loadQueueFile();
     //Shuffle
     if (name == 'shuffle') {
-      await _player.setShuffleModeEnabled(args);
+      _queue.shuffle();
+      AudioServiceBackground.setQueue(_queue);
+      _queueIndex = 0;
+      await _loadQueue();
     }
     //Android auto callback
     if (name == 'screenAndroidAuto' && _androidAutoCallback != null) {

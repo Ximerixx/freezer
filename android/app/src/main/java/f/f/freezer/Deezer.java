@@ -306,11 +306,14 @@ public class Deezer {
         tag.setField(FieldKey.DISC_NO, Integer.toString(publicTrack.getInt("disk_number")));
         tag.setField(FieldKey.ALBUM_ARTIST, publicAlbum.getJSONObject("artist").getString("name"));
         tag.setField(FieldKey.YEAR, publicTrack.getString("release_date").substring(0, 4));
-        tag.setField(FieldKey.BPM, Integer.toString((int)publicTrack.getDouble("bpm")));
         tag.setField(FieldKey.RECORD_LABEL, publicAlbum.getString("label"));
         tag.setField(FieldKey.ISRC, publicTrack.getString("isrc"));
         tag.setField(FieldKey.BARCODE, publicAlbum.getString("upc"));
         tag.setField(FieldKey.TRACK_TOTAL, Integer.toString(publicAlbum.getInt("nb_tracks")));
+
+        //BPM
+        if (publicTrack.has("bpm") && (int)publicTrack.getDouble("bpm") > 0)
+            tag.setField(FieldKey.BPM, Integer.toString((int)publicTrack.getDouble("bpm")));
 
         //Unsynced lyrics
         if (lyricsData != null) {

@@ -383,6 +383,7 @@ class _LibraryTracksState extends State<LibraryTracks> {
               ),
             ],
           ),
+          Container(width: 8.0),
         ],
       ),
       body: ListView(
@@ -573,6 +574,7 @@ class _LibraryAlbumsState extends State<LibraryAlbums> {
               ),
             ],
           ),
+          Container(width: 8.0),
         ],
       ),
       body: ListView(
@@ -745,7 +747,8 @@ class _LibraryArtistsState extends State<LibraryArtists> {
                 child: Text('Popularity'.i18n),
               ),
             ],
-          )
+          ),
+          Container(width: 8.0),
         ],
       ),
       body: ListView(
@@ -888,7 +891,8 @@ class _LibraryPlaylistsState extends State<LibraryPlaylists> {
                 child: Text('Alphabetic'.i18n),
               ),
             ],
-          )
+          ),
+          Container(width: 8.0),
         ],
       ),
       body: ListView(

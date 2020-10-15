@@ -803,6 +803,20 @@ class _DownloadsSettingsState extends State<DownloadsSettings> {
               ),
             ),
           ),
+          ListTile(
+            title: Text('Create .nomedia files'.i18n),
+            subtitle: Text('To prevent gallery being filled with album art'.i18n),
+            leading: Container(
+              width: 30.0,
+              child: Checkbox(
+                value: settings.nomediaFiles,
+                onChanged: (v) {
+                  setState(() => settings.nomediaFiles = v);
+                  settings.save();
+                },
+              ),
+            ),
+          ),
           Divider(),
           ListTile(
             title: Text('Download Log'.i18n),

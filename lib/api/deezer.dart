@@ -35,12 +35,11 @@ class DeezerAPI {
     "Connection": "keep-alive"
   };
   Future _authorizing;
-
+  Dio dio = Dio();
   CookieJar _cookieJar = new CookieJar();
 
   //Call private api
   Future<Map<dynamic, dynamic>> callApi(String method, {Map<dynamic, dynamic> params, String gatewayInput}) async {
-    Dio dio = Dio();
 
     //Add headers
     dio.interceptors.add(InterceptorsWrapper(
@@ -70,7 +69,6 @@ class DeezerAPI {
         'api_token': this.token,
         'input': '3',
         'method': method,
-
         //Used for homepage
         if (gatewayInput != null)
           'gateway_input': gatewayInput

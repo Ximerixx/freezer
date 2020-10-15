@@ -71,25 +71,6 @@ class _PlayerScreenHorizontalState extends State<PlayerScreenHorizontal> {
 
   double iconSize = ScreenUtil().setWidth(64);
   bool _lyrics = false;
-  PageController _pageController = PageController(
-    initialPage: playerHelper.queueIndex,
-  );
-  StreamSubscription _currentItemSub;
-
-  @override
-  void initState() {
-    _currentItemSub = AudioService.currentMediaItemStream.listen((event) {
-      _pageController.animateToPage(playerHelper.queueIndex, duration: Duration(milliseconds: 300), curve: Curves.easeInOut);
-    });
-    super.initState();
-  }
-
-  @override
-  void dispose() {
-    if (_currentItemSub != null)
-      _currentItemSub.cancel();
-    super.dispose();
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -103,16 +84,7 @@ class _PlayerScreenHorizontalState extends State<PlayerScreenHorizontal> {
               width: ScreenUtil().setWidth(500),
               child: Stack(
                 children: <Widget>[
-                  PageView(
-                    controller: _pageController,
-                    onPageChanged: (int index) {
-                      AudioService.skipToQueueItem(AudioService.queue[index].id);
-                    },
-                    children: List.generate(AudioService.queue.length, (i) => CachedImage(
-                      url: AudioService.queue[i].artUri,
-                      fullThumb: true,
-                    )),
-                  ),
+                  BigAlbumArt(),
                   if (_lyrics) LyricsWidget(
                     artUri: AudioService.currentMediaItem.extras['thumb'],
                     trackId: AudioService.currentMediaItem.id,
@@ -251,25 +223,6 @@ class PlayerScreenVertical extends StatefulWidget {
 class _PlayerScreenVerticalState extends State<PlayerScreenVertical> {
   double iconSize = ScreenUtil().setWidth(100);
   bool _lyrics = false;
-  PageController _pageController = PageController(
-    initialPage: playerHelper.queueIndex,
-  );
-  StreamSubscription _currentItemSub;
-
-  @override
-  void initState() {
-    _currentItemSub = AudioService.currentMediaItemStream.listen((event) {
-      _pageController.animateToPage(playerHelper.queueIndex, duration: Duration(milliseconds: 300), curve: Curves.easeInOut);
-    });
-    super.initState();
-  }
-
-  @override
-  void dispose() {
-    if (_currentItemSub != null)
-      _currentItemSub.cancel();
-    super.dispose();
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -287,16 +240,7 @@ class _PlayerScreenVerticalState extends State<PlayerScreenVertical> {
               height: ScreenUtil().setHeight(1050),
               child: Stack(
                 children: <Widget>[
-                  PageView(
-                    controller: _pageController,
-                    onPageChanged: (int index) {
-                      AudioService.skipToQueueItem(AudioService.queue[index].id);
-                    },
-                    children: List.generate(AudioService.queue.length, (i) => CachedImage(
-                      url: AudioService.queue[i].artUri,
-                      fullThumb: true,
-                    )),
-                  ),
+                  BigAlbumArt(),
                   if (_lyrics) LyricsWidget(
                     artUri: AudioService.currentMediaItem.extras['thumb'],
                     trackId: AudioService.currentMediaItem.id,
@@ -398,6 +342,51 @@ class _PlayerScreenVerticalState extends State<PlayerScreenVertical> {
   }
 }
 
+class BigAlbumArt extends StatefulWidget {
+  @override
+  _BigAlbumArtState createState() => _BigAlbumArtState();
+}
+
+class _BigAlbumArtState extends State<BigAlbumArt> {
+
+  PageController _pageController = PageController(
+    initialPage: playerHelper.queueIndex,
+  );
+  StreamSubscription _currentItemSub;
+  bool _animationLock = true;
+
+  @override
+  void initState() {
+    _currentItemSub = AudioService.currentMediaItemStream.listen((event) async {
+      _animationLock = true;
+      await _pageController.animateToPage(playerHelper.queueIndex, duration: Duration(milliseconds: 300), curve: Curves.easeInOut);
+      _animationLock = false;
+    });
+    super.initState();
+  }
+
+  @override
+  void dispose() {
+    if (_currentItemSub != null)
+      _currentItemSub.cancel();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return PageView(
+      controller: _pageController,
+      onPageChanged: (int index) {
+        if (_animationLock) return;
+        AudioService.skipToQueueItem(AudioService.queue[index].id);
+      },
+      children: List.generate(AudioService.queue.length, (i) => CachedImage(
+        url: AudioService.queue[i].artUri,
+        fullThumb: true,
+      )),
+    );
+  }
+}
 
 
 class LyricsWidget extends StatefulWidget {
@@ -773,17 +762,6 @@ class QueueScreen extends StatefulWidget {
 
 class _QueueScreenState extends State<QueueScreen> {
 
-  //Get proper icon color by theme
-  Color get shuffleIconColor {
-    Color og = Theme.of(context).primaryColor;
-    if (og.computeLuminance() > 0.5) {
-     if (playerHelper.shuffle) return Theme.of(context).primaryColorLight;
-      return Colors.black;
-    }
-    if (playerHelper.shuffle) return Theme.of(context).primaryColorDark;
-    return Colors.white;
-  }
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -793,7 +771,6 @@ class _QueueScreenState extends State<QueueScreen> {
             IconButton(
               icon: Icon(
                 Icons.shuffle,
-                color: shuffleIconColor
               ),
               onPressed: () async {
                 await playerHelper.toggleShuffle();

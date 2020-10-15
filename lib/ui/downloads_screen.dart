@@ -73,6 +73,15 @@ class _DownloadsScreenState extends State<DownloadsScreen> {
           title: Text('Downloads'.i18n),
           actions: [
             IconButton(
+              icon: Icon(Icons.delete_sweep),
+              onPressed: () async {
+                await downloadManager.removeDownloads(DownloadState.ERROR);
+                await downloadManager.removeDownloads(DownloadState.DEEZER_ERROR);
+                await downloadManager.removeDownloads(DownloadState.DONE);
+                await _load();
+              },
+            ),
+            IconButton(
               icon:
                   Icon(downloadManager.running ? Icons.stop : Icons.play_arrow),
               onPressed: () {

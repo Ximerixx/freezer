@@ -1,5 +1,4 @@
-const language_en_us = {
-  "en_us": {
+{
     "Home": "Home",
     "Search": "Search",
     "Library": "Library",
@@ -182,14 +181,10 @@ const language_en_us = {
     "Flow": "Flow",
     "Track is not available on Deezer!": "Track is not available on Deezer!",
     "Failed to download track! Please restart.": "Failed to download track! Please restart.",
-
-    //0.5.0 Strings:
     "Storage permission denied!": "Storage permission denied!",
     "Failed": "Failed",
     "Queued": "Queued",
-    //Updated in 0.5.1 - used in context of download:
     "External": "Storage",
-    //0.5.0
     "Restart failed downloads": "Restart failed downloads",
     "Clear failed": "Clear failed",
     "Download Settings": "Download Settings",
@@ -199,9 +194,7 @@ const language_en_us = {
     "Not set": "Not set",
     "Search or paste URL": "Search or paste URL",
     "History": "History",
-    //Updated 0.5.1
     "Download threads": "Concurrent downloads",
-    //0.5.0
     "Lyrics unavailable, empty or failed to load!": "Lyrics unavailable, empty or failed to load!",
     "About": "About",
     "Telegram Channel": "Telegram Channel",
@@ -213,31 +206,21 @@ const language_en_us = {
     "Update": "Update",
     "Playlist updated!": "Playlist updated!",
     "Downloads added!": "Downloads added!",
-
-    //0.5.1 Strings:
     "Save cover file for every track": "Save cover file for every track",
     "Download Log": "Download Log",
     "Repository": "Repository",
     "Source code, report issues there.": "Source code, report issues there.",
-
-    //0.5.2 Strings:
     "Use system theme": "Use system theme",
     "Light": "Light",
-
-    //0.5.3 Strings:
     "Popularity": "Popularity",
     "User": "User",
     "Track count": "Track count",
     "If you want to use custom directory naming - use '/' as directory separator.": "If you want to use custom directory naming - use '/' as directory separator.",
-
-    //0.5.4 Strings:
     "Share": "Share",
     "Save album cover": "Save album cover",
     "Warning": "Warning",
     "Using too many concurrent downloads on older/weaker devices might cause crashes!": "Using too many concurrent downloads on older/weaker devices might cause crashes!",
-
-    //0.5.6 Strings:
     "Create .nomedia files": "Create .nomedia files",
     "To prevent gallery being filled with album art": "To prevent gallery being filled with album art"
   }
-};
+
