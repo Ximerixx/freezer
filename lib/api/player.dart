@@ -221,7 +221,7 @@ class PlayerHelper {
     QueueSource queueSource = QueueSource(
       id: stl.id,
       source: (stl.id == 'flow')?'flow':'smarttracklist',
-      text: stl.title??(stl.id == 'flow')?'Flow'.i18n:'Smart track list'.i18n
+      text: stl.title??((stl.id == 'flow') ? 'Flow'.i18n : 'Smart track list'.i18n)
     );
     await playFromTrackList(stl.tracks, stl.tracks[0].id, queueSource);
   }
