@@ -1,5 +1,6 @@
 import 'package:audio_service/audio_service.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:freezer/settings.dart';
 
 import '../api/player.dart';
@@ -46,7 +47,12 @@ class PlayerBar extends StatelessWidget {
               Container(
                 color: Theme.of(context).bottomAppBarColor,
                 child: ListTile(
-                    onTap: () => Navigator.of(context).push(MaterialPageRoute(builder: (BuildContext context) => PlayerScreen())),
+                  onTap: () {
+                      Navigator.of(context).push(MaterialPageRoute(builder: (BuildContext context) => PlayerScreen()));
+                      SystemChrome.setSystemUIOverlayStyle(SystemUiOverlayStyle(
+                        systemNavigationBarColor: settings.themeData.scaffoldBackgroundColor,
+                      ));
+                    },
                     leading: CachedImage(
                       width: 50,
                       height: 50,

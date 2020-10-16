@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:audio_service/audio_service.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_screenutil/screenutil.dart';
 import 'package:freezer/api/deezer.dart';
 import 'package:freezer/api/player.dart';
+import 'package:freezer/settings.dart';
 import 'package:freezer/translations.i18n.dart';
 import 'package:freezer/ui/menu.dart';
 import 'package:freezer/ui/settings_screen.dart';
@@ -25,6 +27,13 @@ class PlayerScreen extends StatefulWidget {
 
 class _PlayerScreenState extends State<PlayerScreen> {
 
+  @override
+  void dispose() {
+    SystemChrome.setSystemUIOverlayStyle(SystemUiOverlayStyle(
+      systemNavigationBarColor: settings.themeData.bottomAppBarColor,
+    ));
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -578,7 +587,7 @@ class PlayerScreenTopRow extends StatelessWidget {
             Container(
               width: this.textWidth??ScreenUtil().setWidth(550),
               child: Text(
-                (short??false)?playerHelper.queueSource.text:'Playing from:'.i18n + ' ' + playerHelper.queueSource.text,
+                (short??false)?(playerHelper.queueSource.text??''):'Playing from:'.i18n + ' ' + (playerHelper.queueSource.text??''),
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
                 textAlign: TextAlign.left,
@@ -779,9 +788,13 @@ class _QueueScreenState extends State<QueueScreen> {
             )
           ],
         ),
-        body: ListView.builder(
-          itemCount: AudioService.queue.length,
-          itemBuilder: (context, i) {
+        body: ReorderableListView(
+          onReorder: (int oldIndex, int newIndex) async {
+            if (oldIndex == playerHelper.queueIndex) return;
+            await playerHelper.reorder(oldIndex, newIndex);
+            setState(() {});
+          },
+          children: List.generate(AudioService.queue.length, (int i) {
             Track t = Track.fromMediaItem(AudioService.queue[i]);
             return TrackTile(
               t,
@@ -789,12 +802,9 @@ class _QueueScreenState extends State<QueueScreen> {
                 await AudioService.playFromMediaId(t.id);
                 Navigator.of(context).pop();
               },
-              onHold: () {
-                MenuSheet m = MenuSheet(context);
-                m.defaultTrackMenu(t);
-              },
+              key: Key(t.id),
             );
-          },
+          }),
         )
     );
   }

@@ -245,6 +245,9 @@ const language_en_us = {
     "Minutes:": "Minutes:",
     "Hours:": "Hours:",
     "Cancel current timer": "Cancel current timer",
-    "Current timer ends at": "Current timer ends at"
+    "Current timer ends at": "Current timer ends at",
+
+    //0.5.8 Strings:
+    "Smart track list": "Smart track list"
   }
 };

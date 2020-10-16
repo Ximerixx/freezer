@@ -221,7 +221,7 @@ class PlayerHelper {
     QueueSource queueSource = QueueSource(
       id: stl.id,
       source: (stl.id == 'flow')?'flow':'smarttracklist',
-      text: stl.title
+      text: stl.title??(stl.id == 'flow')?'Flow'.i18n:'Smart track list'.i18n
     );
     await playFromTrackList(stl.tracks, stl.tracks[0].id, queueSource);
   }
@@ -231,6 +231,11 @@ class PlayerHelper {
 
     this.queueSource = queueSource;
     await AudioService.customAction('queueSource', queueSource.toJson());
+  }
+
+  //Reorder tracks in queue
+  Future reorder(int oldIndex, int newIndex) async {
+    await AudioService.customAction('reorder', [oldIndex, newIndex]);
   }
 
 }
@@ -561,6 +566,18 @@ class AudioPlayerTask extends BackgroundAudioTask {
     //Android auto callback
     if (name == 'screenAndroidAuto' && _androidAutoCallback != null) {
       _androidAutoCallback.complete(jsonDecode(args).map<MediaItem>((m) => MediaItem.fromJson(m)).toList());
+    }
+    //Reorder tracks, args = [old, new]
+    if (name == 'reorder') {
+      await _audioSource.move(args[0], args[1]);
+      //Switch in queue
+      List<MediaItem> newQueue = List.from(_queue);
+      newQueue.removeAt(args[0]);
+      newQueue.insert(args[1], _queue[args[0]]);
+      _queue = newQueue;
+      //Update UI
+      AudioServiceBackground.setQueue(_queue);
+      _broadcastState();
     }
 
     return true;

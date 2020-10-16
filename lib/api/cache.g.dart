@@ -31,6 +31,8 @@ Cache _$CacheFromJson(Map<String, dynamic> json) {
         PlaylistSortType.DEFAULT
     ..trackSort = _$enumDecodeNullable(_$SortTypeEnumMap, json['trackSort']) ??
         SortType.DEFAULT
+    ..searchHistory =
+        (json['searchHistory'] as List)?.map((e) => e as String)?.toList() ?? []
     ..threadsWarning = json['threadsWarning'] as bool ?? false;
 }
 
@@ -44,6 +46,7 @@ Map<String, dynamic> _$CacheToJson(Cache instance) => <String, dynamic>{
       'libraryPlaylistSort':
           _$PlaylistSortTypeEnumMap[instance.libraryPlaylistSort],
       'trackSort': _$SortTypeEnumMap[instance.trackSort],
+      'searchHistory': instance.searchHistory,
       'threadsWarning': instance.threadsWarning,
     };
 

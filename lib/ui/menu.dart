@@ -560,6 +560,7 @@ class _SleepTimerDialogState extends State<SleepTimerDialog> {
         mainAxisSize: MainAxisSize.min,
         children: [
           Row(
+            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
             children: [
               Column(
                 mainAxisSize: MainAxisSize.min,

@@ -1,5 +1,6 @@
 import 'package:connectivity/connectivity.dart';
 import 'package:flutter/material.dart';
+import 'package:freezer/api/cache.dart';
 import 'package:freezer/api/download.dart';
 import 'package:freezer/api/player.dart';
 import 'package:freezer/ui/details_screens.dart';
@@ -62,6 +63,10 @@ class _SearchScreenState extends State<SearchScreen> {
       setState(() => _loading = false);
       return;
     }
+
+    //Add to search history
+    try {cache.searchHistory.remove(_query);} catch (_) {}
+    cache.searchHistory.add(_query);
 
     Navigator.of(context).push(
         MaterialPageRoute(builder: (context) => SearchResultsScreen(_query, offline: _offline,))
@@ -158,6 +163,19 @@ class _SearchScreenState extends State<SearchScreen> {
           if (_loading)
             LinearProgressIndicator(),
           Divider(),
+
+          //History
+          if (cache.searchHistory.length > 0 && (_query??'').length == 0)
+            ...List.generate(cache.searchHistory.length > 10 ? 10 : cache.searchHistory.length, (int i) => ListTile(
+              title: Text(cache.searchHistory[i]),
+              leading: Icon(Icons.history),
+              onTap: () {
+                setState(() => _query = cache.searchHistory[i]);
+                _submit(context);
+              },
+            )),
+
+          //Suggestions
           ...List.generate((_suggestions??[]).length, (i) => ListTile(
             title: Text(_suggestions[i]),
             leading: Icon(Icons.search),

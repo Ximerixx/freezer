@@ -14,6 +14,7 @@ import 'package:freezer/ui/search.dart';
 import 'package:i18n_extension/i18n_widget.dart';
 import 'package:move_to_background/move_to_background.dart';
 import 'package:freezer/translations.i18n.dart';
+import 'package:quick_actions/quick_actions.dart';
 import 'package:uni_links/uni_links.dart';
 
 import 'api/deezer.dart';
@@ -51,6 +52,7 @@ class _FreezerAppState extends State<FreezerApp> {
   void initState() {
     //Make update theme global
     updateTheme = _updateTheme;
+    _updateTheme();
     super.initState();
   }
 
@@ -63,6 +65,9 @@ class _FreezerAppState extends State<FreezerApp> {
     setState(() {
       settings.themeData;
     });
+    SystemChrome.setSystemUIOverlayStyle(SystemUiOverlayStyle(
+      systemNavigationBarColor: settings.themeData.bottomAppBarColor,
+    ));
   }
 
   Locale _locale() {
@@ -158,28 +163,47 @@ class _MainScreenState extends State<MainScreen> with SingleTickerProviderStateM
   void initState() {
     navigatorKey = GlobalKey<NavigatorState>();
 
-    //Setup URLs
-    setupUniLinks();
-
+    //Start with parameters
+    _setupUniLinks();
     _loadPreloadInfo();
+    _prepareQuickActions();
 
     super.initState();
+  }
+
+  void _prepareQuickActions() {
+    final QuickActions quickActions = QuickActions();
+    quickActions.initialize((type) {
+      if (type != null)
+        _startPreload(type);
+    });
+
+    //Actions
+    quickActions.setShortcutItems([
+      ShortcutItem(type: 'favorites', localizedTitle: 'Favorites'.i18n, icon: 'ic_favorites'),
+      ShortcutItem(type: 'flow', localizedTitle: 'Flow'.i18n, icon: 'ic_flow'),
+
+    ]);
+  }
+
+  void _startPreload(String type) async {
+    await deezerAPI.authorize();
+    if (type == 'flow') {
+      await playerHelper.playFromSmartTrackList(SmartTrackList(id: 'flow'));
+      return;
+    }
+    if (type == 'favorites') {
+      Playlist p = await deezerAPI.fullPlaylist(deezerAPI.favoritesPlaylistId);
+      playerHelper.playFromPlaylist(p, p.tracks[0].id);
+    }
   }
 
   void _loadPreloadInfo() async {
     String info = await DownloadManager.platform.invokeMethod('getPreloadInfo');
     if (info != null) {
       //Used if started from android auto
-
       await deezerAPI.authorize();
-      if (info == 'flow') {
-        await playerHelper.playFromSmartTrackList(SmartTrackList(id: 'flow'));
-        return;
-      }
-      if (info == 'favorites') {
-        Playlist p = await deezerAPI.fullPlaylist(deezerAPI.favoritesPlaylistId);
-        playerHelper.playFromPlaylist(p, p.tracks[0].id);
-      }
+      _startPreload(info);
     }
   }
 
@@ -190,7 +214,7 @@ class _MainScreenState extends State<MainScreen> with SingleTickerProviderStateM
     super.dispose();
   }
 
-  void setupUniLinks() async {
+  void _setupUniLinks() async {
     //Listen to URLs
     _urlLinkStream = getUriLinksStream().listen((Uri uri) {
       openScreenByURL(context, uri.toString());

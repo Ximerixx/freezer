@@ -293,6 +293,7 @@ public class Deezer {
             isFlac = false;
         }
         Tag tag = f.getTag();
+        tag.setEncoding("utf-8");
 
         tag.setField(FieldKey.TITLE, publicTrack.getString("title"));
         tag.setField(FieldKey.ALBUM, publicTrack.getJSONObject("album").getString("title"));

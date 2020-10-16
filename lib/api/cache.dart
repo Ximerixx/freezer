@@ -49,6 +49,9 @@ class Cache {
   @JsonKey(ignore: true)
   StreamSubscription sleepTimer;
 
+  @JsonKey(defaultValue: const [])
+  List<String> searchHistory;
+
   //If download threads warning was shown
   @JsonKey(defaultValue: false)
   bool threadsWarning;
