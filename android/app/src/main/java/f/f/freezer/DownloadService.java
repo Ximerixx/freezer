@@ -313,13 +313,41 @@ public class DownloadService extends Service {
                 return;
             }
 
+            //Quality fallback
+            int newQuality;
+            try {
+                newQuality = deezer.qualityFallback(download.trackId, download.md5origin, download.mediaVersion, download.quality);
+            } catch (Exception e) {
+                logger.error("Quality fallback failed: " + e.toString(), download);
+                download.state = Download.DownloadState.ERROR;
+                exit();
+                return;
+            }
+
+            //TrackID Fallback
+            try {
+                if (newQuality == -1 && !download.isUserUploaded() && privateJson.has("FALLBACK")) {
+                    logger.warn("TrackID Fallback!", download);
+                    String fallbackId = privateJson.getJSONObject("FALLBACK").getString("SNG_ID");
+                    JSONObject newPrivate = deezer.callGWAPI("song.getListData", "{\"sng_ids\": [" + fallbackId + "]}");
+                    JSONObject trackData = newPrivate.getJSONObject("results").getJSONArray("data").getJSONObject(0);
+                    download.trackId = trackData.getString("SNG_ID");
+                    download.md5origin = trackData.getString("MD5_ORIGIN");
+                    download.mediaVersion = trackData.getString("MEDIA_VERSION");
+                    run();
+                    return;
+                }
+            } catch (Exception e) {
+                logger.error("ID fallback failed: " + e.toString(), download);
+            }
+
             //ISRC Fallback
             try {
-                if (!download.isUserUploaded() && trackJson.has("available_countries") && trackJson.getJSONArray("available_countries").length() == 0) {
+                if (newQuality == -1 && !download.isUserUploaded()) {
                     logger.warn("ISRC Fallback!", download);
                     JSONObject newTrackJson = Deezer.callPublicAPI("track", "isrc:" + trackJson.getString("isrc"));
                     //Same track check
-                    if (newTrackJson.getJSONArray("available_countries").length() == 0 || newTrackJson.getInt("id") == trackJson.getInt("id")) throw new Exception("No more to fallback!");
+                    if (newTrackJson.getInt("id") == trackJson.getInt("id")) throw new Exception("No more to fallback!");
                     //Get private data
                     JSONObject privateJson = deezer.callGWAPI("song.getListData", "{\"sng_ids\": [" + newTrackJson.getInt("id") + "]}");
                     JSONObject trackData = privateJson.getJSONObject("results").getJSONArray("data").getJSONObject(0);
@@ -336,17 +364,6 @@ public class DownloadService extends Service {
                 return;
             }
 
-
-            //Quality fallback
-            int newQuality;
-            try {
-                newQuality = deezer.qualityFallback(download.trackId, download.md5origin, download.mediaVersion, download.quality);
-            } catch (Exception e) {
-                logger.error("Quality fallback failed: " + e.toString(), download);
-                download.state = Download.DownloadState.ERROR;
-                exit();
-                return;
-            }
             //No quality available
             if (newQuality == -1) {
                 logger.error("No available quality!", download);

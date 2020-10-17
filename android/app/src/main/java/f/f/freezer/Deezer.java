@@ -166,6 +166,9 @@ public class Deezer {
         URL url = new URL(getTrackUrl(trackId, md5origin, mediaVersion, originalQuality));
         HttpsURLConnection connection = (HttpsURLConnection) url.openConnection();
         connection.setRequestMethod("HEAD");
+        connection.setRequestProperty("User-Agent", "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/79.0.3945.130 Safari/537.36");
+        connection.setRequestProperty("Accept-Language", "*");
+        connection.setRequestProperty("Accept", "*/*");
         int rc = connection.getResponseCode();
         //Track not available
         if (rc > 400) {
@@ -293,7 +296,6 @@ public class Deezer {
             isFlac = false;
         }
         Tag tag = f.getTag();
-        tag.setEncoding("utf-8");
 
         tag.setField(FieldKey.TITLE, publicTrack.getString("title"));
         tag.setField(FieldKey.ALBUM, publicTrack.getJSONObject("album").getString("title"));

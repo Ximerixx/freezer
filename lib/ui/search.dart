@@ -66,7 +66,10 @@ class _SearchScreenState extends State<SearchScreen> {
 
     //Add to search history
     try {cache.searchHistory.remove(_query);} catch (_) {}
-    cache.searchHistory.add(_query);
+    if (cache.searchHistory == null)
+      cache.searchHistory = [];
+    cache.searchHistory.insert(0, _query);
+    cache.save();
 
     Navigator.of(context).push(
         MaterialPageRoute(builder: (context) => SearchResultsScreen(_query, offline: _offline,))
@@ -75,6 +78,7 @@ class _SearchScreenState extends State<SearchScreen> {
 
   @override
   void initState() {
+    print(cache.searchHistory);
     //Check for connectivity and enable offline mode
     Connectivity().checkConnectivity().then((res) {
       if (res == ConnectivityResult.none) setState(() {
@@ -165,9 +169,9 @@ class _SearchScreenState extends State<SearchScreen> {
           Divider(),
 
           //History
-          if (cache.searchHistory.length > 0 && (_query??'').length == 0)
+          if (cache.searchHistory != null && cache.searchHistory.length > 0 && (_query??'').length == 0)
             ...List.generate(cache.searchHistory.length > 10 ? 10 : cache.searchHistory.length, (int i) => ListTile(
-              title: Text(cache.searchHistory[i]),
+              title: Text(cache.searchHistory[i]??''),
               leading: Icon(Icons.history),
               onTap: () {
                 setState(() => _query = cache.searchHistory[i]);

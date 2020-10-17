@@ -771,6 +771,21 @@ class QueueScreen extends StatefulWidget {
 
 class _QueueScreenState extends State<QueueScreen> {
 
+  StreamSubscription _queueSub;
+
+  @override
+  void initState() {
+    _queueSub = AudioService.queueStream.listen((event) {setState((){});});
+    super.initState();
+  }
+
+  @override
+  void dispose() {
+    if (_queueSub != null)
+      _queueSub.cancel();
+    super.dispose();
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
