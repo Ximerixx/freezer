@@ -358,7 +358,7 @@ public class DownloadService extends Service {
                     return;
                 }
             } catch (Exception e) {
-                logger.error("ISRC Fallback failed, track unavailable! " + e.toString());
+                logger.error("ISRC Fallback failed, track unavailable! " + e.toString(), download);
                 download.state = Download.DownloadState.DEEZER_ERROR;
                 exit();
                 return;
@@ -572,7 +572,7 @@ public class DownloadService extends Service {
 
                 //Tag
                 try {
-                    Deezer.tagTrack(outFile.getPath(), trackJson, albumJson, coverFile.getPath(), lyricsData, privateJson);
+                    deezer.tagTrack(outFile.getPath(), trackJson, albumJson, coverFile.getPath(), lyricsData, privateJson);
                 } catch (Exception e) {
                     Log.e("ERR", "Tagging error!");
                     e.printStackTrace();
@@ -600,7 +600,7 @@ public class DownloadService extends Service {
             File coverFile = new File(parentDir, "cover.jpg");
             if (coverFile.exists()) return;
             //Don't download if doesn't have album
-            if (!download.path.matches(".*/%album%.*/.*")) return;
+            if (!download.path.matches(".*/.*%album%.*/.*")) return;
 
             try {
                 //Create to lock

@@ -15,7 +15,7 @@ class PlayerBar extends StatelessWidget {
     return AudioService.playbackState.currentPosition.inSeconds / AudioService.currentMediaItem.duration.inSeconds;
   }
 
-  double iconSize = 32;
+  double iconSize = 28;
   bool _gestureRegistered = false;
 
   @override
@@ -40,42 +40,48 @@ class PlayerBar extends StatelessWidget {
       child: StreamBuilder(
         stream: Stream.periodic(Duration(milliseconds: 250)),
         builder: (BuildContext context, AsyncSnapshot snapshot) {
-          if (AudioService.currentMediaItem == null) return Container(width: 0, height: 0,);
+          if (AudioService.currentMediaItem == null)
+            return Container(width: 0, height: 0,);
           return Column(
             mainAxisSize: MainAxisSize.min,
             children: <Widget>[
               Container(
                 color: Theme.of(context).bottomAppBarColor,
                 child: ListTile(
+                  dense: true,
+                  contentPadding: EdgeInsets.symmetric(horizontal: 8.0),
                   onTap: () {
-                      Navigator.of(context).push(MaterialPageRoute(builder: (BuildContext context) => PlayerScreen()));
-                      SystemChrome.setSystemUIOverlayStyle(SystemUiOverlayStyle(
-                        systemNavigationBarColor: settings.themeData.scaffoldBackgroundColor,
-                      ));
-                    },
-                    leading: CachedImage(
-                      width: 50,
-                      height: 50,
-                      url: AudioService.currentMediaItem.extras['thumb'] ?? AudioService.currentMediaItem.artUri,
-                    ),
-                    title: Text(
-                      AudioService.currentMediaItem.displayTitle,
-                      overflow: TextOverflow.clip,
-                      maxLines: 1,
-                    ),
-                    subtitle: Text(
-                      AudioService.currentMediaItem.displaySubtitle,
-                      overflow: TextOverflow.clip,
-                      maxLines: 1,
-                    ),
-                    trailing: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: <Widget>[
-                        PrevNextButton(iconSize, prev: true, hidePrev: true,),
-                        PlayPauseButton(iconSize),
-                        PrevNextButton(iconSize)
-                      ],
-                    )
+                    Navigator.of(context).push(MaterialPageRoute(
+                        builder: (BuildContext context) => PlayerScreen()));
+                    SystemChrome.setSystemUIOverlayStyle(SystemUiOverlayStyle(
+                      systemNavigationBarColor: settings.themeData
+                          .scaffoldBackgroundColor,
+                    ));
+                  },
+                  leading: CachedImage(
+                    width: 50,
+                    height: 50,
+                    url: AudioService.currentMediaItem.extras['thumb'] ??
+                        AudioService.currentMediaItem.artUri,
+                  ),
+                  title: Text(
+                    AudioService.currentMediaItem.displayTitle,
+                    overflow: TextOverflow.clip,
+                    maxLines: 1,
+                  ),
+                  subtitle: Text(
+                    AudioService.currentMediaItem.displaySubtitle,
+                    overflow: TextOverflow.clip,
+                    maxLines: 1,
+                  ),
+                  trailing: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: <Widget>[
+                      PrevNextButton(iconSize, prev: true, hidePrev: true,),
+                      PlayPauseButton(iconSize),
+                      PrevNextButton(iconSize)
+                    ],
+                  )
                 ),
               ),
               Container(
@@ -87,7 +93,7 @@ class PlayerBar extends StatelessWidget {
               )
             ],
           );
-        },
+        }
       ),
     );
   }

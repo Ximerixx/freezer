@@ -38,8 +38,9 @@ class CachedImage extends StatefulWidget {
   final double height;
   final bool circular;
   final bool fullThumb;
+  final bool rounded;
 
-  const CachedImage({Key key, this.url, this.height, this.width, this.circular = false, this.fullThumb = false}): super(key: key);
+  const CachedImage({Key key, this.url, this.height, this.width, this.circular = false, this.fullThumb = false, this.rounded = false}): super(key: key);
 
   @override
   _CachedImageState createState() => _CachedImageState();
@@ -49,8 +50,13 @@ class _CachedImageState extends State<CachedImage> {
   @override
   Widget build(BuildContext context) {
 
+    if (widget.rounded) return ClipRRect(
+      borderRadius: BorderRadius.circular(8.0),
+      child: CachedImage(url: widget.url, height: widget.height, width: widget.width, circular: false, rounded: false, fullThumb: widget.fullThumb),
+    );
+
     if (widget.circular) return ClipOval(
-      child: CachedImage(url: widget.url, height: widget.height, width: widget.width, circular: false)
+      child: CachedImage(url: widget.url, height: widget.height, width: widget.width, circular: false, rounded: false, fullThumb: widget.fullThumb,)
     );
 
     if (!widget.url.startsWith('http'))

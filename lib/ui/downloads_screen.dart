@@ -4,6 +4,7 @@ import 'package:filesize/filesize.dart';
 import 'package:flutter/material.dart';
 import 'package:freezer/api/download.dart';
 import 'package:freezer/translations.i18n.dart';
+import 'package:freezer/ui/elements.dart';
 import 'package:path/path.dart' as p;
 import 'package:path_provider/path_provider.dart';
 import 'cached_image.dart';
@@ -69,8 +70,8 @@ class _DownloadsScreenState extends State<DownloadsScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-        appBar: AppBar(
-          title: Text('Downloads'.i18n),
+        appBar: FreezerAppBar(
+         'Downloads'.i18n,
           actions: [
             IconButton(
               icon: Icon(Icons.delete_sweep),
@@ -348,9 +349,7 @@ class _DownloadLogViewerState extends State<DownloadLogViewer> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: Text('Download Log'.i18n),
-      ),
+      appBar: FreezerAppBar('Download Log'.i18n),
       body: ListView.builder(
         itemCount: data.length,
         itemBuilder: (context, i) {

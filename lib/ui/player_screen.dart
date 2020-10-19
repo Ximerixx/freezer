@@ -2,10 +2,12 @@ import 'package:flutter/material.dart';
 import 'package:audio_service/audio_service.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_screenutil/screenutil.dart';
+import 'package:freezer/api/cache.dart';
 import 'package:freezer/api/deezer.dart';
 import 'package:freezer/api/player.dart';
 import 'package:freezer/settings.dart';
 import 'package:freezer/translations.i18n.dart';
+import 'package:freezer/ui/elements.dart';
 import 'package:freezer/ui/menu.dart';
 import 'package:freezer/ui/settings_screen.dart';
 import 'package:freezer/ui/tiles.dart';
@@ -78,7 +80,6 @@ class PlayerScreenHorizontal extends StatefulWidget {
 
 class _PlayerScreenHorizontalState extends State<PlayerScreenHorizontal> {
 
-  double iconSize = ScreenUtil().setWidth(64);
   bool _lyrics = false;
 
   @override
@@ -115,9 +116,9 @@ class _PlayerScreenHorizontalState extends State<PlayerScreenHorizontal> {
                   padding: EdgeInsets.fromLTRB(8, 16, 8, 0),
                   child: Container(
                     child: PlayerScreenTopRow(
-                      textSize: ScreenUtil().setSp(26),
-                      iconSize: ScreenUtil().setSp(32),
-                      textWidth: ScreenUtil().setWidth(256),
+                      textSize: ScreenUtil().setSp(24),
+                      iconSize: ScreenUtil().setSp(36),
+                      textWidth: ScreenUtil().setWidth(350),
                       short: true
                     ),
                   )
@@ -166,17 +167,7 @@ class _PlayerScreenHorizontalState extends State<PlayerScreenHorizontal> {
                 padding: EdgeInsets.symmetric(horizontal: 16.0),
                 child: SeekBar(),
               ),
-              Container(
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceAround,
-                  mainAxisSize: MainAxisSize.max,
-                  children: <Widget>[
-                    PrevNextButton(iconSize, prev: true,),
-                    PlayPauseButton(iconSize),
-                    PrevNextButton(iconSize)
-                  ],
-                ),
-              ),
+              PlaybackControls(ScreenUtil().setSp(60)),
               Padding(
                   padding: EdgeInsets.fromLTRB(8, 0, 8, 16),
                   child: Container(
@@ -230,7 +221,6 @@ class PlayerScreenVertical extends StatefulWidget {
 }
 
 class _PlayerScreenVerticalState extends State<PlayerScreenVertical> {
-  double iconSize = ScreenUtil().setWidth(100);
   bool _lyrics = false;
 
   @override
@@ -240,26 +230,27 @@ class _PlayerScreenVerticalState extends State<PlayerScreenVertical> {
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: <Widget>[
         Padding(
-            padding: EdgeInsets.fromLTRB(28, 10, 28, 0),
-            child: PlayerScreenTopRow()
+          padding: EdgeInsets.fromLTRB(30, 4, 16, 0),
+          child: PlayerScreenTopRow()
         ),
         Padding(
-            padding: EdgeInsets.fromLTRB(16, 0, 16, 0),
-            child: Container(
-              height: ScreenUtil().setHeight(1050),
-              child: Stack(
-                children: <Widget>[
-                  BigAlbumArt(),
-                  if (_lyrics) LyricsWidget(
-                    artUri: AudioService.currentMediaItem.extras['thumb'],
-                    trackId: AudioService.currentMediaItem.id,
-                    lyrics: Track.fromMediaItem(AudioService.currentMediaItem).lyrics,
-                    height: ScreenUtil().setHeight(1050),
-                  ),
-                ],
-              ),
+          padding: EdgeInsets.fromLTRB(16, 0, 16, 0),
+          child: Container(
+            height: ScreenUtil().setHeight(1000),
+            child: Stack(
+              children: <Widget>[
+                BigAlbumArt(),
+                if (_lyrics) LyricsWidget(
+                  artUri: AudioService.currentMediaItem.extras['thumb'],
+                  trackId: AudioService.currentMediaItem.id,
+                  lyrics: Track.fromMediaItem(AudioService.currentMediaItem).lyrics,
+                  height: ScreenUtil().setHeight(1000),
+                ),
+              ],
             ),
+          ),
         ),
+        Container(height: 4.0),
         Column(
           mainAxisSize: MainAxisSize.min,
           children: <Widget>[
@@ -301,16 +292,7 @@ class _PlayerScreenVerticalState extends State<PlayerScreenVertical> {
           ],
         ),
         SeekBar(),
-        Row(
-          mainAxisAlignment: MainAxisAlignment.spaceAround,
-          mainAxisSize: MainAxisSize.max,
-          children: <Widget>[
-            PrevNextButton(iconSize, prev: true,),
-            PlayPauseButton(iconSize),
-            PrevNextButton(iconSize)
-          ],
-        ),
-        //Container(height: 8.0,),
+        PlaybackControls(ScreenUtil().setWidth(100)),
         Padding(
           padding: EdgeInsets.symmetric(vertical: 0, horizontal: 16.0),
           child: Row(
@@ -351,6 +333,90 @@ class _PlayerScreenVerticalState extends State<PlayerScreenVertical> {
   }
 }
 
+class PlaybackControls extends StatefulWidget {
+
+  final double iconSize;
+  PlaybackControls(this.iconSize, {Key key}): super(key: key);
+
+  @override
+  _PlaybackControlsState createState() => _PlaybackControlsState();
+}
+
+class _PlaybackControlsState extends State<PlaybackControls> {
+
+  Icon get repeatIcon {
+    switch (playerHelper.repeatType) {
+      case LoopMode.off:
+        return Icon(
+            Icons.repeat,
+            size: widget.iconSize * 0.64
+        );
+      case LoopMode.all:
+        return Icon(
+            Icons.repeat,
+            color: Theme.of(context).primaryColor,
+            size: widget.iconSize * 0.64
+        );
+      case LoopMode.one:
+        return Icon(
+          Icons.repeat_one,
+          color: Theme.of(context).primaryColor,
+          size: widget.iconSize * 0.64,
+        );
+    }
+  }
+
+  Icon get libraryIcon {
+    if (cache.checkTrackFavorite(Track.fromMediaItem(AudioService.currentMediaItem))) {
+      return Icon(Icons.favorite, size: widget.iconSize * 0.64);
+    }
+    return Icon(Icons.favorite_border, size: widget.iconSize * 0.64);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: EdgeInsets.symmetric(horizontal: 8.0),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        mainAxisSize: MainAxisSize.max,
+        children: [
+          IconButton(
+            icon: repeatIcon,
+            onPressed: () async {
+              await playerHelper.changeRepeat();
+              setState(() {});
+            },
+          ),
+          PrevNextButton(widget.iconSize, prev: true),
+          PlayPauseButton(widget.iconSize * 1.25),
+          PrevNextButton(widget.iconSize),
+          IconButton(
+            icon: libraryIcon,
+            onPressed: () async {
+              if (cache.libraryTracks == null)
+                cache.libraryTracks = [];
+
+              if (cache.checkTrackFavorite(Track.fromMediaItem(AudioService.currentMediaItem))) {
+                //Remove from library
+                setState(() => cache.libraryTracks.remove(AudioService.currentMediaItem.id));
+                await deezerAPI.removeFavorite(AudioService.currentMediaItem.id);
+                await cache.save();
+              } else {
+                //Add
+                setState(() => cache.libraryTracks.add(AudioService.currentMediaItem.id));
+                await deezerAPI.addFavoriteTrack(AudioService.currentMediaItem.id);
+                await cache.save();
+              }
+            },
+          )
+        ],
+      ),
+    );
+  }
+}
+
+
 class BigAlbumArt extends StatefulWidget {
   @override
   _BigAlbumArtState createState() => _BigAlbumArtState();
@@ -383,16 +449,23 @@ class _BigAlbumArtState extends State<BigAlbumArt> {
 
   @override
   Widget build(BuildContext context) {
-    return PageView(
-      controller: _pageController,
-      onPageChanged: (int index) {
-        if (_animationLock) return;
-        AudioService.skipToQueueItem(AudioService.queue[index].id);
+    return GestureDetector(
+      onVerticalDragUpdate: (DragUpdateDetails details) {
+        if (details.delta.dy > 16) {
+          Navigator.of(context).pop();
+        }
       },
-      children: List.generate(AudioService.queue.length, (i) => CachedImage(
-        url: AudioService.queue[i].artUri,
-        fullThumb: true,
-      )),
+      child: PageView(
+        controller: _pageController,
+        onPageChanged: (int index) {
+          if (_animationLock) return;
+          AudioService.skipToQueueItem(AudioService.queue[index].id);
+        },
+        children: List.generate(AudioService.queue.length, (i) => CachedImage(
+          url: AudioService.queue[i].artUri,
+          fullThumb: true,
+        )),
+      ),
     );
   }
 }
@@ -569,106 +642,29 @@ class PlayerScreenTopRow extends StatelessWidget {
     return Row(
       mainAxisSize: MainAxisSize.max,
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      crossAxisAlignment: CrossAxisAlignment.center,
       children: <Widget>[
-        Row(
-          children: <Widget>[
-            Padding(
-              padding: EdgeInsets.fromLTRB(0, 0, 8, 0),
-              child: InkWell(
-                child: Container(
-                  padding: EdgeInsets.all(8.0),
-                  child: Icon(Icons.keyboard_arrow_down, size: this.iconSize??ScreenUtil().setWidth(46)),
-                ),
-                onTap: () {
-                  Navigator.of(context).pop();
-                },
-              ),
-            ),
-            Container(
-              width: this.textWidth??ScreenUtil().setWidth(550),
-              child: Text(
-                (short??false)?(playerHelper.queueSource.text??''):'Playing from:'.i18n + ' ' + (playerHelper.queueSource.text??''),
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                textAlign: TextAlign.left,
-                style: TextStyle(fontSize: this.textSize??ScreenUtil().setSp(34)),
-              ),
-            )
-          ],
+        Container(
+          width: this.textWidth??ScreenUtil().setWidth(800),
+          child: Text(
+            (short??false)?(playerHelper.queueSource.text??''):'Playing from:'.i18n + ' ' + (playerHelper.queueSource?.text??''),
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            textAlign: TextAlign.left,
+            style: TextStyle(fontSize: this.textSize??ScreenUtil().setSp(38)),
+          ),
         ),
-        Row(
-          mainAxisSize: MainAxisSize.min,
-          children: <Widget>[
-            RepeatButton(size: this.iconSize),
-            Container(width: 16.0,),
-            InkWell(
-              child: Container(
-                padding: EdgeInsets.all(8.0),
-                child: Icon(Icons.menu, size: this.iconSize??ScreenUtil().setWidth(46)),
-              ),
-              onTap: (){
-                Navigator.of(context).push(MaterialPageRoute(
-                    builder: (context) => QueueScreen()
-                ));
-              },
-            ),
-          ],
-        )
+        IconButton(
+          icon: Icon(Icons.menu),
+          iconSize: this.iconSize??ScreenUtil().setSp(52),
+          splashRadius: this.iconSize??ScreenUtil().setWidth(52),
+          onPressed: () {
+            Navigator.of(context).push(MaterialPageRoute(
+                builder: (context) => QueueScreen()
+            ));
+          },
+        ),
       ],
-    );
-  }
-}
-
-
-
-class RepeatButton extends StatefulWidget {
-
-  double size;
-  RepeatButton({this.size, Key key}): super(key: key);
-
-  @override
-  _RepeatButtonState createState() => _RepeatButtonState();
-}
-
-class _RepeatButtonState extends State<RepeatButton> {
-
-  double _size = ScreenUtil().setWidth(46);
-
-  Icon get icon {
-    switch (playerHelper.repeatType) {
-      case LoopMode.off:
-        return Icon(Icons.repeat, size: widget.size??_size);
-      case LoopMode.all:
-        return Icon(
-          Icons.repeat,
-          color: Theme.of(context).primaryColor,
-          size: widget.size??_size
-        );
-      case LoopMode.one:
-        return Icon(
-          Icons.repeat_one,
-          color: Theme.of(context).primaryColor,
-          size: widget.size??_size
-        );
-    }
-  }
-
-  @override
-  void initState() {
-    super.initState();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return InkWell(
-      onTap: () async {
-        await playerHelper.changeRepeat();
-        setState(() {});
-      },
-      child: Container(
-        padding: EdgeInsets.all(8.0),
-        child: icon,
-      ),
     );
   }
 }
@@ -789,8 +785,8 @@ class _QueueScreenState extends State<QueueScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-        appBar: AppBar(
-          title: Text('Queue'.i18n),
+        appBar: FreezerAppBar(
+          'Queue'.i18n,
           actions: <Widget>[
             IconButton(
               icon: Icon(

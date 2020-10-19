@@ -1,91 +1,67 @@
-import 'dart:async';
-
-import 'package:dio/adapter.dart';
-import 'package:dio/dio.dart';
-import 'package:cookie_jar/cookie_jar.dart';
-import 'package:dio_cookie_manager/dio_cookie_manager.dart';
-import 'package:freezer/api/cache.dart';
+import 'package:freezer/api/definitions.dart';
+import 'package:freezer/settings.dart';
+import 'package:http/http.dart' as http;
 
 import 'dart:io';
 import 'dart:convert';
-
-import '../settings.dart';
-import 'definitions.dart';
+import 'dart:async';
 
 DeezerAPI deezerAPI = DeezerAPI();
 
 class DeezerAPI {
 
-  String arl;
-
   DeezerAPI({this.arl});
 
+  String arl;
   String token;
   String userId;
   String userName;
   String favoritesPlaylistId;
-  String privateUrl = 'http://www.deezer.com/ajax/gw-light.php';
-  Map<String, String> headers = {
+  String sid;
+
+  Future _authorizing;
+
+  //Get headers
+  Map<String, String> get headers => {
     "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/67.0.3396.99 Safari/537.36",
     "Content-Language": '${settings.deezerLanguage??"en"}-${settings.deezerCountry??'US'}',
     "Cache-Control": "max-age=0",
     "Accept": "*/*",
     "Accept-Charset": "utf-8,ISO-8859-1;q=0.7,*;q=0.3",
     "Accept-Language": "${settings.deezerLanguage??"en"}-${settings.deezerCountry??'US'},${settings.deezerLanguage??"en"};q=0.9,en-US;q=0.8,en;q=0.7",
-    "Connection": "keep-alive"
+    "Connection": "keep-alive",
+    "Cookie": "arl=${arl}" + ((sid == null) ? '' : '; sid=${sid}')
   };
-  Future _authorizing;
-  Dio dio = Dio();
-  CookieJar _cookieJar = new CookieJar();
 
-  //Call private api
+  //Call private API
   Future<Map<dynamic, dynamic>> callApi(String method, {Map<dynamic, dynamic> params, String gatewayInput}) async {
-
-    //Add headers
-    dio.interceptors.add(InterceptorsWrapper(
-      onRequest: (RequestOptions options) {
-        options.headers = this.headers;
-        return options;
+    //Generate URL
+    Uri uri = Uri.https('www.deezer.com', '/ajax/gw-light.php', {
+      'api_version': '1.0',
+      'api_token': this.token,
+      'input': '3',
+      'method': method,
+      //Used for homepage
+      if (gatewayInput != null)
+        'gateway_input': gatewayInput
+    });
+    //Post
+    http.Response res = await http.post(uri, headers: headers, body: jsonEncode(params));
+    //Grab SID
+    if (method == 'deezer.getUserData') {
+      for (String cookieHeader in res.headers['set-cookie'].split(';')) {
+        if (cookieHeader.startsWith('sid=')) {
+          sid = cookieHeader.split('=')[1];
+        }
       }
-    ));
-
-    //Proxy
-    if (settings.proxyAddress != null && settings.proxyAddress != '' && settings.proxyAddress.length > 9) {
-      (dio.httpClientAdapter as DefaultHttpClientAdapter).onHttpClientCreate = (client) {
-        client.findProxy = (uri) => "PROXY ${settings.proxyAddress}";
-        client.badCertificateCallback = (X509Certificate cert, String host, int port) => true;
-      };
     }
 
-    //Add cookies
-    List<Cookie> cookies = [Cookie('arl', this.arl)];
-    _cookieJar.saveFromResponse(Uri.parse(this.privateUrl), cookies);
-    dio.interceptors.add(CookieManager(_cookieJar));
-    //Make request
-    Response<dynamic> response = await dio.post(
-      this.privateUrl,
-      queryParameters: {
-        'api_version': '1.0',
-        'api_token': this.token,
-        'input': '3',
-        'method': method,
-        //Used for homepage
-        if (gatewayInput != null)
-          'gateway_input': gatewayInput
-      },
-      data: jsonEncode(params??{}),
-      options: Options(responseType: ResponseType.json, sendTimeout: 10000, receiveTimeout: 10000)
-    );
-    return response.data;
+    return jsonDecode(res.body);
   }
 
-  Future<Map> callPublicApi(String path) async {
-    Dio dio = Dio();
-    Response response = await dio.get(
-      'https://api.deezer.com/' + path,
-      options: Options(responseType: ResponseType.json, sendTimeout: 10000, receiveTimeout: 10000)
-    );
-    return response.data;
+  Future<Map<dynamic, dynamic>> callPublicApi(String path) async {
+    http.Response res = await http.get('https://api.deezer.com/' + path);
+    return jsonDecode(res.body);
   }
 
   //Wrapper so it can be globally awaited
@@ -128,11 +104,11 @@ class DeezerAPI {
     }
     //Share URL
     if (uri.host == 'deezer.page.link' || uri.host == 'www.deezer.page.link') {
-      Dio dio = Dio();
-      Response res = await dio.head(url, options: RequestOptions(
-        followRedirects: true
-      ));
-      return parseLink('http://deezer.com' + res.realUri.toString());
+      http.BaseRequest request = http.Request('HEAD', Uri.parse(url));
+      request.followRedirects = false;
+      http.StreamedResponse response = await request.send();
+      String newUrl = response.headers['location'];
+      return parseLink(newUrl);
     }
   }
 
@@ -444,6 +420,15 @@ class DeezerAPI {
       'status': status,
       'songs': []
     });
+  }
+
+  //Get shuffled library
+  Future<List<Track>> libraryShuffle({int start=0}) async {
+    Map data = await callApi('tracklist.getShuffledCollection', params: {
+      'nb': 50,
+      'start': start
+    });
+    return data['results']['data'].map<Track>((t) => Track.fromPrivateJson(t)).toList();
   }
 }
 

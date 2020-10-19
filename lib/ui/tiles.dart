@@ -1,10 +1,13 @@
-import 'dart:async';
-
 import 'package:audio_service/audio_service.dart';
 import 'package:flutter/material.dart';
+import 'package:freezer/api/deezer.dart';
+import 'package:freezer/translations.i18n.dart';
 
 import '../api/definitions.dart';
 import 'cached_image.dart';
+
+import 'dart:async';
+
 
 class TrackTile extends StatefulWidget {
 
@@ -132,6 +135,8 @@ class ArtistTile extends StatelessWidget {
     return SizedBox(
       width: 150,
       child: Card(
+        color: Theme.of(context).scaffoldBackgroundColor,
+        elevation: 0.0,
         child: InkWell(
           onTap: onTap,
           onLongPress: onHold,
@@ -144,7 +149,7 @@ class ArtistTile extends StatelessWidget {
                 circular: true,
                 width: 100,
               ),
-              Container(height: 4,),
+              Container(height: 8,),
               Text(
                 artist.name,
                 maxLines: 1,
@@ -172,6 +177,13 @@ class PlaylistTile extends StatelessWidget {
 
   PlaylistTile(this.playlist, {this.onHold, this.onTap, this.trailing});
 
+  String get subtitle {
+    if (playlist.user == null || playlist.user.name == null || playlist.user.name == '' || playlist.user.id == deezerAPI.userId) {
+      return '${playlist.trackCount} ' + 'Tracks'.i18n;
+    }
+    return playlist.user.name;
+  }
+
   @override
   Widget build(BuildContext context) {
     return ListTile(
@@ -180,7 +192,7 @@ class PlaylistTile extends StatelessWidget {
         maxLines: 1,
       ),
       subtitle: Text(
-        playlist.user.name,
+        subtitle,
         maxLines: 1,
       ),
       leading: CachedImage(
@@ -234,6 +246,8 @@ class PlaylistCardTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Card(
+      color: Theme.of(context).scaffoldBackgroundColor,
+      elevation: 0.0,
       child: InkWell(
         onTap: onTap,
         onLongPress: onHold,
@@ -245,8 +259,10 @@ class PlaylistCardTile extends StatelessWidget {
                 url: playlist.image.thumb,
                 width: 128,
                 height: 128,
+                rounded: true,
               ),
             ),
+            Container(height: 2.0),
             Container(
               width: 144,
               child: Text(
@@ -257,7 +273,7 @@ class PlaylistCardTile extends StatelessWidget {
                 style: TextStyle(fontSize: 14.0),
               ),
             ),
-            Container(height: 8.0,)
+            Container(height: 4.0,)
           ],
         ),
       )
@@ -276,6 +292,8 @@ class SmartTrackListTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Card(
+      elevation: 0,
+      color: Theme.of(context).scaffoldBackgroundColor,
       child: InkWell(
         onTap: onTap,
         onLongPress: onHold,
@@ -287,6 +305,7 @@ class SmartTrackListTile extends StatelessWidget {
                 width: 128,
                 height: 128,
                 url: smartTrackList.cover.thumb,
+                rounded: true,
               ),
             ),
             Container(
@@ -320,6 +339,8 @@ class AlbumCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Card(
+      color: Theme.of(context).scaffoldBackgroundColor,
+      elevation: 0.0,
       child: InkWell(
         onTap: onTap,
         onLongPress: onHold,
@@ -331,6 +352,7 @@ class AlbumCard extends StatelessWidget {
                 width: 128.0,
                 height: 128.0,
                 url: album.art.thumb,
+                rounded: true
               ),
             ),
             Container(
@@ -342,6 +364,20 @@ class AlbumCard extends StatelessWidget {
                 overflow: TextOverflow.ellipsis,
                 style: TextStyle(
                     fontSize: 14.0
+                ),
+              ),
+            ),
+            Container(height: 4.0),
+            Container(
+              width: 144.0,
+              child: Text(
+                album.artistString,
+                maxLines: 1,
+                textAlign: TextAlign.center,
+                overflow: TextOverflow.ellipsis,
+                style: TextStyle(
+                  fontSize: 12.0,
+                  color: (Theme.of(context).brightness == Brightness.light) ? Colors.grey[800] : Colors.white70
                 ),
               ),
             ),
@@ -366,28 +402,31 @@ class ChannelTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Card(
-      color: channel.backgroundColor,
-      child: InkWell(
-        onTap: this.onTap,
-        child: Container(
-          width: 150,
-          height: 75,
-          child: Center(
-            child: Text(
-              channel.title,
-              textAlign: TextAlign.center,
-              maxLines: 2,
-              overflow: TextOverflow.ellipsis,
-              style: TextStyle(
-                fontSize: 18.0,
-                fontWeight: FontWeight.bold,
-                color: _textColor()
+    return Padding(
+      padding: EdgeInsets.symmetric(horizontal: 4.0),
+      child: Card(
+        color: channel.backgroundColor,
+        child: InkWell(
+          onTap: this.onTap,
+          child: Container(
+            width: 150,
+            height: 75,
+            child: Center(
+              child: Text(
+                channel.title,
+                textAlign: TextAlign.center,
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+                style: TextStyle(
+                    fontSize: 18.0,
+                    fontWeight: FontWeight.bold,
+                    color: _textColor()
+                ),
               ),
             ),
           ),
-        ),
-      )
+        )
+      ),
     );
   }
 }

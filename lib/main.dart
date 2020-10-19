@@ -67,6 +67,7 @@ class _FreezerAppState extends State<FreezerApp> {
     });
     SystemChrome.setSystemUIOverlayStyle(SystemUiOverlayStyle(
       systemNavigationBarColor: settings.themeData.bottomAppBarColor,
+      systemNavigationBarIconBrightness: (settings.theme == Themes.Light)?Brightness.dark:Brightness.light
     ));
   }
 
@@ -231,45 +232,45 @@ class _MainScreenState extends State<MainScreen> with SingleTickerProviderStateM
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-        bottomNavigationBar: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: <Widget>[
-            PlayerBar(),
-            BottomNavigationBar(
-              backgroundColor: Theme.of(context).bottomAppBarColor,
-              currentIndex: _selected,
-              onTap: (int s) async {
+      bottomNavigationBar: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: <Widget>[
+          PlayerBar(),
+          BottomNavigationBar(
+            backgroundColor: Theme.of(context).bottomAppBarColor,
+            currentIndex: _selected,
+            onTap: (int s) async {
 
-                //Pop all routes until home screen
-                while (navigatorKey.currentState.canPop()) {
-                  await navigatorKey.currentState.maybePop();
-                }
-
+              //Pop all routes until home screen
+              while (navigatorKey.currentState.canPop()) {
                 await navigatorKey.currentState.maybePop();
-                setState(() {
-                  _selected = s;
-                });
-              },
-              selectedItemColor: Theme.of(context).primaryColor,
-              items: <BottomNavigationBarItem>[
-                BottomNavigationBarItem(
-                    icon: Icon(Icons.home), title: Text('Home'.i18n)),
-                BottomNavigationBarItem(
-                  icon: Icon(Icons.search),
-                  title: Text('Search'.i18n),
-                ),
-                BottomNavigationBarItem(
-                    icon: Icon(Icons.library_music), title: Text('Library'.i18n))
-              ],
-            )
-          ],
+              }
+
+              await navigatorKey.currentState.maybePop();
+              setState(() {
+                _selected = s;
+              });
+            },
+            selectedItemColor: Theme.of(context).primaryColor,
+            items: <BottomNavigationBarItem>[
+              BottomNavigationBarItem(
+                  icon: Icon(Icons.home), title: Text('Home'.i18n)),
+              BottomNavigationBarItem(
+                icon: Icon(Icons.search),
+                title: Text('Search'.i18n),
+              ),
+              BottomNavigationBarItem(
+                  icon: Icon(Icons.library_music), title: Text('Library'.i18n))
+            ],
+          )
+        ],
+      ),
+      body: AudioServiceWidget(
+        child: CustomNavigator(
+          navigatorKey: navigatorKey,
+          home: _screens[_selected],
+          pageRoute: PageRoutes.materialPageRoute,
         ),
-        body: AudioServiceWidget(
-          child: CustomNavigator(
-            navigatorKey: navigatorKey,
-            home: _screens[_selected],
-            pageRoute: PageRoutes.materialPageRoute,
-          ),
-        ));
+      ));
   }
 }

@@ -12,6 +12,7 @@ Settings _$SettingsFromJson(Map<String, dynamic> json) {
     arl: json['arl'] as String,
   )
     ..language = json['language'] as String
+    ..ignoreInterruptions = json['ignoreInterruptions'] as bool ?? false
     ..wifiQuality =
         _$enumDecodeNullable(_$AudioQualityEnumMap, json['wifiQuality']) ??
             AudioQuality.MP3_320
@@ -49,6 +50,7 @@ Settings _$SettingsFromJson(Map<String, dynamic> json) {
 
 Map<String, dynamic> _$SettingsToJson(Settings instance) => <String, dynamic>{
       'language': instance.language,
+      'ignoreInterruptions': instance.ignoreInterruptions,
       'arl': instance.arl,
       'wifiQuality': _$AudioQualityEnumMap[instance.wifiQuality],
       'mobileQuality': _$AudioQualityEnumMap[instance.mobileQuality],
@@ -112,6 +114,7 @@ const _$AudioQualityEnumMap = {
   AudioQuality.MP3_128: 'MP3_128',
   AudioQuality.MP3_320: 'MP3_320',
   AudioQuality.FLAC: 'FLAC',
+  AudioQuality.ASK: 'ASK',
 };
 
 const _$ThemesEnumMap = {

@@ -8,11 +8,13 @@ import org.jaudiotagger.audio.AudioFileIO;
 import org.jaudiotagger.tag.FieldKey;
 import org.jaudiotagger.tag.Tag;
 import org.jaudiotagger.tag.TagOptionSingleton;
-import org.jaudiotagger.tag.datatype.Artwork;
 import org.jaudiotagger.tag.flac.FlacTag;
 import org.jaudiotagger.tag.id3.ID3v23Tag;
 import org.jaudiotagger.tag.id3.valuepair.ImageFormats;
+import org.jaudiotagger.tag.images.Artwork;
+import org.jaudiotagger.tag.images.ArtworkFactory;
 import org.jaudiotagger.tag.reference.PictureTypes;
+import org.jaudiotagger.tag.vorbiscomment.VorbisCommentFieldKey;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
@@ -119,6 +121,12 @@ public class Deezer {
             data += scanner.nextLine();
         }
 
+        //End
+        try {
+            connection.disconnect();
+            scanner.close();
+        } catch (Exception e) {}
+
         //Parse JSON
         JSONObject out = new JSONObject(data);
 
@@ -155,6 +163,12 @@ public class Deezer {
         while (scanner.hasNext()) {
             data += scanner.nextLine();
         }
+
+        //Close
+        try {
+            connection.disconnect();
+            scanner.close();
+        } catch (Exception e) {}
 
         //Parse JSON
         JSONObject out = new JSONObject(data);
@@ -252,9 +266,11 @@ public class Deezer {
         String artists = "";
         String feats = "";
         for (int i=0; i<publicTrack.getJSONArray("contributors").length(); i++) {
-            artists += ", " + publicTrack.getJSONArray("contributors").getJSONObject(i).getString("name");
-            if (i > 0)
-                feats += ", " + publicTrack.getJSONArray("contributors").getJSONObject(i).getString("name");
+            String artist = publicTrack.getJSONArray("contributors").getJSONObject(i).getString("name");
+            if (!artists.contains(artist))
+                artists += ", " + artist;
+            if (i > 0 && !artists.contains(artist) && !feats.contains(artist))
+                feats += ", " + artist;
         }
         original = original.replaceAll("%artists%", sanitize(artists).substring(2));
         if (feats.length() >= 2)
@@ -266,6 +282,9 @@ public class Deezer {
         //Year
         original = original.replaceAll("%year%", publicTrack.getString("release_date").substring(0, 4));
         original = original.replaceAll("%date%", publicTrack.getString("release_date"));
+
+        //Remove leading dots
+        original = original.replaceAll("/\\.+", "/");
 
         if (newQuality == 9) return original + ".flac";
         return original + ".mp3";
@@ -286,7 +305,7 @@ public class Deezer {
     }
 
     //Tag track with data from API
-    public static void tagTrack(String path, JSONObject publicTrack, JSONObject publicAlbum, String cover, JSONObject lyricsData, JSONObject privateJson) throws Exception {
+    public void tagTrack(String path, JSONObject publicTrack, JSONObject publicAlbum, String cover, JSONObject lyricsData, JSONObject privateJson) throws Exception {
         TagOptionSingleton.getInstance().setAndroid(true);
         //Load file
         AudioFile f = AudioFileIO.read(new File(path));
@@ -302,7 +321,9 @@ public class Deezer {
         //Artist
         String artists = "";
         for (int i=0; i<publicTrack.getJSONArray("contributors").length(); i++) {
-            artists += ", " + publicTrack.getJSONArray("contributors").getJSONObject(i).getString("name");
+            String artist = publicTrack.getJSONArray("contributors").getJSONObject(i).getString("name");
+            if (!artists.contains(artist))
+                artists += ", " + artist;
         }
         tag.addField(FieldKey.ARTIST, artists.substring(2));
         tag.setField(FieldKey.TRACK, Integer.toString(publicTrack.getInt("track_position")));
@@ -337,66 +358,70 @@ public class Deezer {
             tag.setField(FieldKey.GENRE, genres.substring(2));
 
         //Additional tags from private api
-        if (privateJson != null && privateJson.has("SNG_CONTRIBUTORS")) {
-            JSONObject contrib = privateJson.getJSONObject("SNG_CONTRIBUTORS");
-            //Composer
-            if (contrib.has("composer")) {
-                JSONArray composers = contrib.getJSONArray("composer");
-                String composer = "";
-                for (int i=0; i<composers.length(); i++)
-                    composer += ", " + composers.getString(i);
-                if (composer.length() > 2)
-                    tag.setField(FieldKey.COMPOSER, composer.substring(2));
-            }
-            //Engineer
-            if (contrib.has("engineer")) {
-                JSONArray engineers = contrib.getJSONArray("engineer");
-                String engineer = "";
-                for (int i=0; i<engineers.length(); i++)
-                    engineer += ", " + engineers.getString(i);
-                if (engineer.length() > 2)
-                    tag.setField(FieldKey.ENGINEER, engineer.substring(2));
-            }
-            //Mixer
-            if (contrib.has("mixer")) {
-                JSONArray mixers = contrib.getJSONArray("mixer");
-                String mixer = "";
-                for (int i=0; i<mixers.length(); i++)
-                    mixer += ", " + mixers.getString(i);
-                if (mixer.length() > 2)
-                    tag.setField(FieldKey.MIXER, mixer.substring(2));
-            }
-            //Producer
-            if (contrib.has("producer")) {
-                JSONArray producers = contrib.getJSONArray("producer");
-                String producer = "";
-                for (int i=0; i<producers.length(); i++)
-                    producer += ", " + producers.getString(i);
-                if (producer.length() > 2)
-                    tag.setField(FieldKey.MIXER, producer.substring(2));
-            }
+        try {
+            if (privateJson != null && privateJson.has("SNG_CONTRIBUTORS")) {
+                JSONObject contrib = privateJson.getJSONObject("SNG_CONTRIBUTORS");
+                //Composer
+                if (contrib.has("composer")) {
+                    JSONArray composers = contrib.getJSONArray("composer");
+                    String composer = "";
+                    for (int i = 0; i < composers.length(); i++)
+                        composer += ", " + composers.getString(i);
+                    if (composer.length() > 2)
+                        tag.setField(FieldKey.COMPOSER, composer.substring(2));
+                }
+                //Engineer
+                if (contrib.has("engineer")) {
+                    JSONArray engineers = contrib.getJSONArray("engineer");
+                    String engineer = "";
+                    for (int i = 0; i < engineers.length(); i++)
+                        engineer += ", " + engineers.getString(i);
+                    if (engineer.length() > 2)
+                        tag.setField(FieldKey.ENGINEER, engineer.substring(2));
+                }
+                //Mixer
+                if (contrib.has("mixer")) {
+                    JSONArray mixers = contrib.getJSONArray("mixer");
+                    String mixer = "";
+                    for (int i = 0; i < mixers.length(); i++)
+                        mixer += ", " + mixers.getString(i);
+                    if (mixer.length() > 2)
+                        tag.setField(FieldKey.MIXER, mixer.substring(2));
+                }
+                //Producer
+                if (contrib.has("producer")) {
+                    JSONArray producers = contrib.getJSONArray("producer");
+                    String producer = "";
+                    for (int i = 0; i < producers.length(); i++)
+                        producer += ", " + producers.getString(i);
+                    if (producer.length() > 2)
+                        tag.setField(FieldKey.MIXER, producer.substring(2));
+                }
 
-            //FLAC Only
-            if (isFlac) {
-                //Author
-                if (contrib.has("author")) {
-                    JSONArray authors = contrib.getJSONArray("author");
-                    String author = "";
-                    for (int i=0; i<authors.length(); i++)
-                        author += ", " + authors.getString(i);
-                    if (author.length() > 2)
-                        ((FlacTag)tag).setField("AUTHOR", author.substring(2));
-                }
-                //Writer
-                if (contrib.has("writer")) {
-                    JSONArray writers = contrib.getJSONArray("writer");
-                    String writer = "";
-                    for (int i=0; i<writers.length(); i++)
-                        writer += ", " + writers.getString(i);
-                    if (writer.length() > 2)
-                        ((FlacTag)tag).setField("WRITER", writer.substring(2));
+                //FLAC Only
+                if (isFlac) {
+                    //Author
+                    if (contrib.has("author")) {
+                        JSONArray authors = contrib.getJSONArray("author");
+                        String author = "";
+                        for (int i = 0; i < authors.length(); i++)
+                            author += ", " + authors.getString(i);
+                        if (author.length() > 2)
+                            ((FlacTag) tag).setField("AUTHOR", author.substring(2));
+                    }
+                    //Writer
+                    if (contrib.has("writer")) {
+                        JSONArray writers = contrib.getJSONArray("writer");
+                        String writer = "";
+                        for (int i = 0; i < writers.length(); i++)
+                            writer += ", " + writers.getString(i);
+                        if (writer.length() > 2)
+                            ((FlacTag) tag).setField("WRITER", writer.substring(2));
+                    }
                 }
             }
+        } catch (Exception e) {
+            logger.warn("Error writing contributors data: " + e.toString());
         }
 
         File coverFile = new File(cover);
@@ -423,7 +448,8 @@ public class Deezer {
             }
         } else {
             if (addCover) {
-                Artwork art = Artwork.createArtworkFromFile(coverFile);
+                Artwork art = ArtworkFactory.createArtworkFromFile(coverFile);
+                //Artwork art = Artwork.createArtworkFromFile(coverFile);
                 tag.addField(art);
             }
         }

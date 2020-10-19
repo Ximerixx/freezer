@@ -18,7 +18,9 @@ lang_crowdin = {
     'ro': 'ro_ro',
     'ru': 'ru_ru',
     'tr': 'tr_tr',
-    'pl': 'pl_pl'
+    'pl': 'pl_pl',
+    'uk': 'uk_ua',
+    'hu': 'hu_hu'
 }
 
 def generate_dart():
@@ -30,7 +32,7 @@ def generate_dart():
                 lang = file.split('/')[0]
                 out[lang_crowdin[lang]] = json.loads(data)
 
-    with open('crowdin.dart', 'w') as f:
+    with open('../lib/languages/crowdin.dart', 'w') as f:
         data = json.dumps(out, ensure_ascii=False).replace('$', '\\$')
         out = f'const crowdin = {data};'
         f.write(out)

@@ -7,6 +7,7 @@ import 'package:freezer/api/cache.dart';
 import 'package:freezer/api/deezer.dart';
 import 'package:freezer/api/download.dart';
 import 'package:freezer/api/player.dart';
+import 'package:freezer/ui/elements.dart';
 import 'package:freezer/ui/error.dart';
 import 'package:freezer/ui/search.dart';
 import 'package:freezer/translations.i18n.dart';
@@ -53,14 +54,17 @@ class AlbumDetails extends StatelessWidget {
           return ListView(
             children: <Widget>[
               //Album art, title, artists
-              Card(
+              Container(
+                color: Theme.of(context).scaffoldBackgroundColor,
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: <Widget>[
                     Container(height: 8.0,),
                     CachedImage(
                       url: album.art.full,
-                      width: MediaQuery.of(context).size.width / 2
+                      width: MediaQuery.of(context).size.width / 2,
+                      fullThumb: true,
+                      rounded: true,
                     ),
                     Container(height: 8,),
                     Text(
@@ -97,8 +101,9 @@ class AlbumDetails extends StatelessWidget {
                   ],
                 ),
               ),
+              FreezerDivider(),
               //Details
-              Card(
+              Container(
                 child: Row(
                   mainAxisSize: MainAxisSize.max,
                   mainAxisAlignment: MainAxisAlignment.spaceEvenly,
@@ -136,8 +141,9 @@ class AlbumDetails extends StatelessWidget {
                   ],
                 ),
               ),
+              FreezerDivider(),
               //Options (offline, download...)
-              Card(
+              Container(
                 child: Row(
                   mainAxisSize: MainAxisSize.max,
                   mainAxisAlignment: MainAxisAlignment.spaceAround,
@@ -168,20 +174,28 @@ class AlbumDetails extends StatelessWidget {
                           Text('Download'.i18n)
                         ],
                       ),
-                      onPressed: () {
-                        downloadManager.addOfflineAlbum(album, private: false);
+                      onPressed: () async {
+                        if (await downloadManager.addOfflineAlbum(album, private: false, context: context) != false)
+                          MenuSheet(context).showDownloadStartedToast();
                       },
                     )
                   ],
                 ),
               ),
+              FreezerDivider(),
               ...List.generate(cdCount, (cdi) {
                 List<Track> tracks = album.tracks.where((t) => (t.diskNumber??1) == cdi + 1).toList();
                 return Column(
                   children: [
                     Padding(
                       padding: EdgeInsets.symmetric(vertical: 4.0),
-                      child: Text('Disk'.i18n + ' ${cdi + 1}'),
+                      child: Text(
+                        'Disk'.i18n.toUpperCase() + ' ${cdi + 1}',
+                        style: TextStyle(
+                          fontSize: 12.0,
+                          fontWeight: FontWeight.w300
+                        ),
+                      ),
                     ),
                     ...List.generate(tracks.length, (i) => TrackTile(
                       tracks[i],
@@ -237,6 +251,7 @@ class _MakeAlbumOfflineState extends State<MakeAlbumOffline> {
               //Add to offline
               await deezerAPI.addFavoriteAlbum(widget.album.id);
               downloadManager.addOfflineAlbum(widget.album, private: true);
+              MenuSheet(context).showDownloadStartedToast();
               setState(() {
                 _offline = true;
               });
@@ -283,13 +298,16 @@ class ArtistDetails extends StatelessWidget {
 
           return ListView(
             children: <Widget>[
-              Card(
+              Container(height: 4.0),
+              Container(
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                   children: <Widget>[
                     CachedImage(
                       url: artist.picture.full,
                       width: MediaQuery.of(context).size.width / 2 - 8,
+                      rounded: true,
+                      fullThumb: true,
                     ),
                     Container(
                       width: MediaQuery.of(context).size.width / 2 - 8,
@@ -347,8 +365,9 @@ class ArtistDetails extends StatelessWidget {
                   ],
                 ),
               ),
-              Container(height: 4.0,),
-              Card(
+              Container(height: 4.0),
+              FreezerDivider(),
+              Container(
                 child: Row(
                   mainAxisSize: MainAxisSize.max,
                   mainAxisAlignment: MainAxisAlignment.spaceAround,
@@ -391,14 +410,18 @@ class ArtistDetails extends StatelessWidget {
                   ],
                 ),
               ),
-              Container(height: 16.0,),
+              FreezerDivider(),
+              Container(height: 12.0,),
               //Top tracks
-              Text(
-                'Top Tracks'.i18n,
-                textAlign: TextAlign.center,
-                style: TextStyle(
-                  fontWeight: FontWeight.bold,
-                  fontSize: 22.0
+              Padding(
+                padding: EdgeInsets.symmetric(horizontal: 16.0, vertical: 2.0),
+                child: Text(
+                  'Top Tracks'.i18n,
+                  textAlign: TextAlign.left,
+                  style: TextStyle(
+                      fontWeight: FontWeight.bold,
+                      fontSize: 20.0
+                  ),
                 ),
               ),
               Container(height: 4.0),
@@ -432,14 +455,17 @@ class ArtistDetails extends StatelessWidget {
                   );
                 }
               ),
-              Divider(),
+              FreezerDivider(),
               //Albums
-              Text(
-                'Top Albums'.i18n,
-                textAlign: TextAlign.center,
-                style: TextStyle(
-                  fontWeight: FontWeight.bold,
-                  fontSize: 22.0
+              Padding(
+                padding: EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
+                child: Text(
+                  'Top Albums'.i18n,
+                  textAlign: TextAlign.left,
+                  style: TextStyle(
+                      fontWeight: FontWeight.bold,
+                      fontSize: 20.0
+                  ),
                 ),
               ),
               ...List.generate(artist.albums.length > 10 ? 11 : artist.albums.length + 1, (i) {
@@ -582,8 +608,8 @@ class _DiscographyScreenState extends State<DiscographyScreen> {
         });
 
         return Scaffold(
-          appBar: AppBar(
-            title: Text('Discography'.i18n),
+          appBar: FreezerAppBar(
+            'Discography'.i18n,
             bottom: TabBar(
               tabs: [
                 Tab(icon: Icon(Icons.album)),
@@ -591,6 +617,7 @@ class _DiscographyScreenState extends State<DiscographyScreen> {
                 Tab(icon: Icon(Icons.recent_actors))
               ],
             ),
+            height: 100.0,
           ),
           body: TabBarView(
             children: [
@@ -748,7 +775,8 @@ class _PlaylistDetailsState extends State<PlaylistDetails> {
         controller: _scrollController,
         children: <Widget>[
           Container(height: 4.0,),
-          Card(
+          Padding(
+            padding: EdgeInsets.symmetric(vertical: 4.0, horizontal: 8.0),
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceEvenly,
               mainAxisSize: MainAxisSize.max,
@@ -756,6 +784,8 @@ class _PlaylistDetailsState extends State<PlaylistDetails> {
                 CachedImage(
                   url: playlist.image.full,
                   height: MediaQuery.of(context).size.width / 2 - 8,
+                  rounded: true,
+                  fullThumb: true,
                 ),
                 Container(
                   width: MediaQuery.of(context).size.width / 2 - 8,
@@ -767,12 +797,13 @@ class _PlaylistDetailsState extends State<PlaylistDetails> {
                         playlist.title,
                         overflow: TextOverflow.ellipsis,
                         textAlign: TextAlign.center,
-                        maxLines: 2,
+                        maxLines: 3,
                         style: TextStyle(
-                            fontSize: 24.0,
+                            fontSize: 20.0,
                             fontWeight: FontWeight.bold
                         ),
                       ),
+                      Container(height: 4.0),
                       Text(
                         playlist.user.name,
                         overflow: TextOverflow.ellipsis,
@@ -780,12 +811,10 @@ class _PlaylistDetailsState extends State<PlaylistDetails> {
                         textAlign: TextAlign.center,
                         style: TextStyle(
                             color: Theme.of(context).primaryColor,
-                            fontSize: 18.0
+                            fontSize: 17.0
                         ),
                       ),
-                      Container(
-                        height: 8.0,
-                      ),
+                      Container(height: 10.0),
                       Row(
                         mainAxisSize: MainAxisSize.min,
                         children: <Widget>[
@@ -814,22 +843,25 @@ class _PlaylistDetailsState extends State<PlaylistDetails> {
               ],
             ),
           ),
-          Container(height: 4.0,),
-          Card(
-            child: Padding(
-              padding: EdgeInsets.all(4.0),
-              child: Text(
-                playlist.description ?? '',
-                maxLines: 4,
-                overflow: TextOverflow.ellipsis,
-                textAlign: TextAlign.center,
-                style: TextStyle(
-                    fontSize: 16.0
+          if (playlist.description != null && playlist.description.length > 0)
+            FreezerDivider(),
+          if (playlist.description != null && playlist.description.length > 0)
+            Container(
+              child: Padding(
+                padding: EdgeInsets.all(6.0),
+                child: Text(
+                  playlist.description ?? '',
+                  maxLines: 4,
+                  overflow: TextOverflow.ellipsis,
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                      fontSize: 16.0
+                  ),
                 ),
-              ),
-            )
-          ),
-          Card(
+              )
+            ),
+          FreezerDivider(),
+          Container(
             child: Row(
               mainAxisSize: MainAxisSize.max,
               mainAxisAlignment: MainAxisAlignment.spaceAround,
@@ -848,12 +880,14 @@ class _PlaylistDetailsState extends State<PlaylistDetails> {
                 ),
                 IconButton(
                   icon: Icon(Icons.file_download, size: 32.0,),
-                  onPressed: () {
-                    downloadManager.addOfflinePlaylist(playlist, private: false);
+                  onPressed: () async {
+                    if (await downloadManager.addOfflinePlaylist(playlist, private: false, context: context) != false)
+                      MenuSheet(context).showDownloadStartedToast();
                   },
                 ),
                 PopupMenuButton(
                   child: Icon(Icons.sort, size: 32.0),
+                  color: Theme.of(context).scaffoldBackgroundColor,
                   onSelected: (SortType s) async {
                     if (playlist.tracks.length < playlist.trackCount) {
                       //Preload whole playlist
@@ -868,19 +902,19 @@ class _PlaylistDetailsState extends State<PlaylistDetails> {
                   itemBuilder: (context) => <PopupMenuEntry<SortType>>[
                     PopupMenuItem(
                       value: SortType.DEFAULT,
-                      child: Text('Default'.i18n),
+                      child: Text('Default'.i18n, style: popupMenuTextStyle()),
                     ),
                     PopupMenuItem(
                       value: SortType.REVERSE,
-                      child: Text('Reverse'.i18n),
+                      child: Text('Reverse'.i18n, style: popupMenuTextStyle()),
                     ),
                     PopupMenuItem(
                       value: SortType.ALPHABETIC,
-                      child: Text('Alphabetic'.i18n),
+                      child: Text('Alphabetic'.i18n, style: popupMenuTextStyle()),
                     ),
                     PopupMenuItem(
                       value: SortType.ARTIST,
-                      child: Text('Artist'.i18n),
+                      child: Text('Artist'.i18n, style: popupMenuTextStyle()),
                     ),
                   ],
                 ),
@@ -888,6 +922,7 @@ class _PlaylistDetailsState extends State<PlaylistDetails> {
               ],
             ),
           ),
+          FreezerDivider(),
           ...List.generate(playlist.tracks.length, (i) {
             Track t = sorted[i];
             return TrackTile(
@@ -909,11 +944,14 @@ class _PlaylistDetailsState extends State<PlaylistDetails> {
             );
           }),
           if (_loading)
-            Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: <Widget>[
-                CircularProgressIndicator()
-              ],
+            Padding(
+              padding: EdgeInsets.symmetric(vertical: 8.0),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: <Widget>[
+                  CircularProgressIndicator()
+                ],
+              ),
             ),
           if (_error)
             ErrorScreen()
@@ -955,6 +993,7 @@ class _MakePlaylistOfflineState extends State<MakePlaylistOffline> {
               if (widget.playlist.user != null && widget.playlist.user.id != deezerAPI.userId)
                 await deezerAPI.addPlaylist(widget.playlist.id);
               downloadManager.addOfflinePlaylist(widget.playlist, private: true);
+              MenuSheet(context).showDownloadStartedToast();
               setState(() {
                 _offline = true;
               });

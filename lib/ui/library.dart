@@ -8,6 +8,7 @@ import 'package:freezer/api/player.dart';
 import 'package:freezer/settings.dart';
 import 'package:freezer/ui/details_screens.dart';
 import 'package:freezer/ui/downloads_screen.dart';
+import 'package:freezer/ui/elements.dart';
 import 'package:freezer/ui/error.dart';
 import 'package:freezer/ui/importer_screen.dart';
 import 'package:freezer/ui/tiles.dart';
@@ -25,8 +26,8 @@ class LibraryAppBar extends StatelessWidget implements PreferredSizeWidget {
 
   @override
   Widget build(BuildContext context) {
-    return AppBar(
-      title: Text('Library'.i18n),
+    return FreezerAppBar(
+      'Library'.i18n,
       actions: <Widget>[
         IconButton(
           icon: Icon(Icons.file_download),
@@ -61,7 +62,7 @@ class LibraryScreen extends StatelessWidget {
           if (!downloadManager.running && downloadManager.queueSize > 0)
             ListTile(
               title: Text('Downloads'.i18n),
-              leading: Icon(Icons.file_download),
+              leading: LeadingIcon(Icons.file_download, color: Colors.grey),
               subtitle: Text('Downloading is currently stopped, click here to resume.'.i18n),
               onTap: () {
                 downloadManager.start();
@@ -70,13 +71,22 @@ class LibraryScreen extends StatelessWidget {
                 ));
               },
             ),
-          //Dirty if to not use columns
-          if (!downloadManager.running && downloadManager.queueSize > 0)
-            Divider(),
-
+          ListTile(
+            title: Text('Shuffle'.i18n),
+            leading: LeadingIcon(Icons.shuffle, color: Color(0xffeca704)),
+            onTap: () async {
+              List<Track> tracks = await deezerAPI.libraryShuffle();
+              playerHelper.playFromTrackList(tracks, tracks[0].id, QueueSource(
+                id: 'libraryshuffle',
+                source: 'libraryshuffle',
+                text: 'Library shuffle'.i18n
+              ));
+            },
+          ),
+          FreezerDivider(),
           ListTile(
             title: Text('Tracks'.i18n),
-            leading: Icon(Icons.audiotrack),
+            leading: LeadingIcon(Icons.audiotrack, color: Color(0xffbe3266)),
             onTap: () {
               Navigator.of(context).push(
                   MaterialPageRoute(builder: (context) => LibraryTracks())
@@ -85,7 +95,7 @@ class LibraryScreen extends StatelessWidget {
           ),
           ListTile(
             title: Text('Albums'.i18n),
-            leading: Icon(Icons.album),
+            leading: LeadingIcon(Icons.album, color: Color(0xff4b2e7e)),
             onTap: () {
               Navigator.of(context).push(
                   MaterialPageRoute(builder: (context) => LibraryAlbums())
@@ -94,7 +104,7 @@ class LibraryScreen extends StatelessWidget {
           ),
           ListTile(
             title: Text('Artists'.i18n),
-            leading: Icon(Icons.recent_actors),
+            leading: LeadingIcon(Icons.recent_actors, color: Color(0xff384697)),
             onTap: () {
               Navigator.of(context).push(
                   MaterialPageRoute(builder: (context) => LibraryArtists())
@@ -103,26 +113,27 @@ class LibraryScreen extends StatelessWidget {
           ),
           ListTile(
             title: Text('Playlists'.i18n),
-            leading: Icon(Icons.playlist_play),
+            leading: LeadingIcon(Icons.playlist_play, color: Color(0xff0880b5)),
             onTap: () {
               Navigator.of(context).push(
                   MaterialPageRoute(builder: (context) => LibraryPlaylists())
               );
             },
           ),
+          FreezerDivider(),
           ListTile(
             title: Text('History'.i18n),
-            leading: Icon(Icons.history),
+            leading: LeadingIcon(Icons.history, color: Color(0xff009a85)),
             onTap: () {
               Navigator.of(context).push(
                 MaterialPageRoute(builder: (context) => HistoryScreen())
               );
             },
           ),
-          Divider(),
+          FreezerDivider(),
           ListTile(
             title: Text('Import'.i18n),
-            leading: Icon(Icons.import_export),
+            leading: LeadingIcon(Icons.import_export, color: Color(0xff2ba766)),
             subtitle: Text('Import playlists from Spotify'.i18n),
             onTap: () {
               if (spotify.doneImporting != null) {
@@ -140,7 +151,7 @@ class LibraryScreen extends StatelessWidget {
           ),
           ExpansionTile(
             title: Text('Statistics'.i18n),
-            leading: Icon(Icons.insert_chart),
+            leading: LeadingIcon(Icons.insert_chart, color: Colors.grey),
             children: <Widget>[
               FutureBuilder(
                 future: downloadManager.getStats(),
@@ -350,11 +361,12 @@ class _LibraryTracksState extends State<LibraryTracks> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: Text('Tracks'.i18n),
+      appBar: FreezerAppBar(
+        'Tracks'.i18n,
         actions: [
           PopupMenuButton(
             child: Icon(Icons.sort, size: 32.0),
+            color: Theme.of(context).scaffoldBackgroundColor,
             onSelected: (SortType s) async {
               //Preload for sorting
               if (tracks.length < (trackCount??0))
@@ -367,19 +379,19 @@ class _LibraryTracksState extends State<LibraryTracks> {
             itemBuilder: (context) => <PopupMenuEntry<SortType>>[
               PopupMenuItem(
                 value: SortType.DEFAULT,
-                child: Text('Default'.i18n),
+                child: Text('Default'.i18n, style: popupMenuTextStyle()),
               ),
               PopupMenuItem(
                 value: SortType.REVERSE,
-                child: Text('Reverse'.i18n),
+                child: Text('Reverse'.i18n, style: popupMenuTextStyle()),
               ),
               PopupMenuItem(
                 value: SortType.ALPHABETIC,
-                child: Text('Alphabetic'.i18n),
+                child: Text('Alphabetic'.i18n, style: popupMenuTextStyle()),
               ),
               PopupMenuItem(
                 value: SortType.ARTIST,
-                child: Text('Artist'.i18n),
+                child: Text('Artist'.i18n, style: popupMenuTextStyle()),
               ),
             ],
           ),
@@ -389,40 +401,29 @@ class _LibraryTracksState extends State<LibraryTracks> {
       body: ListView(
         controller: _scrollController,
         children: <Widget>[
-          Card(
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
+          Container(
+            child: Row(
+              mainAxisSize: MainAxisSize.max,
+              mainAxisAlignment: MainAxisAlignment.spaceAround,
               children: <Widget>[
-                Container(height: 8.0,),
-                Text(
-                  'Loved tracks'.i18n,
-                  style: TextStyle(
-                    fontWeight: FontWeight.bold,
-                    fontSize: 24
+                MakePlaylistOffline(_playlist),
+                FlatButton(
+                  child: Row(
+                    children: <Widget>[
+                      Icon(Icons.file_download, size: 32.0,),
+                      Container(width: 4,),
+                      Text('Download'.i18n)
+                    ],
                   ),
-                ),
-                Row(
-                  mainAxisSize: MainAxisSize.max,
-                  mainAxisAlignment: MainAxisAlignment.spaceAround,
-                  children: <Widget>[
-                    MakePlaylistOffline(_playlist),
-                    FlatButton(
-                      child: Row(
-                        children: <Widget>[
-                          Icon(Icons.file_download, size: 32.0,),
-                          Container(width: 4,),
-                          Text('Download'.i18n)
-                        ],
-                      ),
-                      onPressed: () {
-                        downloadManager.addOfflinePlaylist(_playlist, private: false);
-                      },
-                    )
-                  ],
+                  onPressed: () async {
+                    if (await downloadManager.addOfflinePlaylist(_playlist, private: false, context: context) != false)
+                      MenuSheet(context).showDownloadStartedToast();
+                  },
                 )
               ],
-            ),
+            )
           ),
+          FreezerDivider(),
           //Loved tracks
           ...List.generate(tracks.length, (i) {
             Track t = (tracks.length == (trackCount??0))?_sorted[i]:tracks[i];
@@ -458,7 +459,7 @@ class _LibraryTracksState extends State<LibraryTracks> {
                 )
               ],
             ),
-          Divider(),
+          FreezerDivider(),
           Text(
             'All offline tracks'.i18n,
             textAlign: TextAlign.center,
@@ -545,10 +546,11 @@ class _LibraryAlbumsState extends State<LibraryAlbums> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: Text('Albums'.i18n),
+      appBar: FreezerAppBar(
+        'Albums'.i18n,
         actions: [
           PopupMenuButton(
+            color: Theme.of(context).scaffoldBackgroundColor,
             child: Icon(Icons.sort, size: 32.0),
             onSelected: (AlbumSortType s) async {
               setState(() => _sort = s);
@@ -558,19 +560,19 @@ class _LibraryAlbumsState extends State<LibraryAlbums> {
             itemBuilder: (context) => <PopupMenuEntry<AlbumSortType>>[
               PopupMenuItem(
                 value: AlbumSortType.DEFAULT,
-                child: Text('Default'.i18n),
+                child: Text('Default'.i18n, style: popupMenuTextStyle()),
               ),
               PopupMenuItem(
                 value: AlbumSortType.REVERSE,
-                child: Text('Reverse'.i18n),
+                child: Text('Reverse'.i18n, style: popupMenuTextStyle()),
               ),
               PopupMenuItem(
                 value: AlbumSortType.ALPHABETIC,
-                child: Text('Alphabetic'.i18n),
+                child: Text('Alphabetic'.i18n, style: popupMenuTextStyle()),
               ),
               PopupMenuItem(
                 value: AlbumSortType.ARTIST,
-                child: Text('Artist'.i18n),
+                child: Text('Artist'.i18n, style: popupMenuTextStyle()),
               ),
             ],
           ),
@@ -615,7 +617,7 @@ class _LibraryAlbumsState extends State<LibraryAlbums> {
               List<Album> albums = snapshot.data;
               return Column(
                 children: <Widget>[
-                  Divider(),
+                  FreezerDivider(),
                   Text(
                     'Offline albums'.i18n,
                     textAlign: TextAlign.center,
@@ -719,11 +721,12 @@ class _LibraryArtistsState extends State<LibraryArtists> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: Text('Artists'.i18n),
+      appBar: FreezerAppBar(
+        'Artists'.i18n,
         actions: [
           PopupMenuButton(
             child: Icon(Icons.sort, size: 32.0),
+            color: Theme.of(context).scaffoldBackgroundColor,
             onSelected: (ArtistSortType s) async {
               setState(() => _sort = s);
               cache.artistSort = s;
@@ -732,19 +735,19 @@ class _LibraryArtistsState extends State<LibraryArtists> {
             itemBuilder: (context) => <PopupMenuEntry<ArtistSortType>>[
               PopupMenuItem(
                 value: ArtistSortType.DEFAULT,
-                child: Text('Default'.i18n),
+                child: Text('Default'.i18n, style: popupMenuTextStyle()),
               ),
               PopupMenuItem(
                 value: ArtistSortType.REVERSE,
-                child: Text('Reverse'.i18n),
+                child: Text('Reverse'.i18n, style: popupMenuTextStyle()),
               ),
               PopupMenuItem(
                 value: ArtistSortType.ALPHABETIC,
-                child: Text('Alphabetic'.i18n),
+                child: Text('Alphabetic'.i18n, style: popupMenuTextStyle()),
               ),
               PopupMenuItem(
                 value: ArtistSortType.POPULARITY,
-                child: Text('Popularity'.i18n),
+                child: Text('Popularity'.i18n, style: popupMenuTextStyle()),
               ),
             ],
           ),
@@ -859,11 +862,12 @@ class _LibraryPlaylistsState extends State<LibraryPlaylists> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: Text('Playlists'.i18n),
+      appBar: FreezerAppBar(
+        'Playlists'.i18n,
         actions: [
           PopupMenuButton(
             child: Icon(Icons.sort, size: 32.0),
+            color: Theme.of(context).scaffoldBackgroundColor,
             onSelected: (PlaylistSortType s) async {
               setState(() => _sort = s);
               cache.libraryPlaylistSort = s;
@@ -872,23 +876,23 @@ class _LibraryPlaylistsState extends State<LibraryPlaylists> {
             itemBuilder: (context) => <PopupMenuEntry<PlaylistSortType>>[
               PopupMenuItem(
                 value: PlaylistSortType.DEFAULT,
-                child: Text('Default'.i18n),
+                child: Text('Default'.i18n, style: popupMenuTextStyle()),
               ),
               PopupMenuItem(
                 value: PlaylistSortType.REVERSE,
-                child: Text('Reverse'.i18n),
+                child: Text('Reverse'.i18n, style: popupMenuTextStyle()),
               ),
               PopupMenuItem(
                 value: PlaylistSortType.USER,
-                child: Text('User'.i18n),
+                child: Text('User'.i18n, style: popupMenuTextStyle()),
               ),
               PopupMenuItem(
                 value: PlaylistSortType.TRACK_COUNT,
-                child: Text('Track count'.i18n),
+                child: Text('Track count'.i18n, style: popupMenuTextStyle()),
               ),
               PopupMenuItem(
                 value: PlaylistSortType.ALPHABETIC,
-                child: Text('Alphabetic'.i18n),
+                child: Text('Alphabetic'.i18n, style: popupMenuTextStyle()),
               ),
             ],
           ),
@@ -899,7 +903,7 @@ class _LibraryPlaylistsState extends State<LibraryPlaylists> {
         children: <Widget>[
           ListTile(
             title: Text('Create new playlist'.i18n),
-            leading: Icon(Icons.playlist_add),
+            leading: LeadingIcon(Icons.playlist_add, color: Color(0xff009a85)),
             onTap: () async {
               if (settings.offlineMode) {
                 Fluttertoast.showToast(
@@ -913,7 +917,7 @@ class _LibraryPlaylistsState extends State<LibraryPlaylists> {
               await _load();
             },
           ),
-          Divider(),
+          FreezerDivider(),
 
           if (!settings.offlineMode && _playlists == null)
             Row(
@@ -965,7 +969,7 @@ class _LibraryPlaylistsState extends State<LibraryPlaylists> {
               List<Playlist> playlists = snapshot.data;
               return Column(
                 children: <Widget>[
-                  Divider(),
+                  FreezerDivider(),
                   Text(
                     'Offline playlists'.i18n,
                     textAlign: TextAlign.center,
@@ -1012,8 +1016,8 @@ class _HistoryScreenState extends State<HistoryScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: Text('History'.i18n),
+      appBar: FreezerAppBar(
+        'History'.i18n,
         actions: [
           IconButton(
             icon: Icon(Icons.delete_sweep),

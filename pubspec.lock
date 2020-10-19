@@ -246,20 +246,6 @@ packages:
       url: "https://pub.dartlang.org"
     source: hosted
     version: "1.3.7"
-  dio:
-    dependency: "direct main"
-    description:
-      name: dio
-      url: "https://pub.dartlang.org"
-    source: hosted
-    version: "3.0.10"
-  dio_cookie_manager:
-    dependency: "direct main"
-    description:
-      name: dio_cookie_manager
-      url: "https://pub.dartlang.org"
-    source: hosted
-    version: "1.0.0"
   disk_space:
     dependency: "direct main"
     description:
@@ -428,7 +414,7 @@ packages:
     source: hosted
     version: "0.14.0+4"
   http:
-    dependency: transitive
+    dependency: "direct main"
     description:
       name: http
       url: "https://pub.dartlang.org"

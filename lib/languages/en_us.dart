@@ -248,6 +248,13 @@ const language_en_us = {
     "Current timer ends at": "Current timer ends at",
 
     //0.5.8 Strings:
-    "Smart track list": "Smart track list"
+    "Smart track list": "Smart track list",
+
+    //0.6.0 Strings:
+    "Shuffle": "Shuffle",
+    "Library shuffle": "Library shuffle",
+    "Ignore interruptions": "Ignore interruptions",
+    "Requires app restart to apply!": "Requires app restart to apply!",
+    "Ask before downloading": "Ask before downloading"
   }
 };

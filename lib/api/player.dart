@@ -104,6 +104,7 @@ class PlayerHelper {
         androidNotificationChannelDescription: 'Freezer',
         androidNotificationChannelName: 'Freezer',
         androidNotificationIcon: 'drawable/ic_logo',
+        params: {'ignoreInterruptions': settings.ignoreInterruptions}
       );
   }
 
@@ -138,14 +139,17 @@ class PlayerHelper {
     await startService();
     await settings.updateAudioServiceQuality();
     await AudioService.updateQueue(queue);
-    await AudioService.skipToQueueItem(trackId);
+    if (queue[0].id != trackId)
+      await AudioService.skipToQueueItem(trackId);
+    if (!AudioService.playbackState.playing)
+      AudioService.play();
   }
 
   //Called when queue ends to load more tracks
   Future onQueueEnd() async {
     //Flow
     if (queueSource == null) return;
-    print('test');
+
     if (queueSource.id == 'flow') {
       List<Track> tracks = await deezerAPI.flow();
       List<MediaItem> mi = tracks.map<MediaItem>((t) => t.toMediaItem()).toList();
@@ -157,6 +161,15 @@ class PlayerHelper {
     //SmartRadio/Artist radio
     if (queueSource.source == 'smartradio') {
       List<Track> tracks = await deezerAPI.smartRadio(queueSource.id);
+      List<MediaItem> mi = tracks.map<MediaItem>((t) => t.toMediaItem()).toList();
+      await AudioService.addQueueItems(mi);
+      AudioService.skipToNext();
+      return;
+    }
+
+    //Library shuffle
+    if (queueSource.source == 'libraryshuffle') {
+      List<Track> tracks = await deezerAPI.libraryShuffle(start: AudioService.queue.length);
       List<MediaItem> mi = tracks.map<MediaItem>((t) => t.toMediaItem()).toList();
       await AudioService.addQueueItems(mi);
       AudioService.skipToNext();
@@ -245,7 +258,7 @@ void backgroundTaskEntrypoint() async {
 }
 
 class AudioPlayerTask extends BackgroundAudioTask {
-  AudioPlayer _player = AudioPlayer();
+  AudioPlayer _player;
 
   //Queue
   List<MediaItem> _queue = <MediaItem>[];
@@ -273,6 +286,13 @@ class AudioPlayerTask extends BackgroundAudioTask {
 
     final session = await AudioSession.instance;
     session.configure(AudioSessionConfiguration.music());
+
+    if (params['ignoreInterruptions'] == true) {
+      _player = AudioPlayer(handleInterruptions: false);
+      session.interruptionEventStream.listen((_) {});
+      session.becomingNoisyEventStream.listen((_) {});
+    } else
+      _player = AudioPlayer();
 
     //Update track index
     _player.currentIndexStream.listen((index) {
@@ -365,7 +385,6 @@ class AudioPlayerTask extends BackgroundAudioTask {
 
   @override
   Future<void> onSkipToNext() async {
-    print('skipping');
     if (_queueIndex == _queue.length-1) return;
     //Update buffering state
     _skipState = AudioProcessingState.skippingToNext;
@@ -428,10 +447,10 @@ class AudioPlayerTask extends BackgroundAudioTask {
         MediaControl.skipToNext,
         //Stop
         MediaControl(
-          androidIcon: 'drawable/ic_action_stop',
-          label: 'stop',
-          action: MediaAction.stop
-        )
+            androidIcon: 'drawable/ic_action_stop',
+            label: 'stop',
+            action: MediaAction.stop
+        ),
       ],
       systemActions: [
         MediaAction.seekTo,

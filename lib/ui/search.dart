@@ -4,6 +4,7 @@ import 'package:freezer/api/cache.dart';
 import 'package:freezer/api/download.dart';
 import 'package:freezer/api/player.dart';
 import 'package:freezer/ui/details_screens.dart';
+import 'package:freezer/ui/elements.dart';
 import 'package:freezer/ui/menu.dart';
 import 'package:freezer/translations.i18n.dart';
 
@@ -50,6 +51,7 @@ class _SearchScreenState extends State<SearchScreen> {
   bool _loading = false;
   TextEditingController _controller = new TextEditingController();
   List _suggestions = [];
+  bool _cancel = false;
 
   void _submit(BuildContext context, {String query}) async {
     if (query != null) _query = query;
@@ -78,7 +80,7 @@ class _SearchScreenState extends State<SearchScreen> {
 
   @override
   void initState() {
-    print(cache.searchHistory);
+    _cancel = true;
     //Check for connectivity and enable offline mode
     Connectivity().checkConnectivity().then((res) {
       if (res == ConnectivityResult.none) setState(() {
@@ -102,24 +104,30 @@ class _SearchScreenState extends State<SearchScreen> {
       sugg = await deezerAPI.searchSuggestions(_query);
     } catch (e) {}
 
-    if (sugg != null)
+    if (sugg != null && !_cancel)
       setState(() => _suggestions = sugg);
+  }
+
+  @override
+  void dispose() {
+    _cancel = true;
+    super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text('Search'.i18n),),
+      appBar: FreezerAppBar('Search'.i18n),
       body: ListView(
         children: <Widget>[
-          Container(height: 16.0),
+          Container(height: 4.0),
           Padding(
             padding: EdgeInsets.symmetric(horizontal: 16.0),
             child: Row(
               children: <Widget>[
                 Expanded(
                   child: Stack(
-                    alignment: Alignment(1.0, 1.0),
+                    alignment: Alignment(1.0, 0.0),
                     children: [
                       TextField(
                         onChanged: (String s) {
@@ -127,37 +135,49 @@ class _SearchScreenState extends State<SearchScreen> {
                           _loadSuggestions();
                         },
                         decoration: InputDecoration(
-                          labelText: 'Search or paste URL'.i18n
+                          labelText: 'Search or paste URL'.i18n,
+                          focusedBorder: OutlineInputBorder(
+                            borderSide: BorderSide(color: Colors.grey)
+                          ),
+                          enabledBorder: OutlineInputBorder(
+                            borderSide: BorderSide(color: Colors.grey)
+                          ),
                         ),
                         controller: _controller,
                         onSubmitted: (String s) => _submit(context, query: s),
                       ),
-                      IconButton(
-                        icon: Icon(Icons.clear),
-                        onPressed: () {
-                          setState(() {
-                            _suggestions = [];
-                            _query = '';
-                          });
-                          _controller.clear();
-                        },
-                      ),
+                      Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Container(
+                            width: 40.0,
+                            child: IconButton(
+                              splashRadius: 20.0,
+                              icon: Icon(Icons.clear),
+                              onPressed: () {
+                                setState(() {
+                                  _suggestions = [];
+                                  _query = '';
+                                });
+                                _controller.clear();
+                              },
+                            ),
+                          ),
+                        ],
+                      )
+
                     ],
                   )
                 ),
-                Padding(
-                  padding: EdgeInsets.fromLTRB(0, 8, 0, 0),
-                  child: IconButton(
-                    icon: Icon(Icons.search),
-                    onPressed: () => _submit(context),
-                  ),
-                )
+
               ],
             ),
           ),
+          Container(height: 8.0),
           ListTile(
             title: Text('Offline search'.i18n),
-            leading: Switch(
+            leading: Icon(Icons.offline_pin),
+            trailing: Switch(
               value: _offline,
               onChanged: (v) {
                 setState(() => _offline = !_offline);
@@ -166,7 +186,7 @@ class _SearchScreenState extends State<SearchScreen> {
           ),
           if (_loading)
             LinearProgressIndicator(),
-          Divider(),
+          FreezerDivider(),
 
           //History
           if (cache.searchHistory != null && cache.searchHistory.length > 0 && (_query??'').length == 0)
@@ -213,9 +233,7 @@ class SearchResultsScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: Text('Search Results'.i18n),
-      ),
+      appBar: FreezerAppBar('Search Results'.i18n),
       body: FutureBuilder(
         future: _search(),
         builder: (BuildContext context, AsyncSnapshot snapshot) {
@@ -243,12 +261,15 @@ class SearchResultsScreen extends StatelessWidget {
           List<Widget> tracks = [];
           if (results.tracks != null && results.tracks.length != 0) {
             tracks = [
-              Text(
-                'Tracks'.i18n,
-                textAlign: TextAlign.center,
-                style: TextStyle(
-                  fontSize: 26.0,
-                  fontWeight: FontWeight.bold
+              Padding(
+                padding: EdgeInsets.symmetric(horizontal: 16.0, vertical: 4.0),
+                child: Text(
+                  'Tracks'.i18n,
+                  textAlign: TextAlign.left,
+                  style: TextStyle(
+                      fontSize: 20.0,
+                      fontWeight: FontWeight.bold
+                  ),
                 ),
               ),
               ...List.generate(3, (i) {
@@ -280,7 +301,8 @@ class SearchResultsScreen extends StatelessWidget {
                     )))
                   );
                 },
-              )
+              ),
+              FreezerDivider()
             ];
           }
 
@@ -288,12 +310,15 @@ class SearchResultsScreen extends StatelessWidget {
           List<Widget> albums = [];
           if (results.albums != null && results.albums.length != 0) {
             albums = [
-              Text(
-                'Albums'.i18n,
-                textAlign: TextAlign.center,
-                style: TextStyle(
-                  fontSize: 26.0,
-                  fontWeight: FontWeight.bold
+              Padding(
+                padding: EdgeInsets.symmetric(horizontal: 16.0, vertical: 4.0),
+                child: Text(
+                  'Albums'.i18n,
+                  textAlign: TextAlign.left,
+                  style: TextStyle(
+                      fontSize: 20.0,
+                      fontWeight: FontWeight.bold
+                  ),
                 ),
               ),
               ...List.generate(3, (i) {
@@ -319,7 +344,8 @@ class SearchResultsScreen extends StatelessWidget {
                     MaterialPageRoute(builder: (context) => AlbumListScreen(results.albums))
                   );
                 },
-              )
+              ),
+              FreezerDivider()
             ];
           }
 
@@ -327,12 +353,15 @@ class SearchResultsScreen extends StatelessWidget {
           List<Widget> artists = [];
           if (results.artists != null && results.artists.length != 0) {
             artists = [
-              Text(
-                'Artists'.i18n,
-                textAlign: TextAlign.center,
-                style: TextStyle(
-                  fontSize: 26.0,
-                  fontWeight: FontWeight.bold
+              Padding(
+                padding: EdgeInsets.symmetric(vertical: 4.0, horizontal: 16.0),
+                child: Text(
+                  'Artists'.i18n,
+                  textAlign: TextAlign.left,
+                  style: TextStyle(
+                      fontSize: 20.0,
+                      fontWeight: FontWeight.bold
+                  ),
                 ),
               ),
               Container(height: 4),
@@ -355,7 +384,8 @@ class SearchResultsScreen extends StatelessWidget {
                     );
                   }),
                 )
-              )
+              ),
+              FreezerDivider()
             ];
           }
 
@@ -363,12 +393,15 @@ class SearchResultsScreen extends StatelessWidget {
           List<Widget> playlists = [];
           if (results.playlists != null && results.playlists.length != 0) {
             playlists = [
-              Text(
-                'Playlists'.i18n,
-                textAlign: TextAlign.center,
-                style: TextStyle(
-                  fontSize: 26.0,
-                  fontWeight: FontWeight.bold
+              Padding(
+                padding: EdgeInsets.symmetric(vertical: 4.0, horizontal: 16.0),
+                child: Text(
+                  'Playlists'.i18n,
+                  textAlign: TextAlign.left,
+                  style: TextStyle(
+                      fontSize: 20.0,
+                      fontWeight: FontWeight.bold
+                  ),
                 ),
               ),
               ...List.generate(3, (i) {
@@ -427,7 +460,7 @@ class TrackListScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text('Tracks'.i18n),),
+      appBar: FreezerAppBar('Tracks'.i18n),
       body: ListView.builder(
         itemCount: tracks.length,
         itemBuilder: (BuildContext context, int i) {
@@ -457,7 +490,7 @@ class AlbumListScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text('Albums'.i18n),),
+      appBar: FreezerAppBar('Albums'.i18n),
       body: ListView.builder(
         itemCount: albums.length,
         itemBuilder: (context, i) {
@@ -488,7 +521,7 @@ class SearchResultPlaylists extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text('Playlists'.i18n),),
+      appBar: FreezerAppBar('Playlists'.i18n),
       body: ListView.builder(
         itemCount: playlists.length,
         itemBuilder: (context, i) {

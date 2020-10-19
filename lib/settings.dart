@@ -24,6 +24,9 @@ class Settings {
   @JsonKey(defaultValue: null)
   String language;
 
+  @JsonKey(defaultValue: false)
+  bool ignoreInterruptions;
+
   //Account
   String arl;
   @JsonKey(ignore: true)
@@ -185,6 +188,7 @@ class Settings {
   }
 
   static const deezerBg = Color(0xFF1F1A16);
+  static const deezerBottom = Color(0xFF1b1714);
   static const font = 'MabryPro';
   Map<Themes, ThemeData> get _themeData => {
     Themes.Light: ThemeData(
@@ -193,7 +197,7 @@ class Settings {
       accentColor: primaryColor,
       sliderTheme: _sliderTheme,
       toggleableActiveColor: primaryColor,
-      bottomAppBarColor: Color(0xfff7f7f7)
+      bottomAppBarColor: Color(0xfff5f5f5),
     ),
     Themes.Dark: ThemeData(
       fontFamily: font,
@@ -212,10 +216,10 @@ class Settings {
       toggleableActiveColor: primaryColor,
       backgroundColor: deezerBg,
       scaffoldBackgroundColor: deezerBg,
-      bottomAppBarColor: deezerBg,
-      dialogBackgroundColor: deezerBg,
+      bottomAppBarColor: deezerBottom,
+      dialogBackgroundColor: deezerBottom,
       bottomSheetTheme: BottomSheetThemeData(
-        backgroundColor: deezerBg
+        backgroundColor: deezerBottom
       ),
       cardColor: deezerBg
     ),
@@ -245,7 +249,8 @@ class Settings {
 enum AudioQuality {
   MP3_128,
   MP3_320,
-  FLAC
+  FLAC,
+  ASK
 }
 
 enum Themes {

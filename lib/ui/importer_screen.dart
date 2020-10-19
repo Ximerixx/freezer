@@ -2,7 +2,11 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:freezer/api/deezer.dart';
 import 'package:freezer/api/definitions.dart';
+import 'package:freezer/api/download.dart';
 import 'package:freezer/api/spotify.dart';
+import 'package:freezer/main.dart';
+import 'package:freezer/settings.dart';
+import 'package:freezer/ui/elements.dart';
 import 'package:freezer/ui/menu.dart';
 import 'package:freezer/translations.i18n.dart';
 
@@ -49,9 +53,7 @@ class _ImporterScreenState extends State<ImporterScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: Text('Importer'.i18n),
-      ),
+      appBar: FreezerAppBar('Importer'.i18n),
       body: ListView(
         children: <Widget>[
           ListTile(
@@ -62,7 +64,7 @@ class _ImporterScreenState extends State<ImporterScreen> {
               color: Colors.deepOrangeAccent,
             ),
           ),
-          Divider(),
+          FreezerDivider(),
           Container(height: 16.0,),
           Text(
             'Enter your playlist link below'.i18n,
@@ -130,7 +132,7 @@ class _ImporterWidgetState extends State<ImporterWidget> {
   Widget build(BuildContext context) {
     return Column(
       children: <Widget>[
-        Divider(),
+        FreezerDivider(),
         ListTile(
           title: Text(widget.playlist.name),
           subtitle: Text(widget.playlist.description),
@@ -153,8 +155,15 @@ class _ImporterWidgetState extends State<ImporterWidget> {
             RaisedButton(
               child: Text('Download only'.i18n),
               color: Theme.of(context).primaryColor,
-              onPressed: () {
-                spotify.convertPlaylist(widget.playlist, downloadOnly: true);
+              onPressed: () async {
+                //Ask for quality
+                AudioQuality quality;
+                if (settings.downloadQuality == AudioQuality.ASK) {
+                  quality = await downloadManager.qualitySelect(context);
+                  if (quality == null) return;
+                }
+
+                spotify.convertPlaylist(widget.playlist, downloadOnly: true, context: context, quality: quality);
                 Navigator.of(context).pushReplacement(MaterialPageRoute(
                   builder: (context) => CurrentlyImportingScreen()
                 ));
@@ -199,7 +208,7 @@ class CurrentlyImportingScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text('Importing...'.i18n),),
+      appBar: FreezerAppBar('Importing...'.i18n),
       body: StreamBuilder(
         stream: spotify.importingStream.stream,
         builder: (context, snapshot) {
@@ -225,7 +234,7 @@ class CurrentlyImportingScreen extends StatelessWidget {
                   ],
                 ),
               ),
-              Card(
+              Container(
                 child: Row(
                   mainAxisSize: MainAxisSize.max,
                   mainAxisAlignment: MainAxisAlignment.spaceAround,
@@ -267,6 +276,8 @@ class CurrentlyImportingScreen extends StatelessWidget {
                   ],
                 ),
               ),
+              Container(height: 8.0),
+              FreezerDivider(),
               ...List.generate(spotify.importingSpotifyPlaylist.tracks.length, (i) {
                 SpotifyTrack t = spotify.importingSpotifyPlaylist.tracks[i];
                 return ListTile(

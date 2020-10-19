@@ -188,9 +188,9 @@ class MenuSheet {
     title: Text('Download'.i18n),
     leading: Icon(Icons.file_download),
     onTap: () async {
-      await downloadManager.addOfflineTrack(t, private: false);
+      if (await downloadManager.addOfflineTrack(t, private: false, context: context) != false)
+        showDownloadStartedToast();
       _close();
-      showDownloadStartedToast();
     },
   );
 
@@ -314,8 +314,8 @@ class MenuSheet {
       leading: Icon(Icons.file_download),
       onTap: () async {
         _close();
-        await downloadManager.addOfflineAlbum(a, private: false);
-        showDownloadStartedToast();
+        if (await downloadManager.addOfflineAlbum(a, private: false, context: context) != false)
+          showDownloadStartedToast();
       }
   );
 
@@ -471,9 +471,9 @@ class MenuSheet {
     title: Text('Download playlist'.i18n),
     leading: Icon(Icons.file_download),
     onTap: () async {
-      downloadManager.addOfflinePlaylist(p, private: false);
       _close();
-      showDownloadStartedToast();
+      if (await downloadManager.addOfflinePlaylist(p, private: false, context: context) != false)
+        showDownloadStartedToast();
     },
   );
 

@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:freezer/api/deezer.dart';
 import 'package:freezer/api/definitions.dart';
 import 'package:freezer/api/player.dart';
+import 'package:freezer/main.dart';
+import 'package:freezer/ui/elements.dart';
 import 'package:freezer/ui/error.dart';
 import 'package:freezer/ui/menu.dart';
 import 'package:freezer/translations.i18n.dart';
@@ -16,9 +18,7 @@ class HomeScreen extends StatelessWidget {
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: <Widget>[
-          SafeArea(
-            child: FreezerTitle(),
-          ),
+          SafeArea(child: Container()),
           Flexible(child: HomePageScreen(),)
         ],
       ),
@@ -161,10 +161,10 @@ class _HomePageScreenState extends State<HomePageScreen> {
                 overflow: TextOverflow.ellipsis,
                 style: TextStyle(
                   fontSize: 20.0,
-                  fontWeight: FontWeight.bold
+                  fontWeight: FontWeight.w900
                 ),
               ),
-              padding: EdgeInsets.symmetric(horizontal: 8.0, vertical: 8.0)
+              padding: EdgeInsets.symmetric(horizontal: 12.0, vertical: 8.0)
             ),
 
             SingleChildScrollView(
@@ -184,9 +184,7 @@ class _HomePageScreenState extends State<HomePageScreen> {
                         ),
                         onPressed: () => Navigator.of(context).push(MaterialPageRoute(
                             builder: (context) => Scaffold(
-                              appBar: AppBar(
-                                title: Text(section.title),
-                              ),
+                              appBar: FreezerAppBar(section.title),
                               body: SingleChildScrollView(
                                 child: HomePageScreen(
                                   channel: DeezerChannel(target: section.pagePath)
@@ -205,6 +203,7 @@ class _HomePageScreenState extends State<HomePageScreen> {
                 }),
               ),
             ),
+            Container(height: 8.0),
           ],
         );
       },

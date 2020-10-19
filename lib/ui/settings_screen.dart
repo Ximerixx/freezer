@@ -12,6 +12,7 @@ import 'package:freezer/api/cache.dart';
 import 'package:freezer/api/deezer.dart';
 import 'package:freezer/api/download.dart';
 import 'package:freezer/ui/downloads_screen.dart';
+import 'package:freezer/ui/elements.dart';
 import 'package:freezer/ui/error.dart';
 import 'package:freezer/ui/home_screen.dart';
 import 'package:i18n_extension/i18n_widget.dart';
@@ -56,26 +57,26 @@ class _SettingsScreenState extends State<SettingsScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text('Settings'.i18n),),
+      appBar: FreezerAppBar('Settings'.i18n),
       body: ListView(
         children: <Widget>[
           ListTile(
             title: Text('General'.i18n),
-            leading: Icon(Icons.settings),
+            leading: LeadingIcon(Icons.settings, color: Color(0xffeca704)),
             onTap: () => Navigator.of(context).push(MaterialPageRoute(
                 builder: (context) => GeneralSettings()
             )),
           ),
           ListTile(
             title: Text('Download Settings'.i18n),
-            leading: Icon(Icons.cloud_download),
+            leading: LeadingIcon(Icons.cloud_download, color: Color(0xffbe3266)),
             onTap: () => Navigator.of(context).push(MaterialPageRoute(
               builder: (context) => DownloadsSettings()
             )),
           ),
           ListTile(
             title: Text('Appearance'.i18n),
-            leading: Icon(Icons.color_lens),
+            leading: LeadingIcon(Icons.color_lens, color: Color(0xff4b2e7e)),
             onTap: () => Navigator.push(
                 context,
                 MaterialPageRoute(builder: (context) => AppearanceSettings())
@@ -83,7 +84,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
           ),
           ListTile(
             title: Text('Quality'.i18n),
-            leading: Icon(Icons.high_quality),
+            leading: LeadingIcon(Icons.high_quality, color: Color(0xff384697)),
             onTap: () => Navigator.push(
                 context,
                 MaterialPageRoute(builder: (context) => QualitySettings())
@@ -91,7 +92,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
           ),
           ListTile(
             title: Text('Deezer'.i18n),
-            leading: Icon(Icons.equalizer),
+            leading: LeadingIcon(Icons.equalizer, color: Color(0xff0880b5)),
             onTap: () => Navigator.push(context, MaterialPageRoute(
                 builder: (context) => DeezerSettings()
             )),
@@ -99,7 +100,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
           //Language select
           ListTile(
             title: Text('Language'.i18n),
-            leading: Icon(Icons.language),
+            leading: LeadingIcon(Icons.language, color: Color(0xff009a85)),
             onTap: () {
               showDialog(
                 context: context,
@@ -140,7 +141,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
           ),
           ListTile(
             title: Text('About'.i18n),
-            leading: Icon(Icons.info),
+            leading: LeadingIcon(Icons.info, color: Color(0xff2ba766)),
             onTap: () => Navigator.push(context, MaterialPageRoute(
                 builder: (context) => CreditsScreen()
             )),
@@ -164,7 +165,7 @@ class _AppearanceSettingsState extends State<AppearanceSettings> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text('Appearance'.i18n),),
+      appBar: FreezerAppBar('Appearance'.i18n),
       body: ListView(
         children: <Widget>[
           ListTile(
@@ -222,19 +223,17 @@ class _AppearanceSettingsState extends State<AppearanceSettings> {
           ),
           ListTile(
             title: Text('Use system theme'.i18n),
-            leading: Container(
-              width: 30.0,
-              child: Checkbox(
-                value: settings.useSystemTheme,
-                onChanged: (bool v) async {
-                  setState(() {
-                    settings.useSystemTheme = v;
-                  });
-                  updateTheme();
-                  await settings.save();
-                },
-              ),
+            trailing: Switch(
+              value: settings.useSystemTheme,
+              onChanged: (bool v) async {
+                setState(() {
+                  settings.useSystemTheme = v;
+                });
+                updateTheme();
+                await settings.save();
+              },
             ),
+            leading: Icon(Icons.android)
           ),
           ListTile(
             title: Text('Primary color'.i18n),
@@ -285,12 +284,10 @@ class _AppearanceSettingsState extends State<AppearanceSettings> {
           ListTile(
             title: Text('Use album art primary color'.i18n),
             subtitle: Text('Warning: might be buggy'.i18n),
-            leading: Container(
-              width: 30.0,
-              child: Checkbox(
-                value: settings.useArtColor,
-                onChanged: (v) => setState(() => settings.updateUseArtColor(v)),
-              ),
+            leading: Icon(Icons.invert_colors),
+            trailing: Switch(
+              value: settings.useArtColor,
+              onChanged: (v) => setState(() => settings.updateUseArtColor(v)),
             ),
           )
         ],
@@ -309,30 +306,30 @@ class _QualitySettingsState extends State<QualitySettings> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text('Quality'.i18n),),
+      appBar: FreezerAppBar('Quality'.i18n),
       body: ListView(
         children: <Widget>[
           ListTile(
             title: Text('Mobile streaming'.i18n),
-            leading: Icon(Icons.network_cell),
+            leading: LeadingIcon(Icons.network_cell, color: Color(0xff384697)),
           ),
           QualityPicker('mobile'),
-          Divider(),
+          FreezerDivider(),
           ListTile(
             title: Text('Wifi streaming'.i18n),
-            leading: Icon(Icons.network_wifi),
+            leading: LeadingIcon(Icons.network_wifi, color: Color(0xff0880b5)),
           ),
           QualityPicker('wifi'),
-          Divider(),
+          FreezerDivider(),
           ListTile(
             title: Text('Offline'.i18n),
-            leading: Icon(Icons.offline_pin),
+            leading: LeadingIcon(Icons.offline_pin, color: Color(0xff009a85)),
           ),
           QualityPicker('offline'),
-          Divider(),
+          FreezerDivider(),
           ListTile(
             title: Text('External downloads'.i18n),
-            leading: Icon(Icons.file_download),
+            leading: LeadingIcon(Icons.file_download, color: Color(0xff2ba766)),
           ),
           QualityPicker('download'),
         ],
@@ -425,6 +422,15 @@ class _QualityPickerState extends State<QualityPicker> {
             onChanged: (q) => _updateQuality(q),
           ),
         ),
+        if (widget.field == 'download')
+          ListTile(
+            title: Text('Ask before downloading'),
+            leading: Radio(
+              groupValue: _quality,
+              value: AudioQuality.ASK,
+              onChanged: (q) => _updateQuality(q),
+            )
+          )
       ],
     );
   }
@@ -439,7 +445,7 @@ class _DeezerSettingsState extends State<DeezerSettings> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text('Deezer'.i18n),),
+      appBar: FreezerAppBar('Deezer'.i18n),
       body: ListView(
         children: <Widget>[
           ListTile(
@@ -485,65 +491,64 @@ class _DeezerSettingsState extends State<DeezerSettings> {
           ListTile(
             title: Text('Log tracks'.i18n),
             subtitle: Text('Send track listen logs to Deezer, enable it for features like Flow to work properly'.i18n),
-            leading: Container(
-              width: 30,
-              child: Checkbox(
-                value: settings.logListen,
-                onChanged: (bool v) {
-                  setState(() => settings.logListen = v);
-                  settings.save();
-                },
-              ),
+            trailing: Switch(
+              value: settings.logListen,
+              onChanged: (bool v) {
+                setState(() => settings.logListen = v);
+                settings.save();
+              },
             ),
+            leading: Icon(Icons.history_toggle_off),
           ),
-          ListTile(
-            title: Text('Proxy'.i18n),
-            leading: Icon(Icons.vpn_key),
-            subtitle: Text(settings.proxyAddress??'Not set'.i18n),
-            onTap: () {
-              String _new;
-              showDialog(
-                context: context,
-                builder: (BuildContext context) {
-                  return AlertDialog(
-                    title: Text('Proxy'.i18n),
-                    content: TextField(
-                      onChanged: (String v) => _new = v,
-                      decoration: InputDecoration(
-                        hintText: 'IP:PORT'
-                      ),
-                    ),
-                    actions: [
-                      FlatButton(
-                        child: Text('Cancel'.i18n),
-                        onPressed: () => Navigator.of(context).pop(),
-                      ),
-                      FlatButton(
-                        child: Text('Reset'.i18n),
-                        onPressed: () async {
-                          setState(() {
-                            settings.proxyAddress = null;
-                          });
-                          await settings.save();
-                          Navigator.of(context).pop();
-                        },
-                      ),
-                      FlatButton(
-                        child: Text('Save'.i18n),
-                        onPressed: () async {
-                          setState(() {
-                            settings.proxyAddress = _new;
-                          });
-                          await settings.save();
-                          Navigator.of(context).pop();
-                        },
-                      )
-                    ],
-                  );
-                }
-              );
-            },
-          )
+          //TODO: Reimplement proxy
+//          ListTile(
+//            title: Text('Proxy'.i18n),
+//            leading: Icon(Icons.vpn_key),
+//            subtitle: Text(settings.proxyAddress??'Not set'.i18n),
+//            onTap: () {
+//              String _new;
+//              showDialog(
+//                context: context,
+//                builder: (BuildContext context) {
+//                  return AlertDialog(
+//                    title: Text('Proxy'.i18n),
+//                    content: TextField(
+//                      onChanged: (String v) => _new = v,
+//                      decoration: InputDecoration(
+//                        hintText: 'IP:PORT'
+//                      ),
+//                    ),
+//                    actions: [
+//                      FlatButton(
+//                        child: Text('Cancel'.i18n),
+//                        onPressed: () => Navigator.of(context).pop(),
+//                      ),
+//                      FlatButton(
+//                        child: Text('Reset'.i18n),
+//                        onPressed: () async {
+//                          setState(() {
+//                            settings.proxyAddress = null;
+//                          });
+//                          await settings.save();
+//                          Navigator.of(context).pop();
+//                        },
+//                      ),
+//                      FlatButton(
+//                        child: Text('Save'.i18n),
+//                        onPressed: () async {
+//                          setState(() {
+//                            settings.proxyAddress = _new;
+//                          });
+//                          await settings.save();
+//                          Navigator.of(context).pop();
+//                        },
+//                      )
+//                    ],
+//                  );
+//                }
+//              );
+//            },
+//          )
         ],
       ),
     );
@@ -562,7 +567,7 @@ class _DownloadsSettingsState extends State<DownloadsSettings> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text('Download Settings'.i18n),),
+      appBar: FreezerAppBar('Download Settings'.i18n),
       body: ListView(
         children: [
           ListTile(
@@ -696,128 +701,110 @@ class _DownloadsSettingsState extends State<DownloadsSettings> {
               }
             }
           ),
-          Divider(),
+          FreezerDivider(),
           ListTile(
             title: Text('Create folders for artist'.i18n),
-            leading: Container(
-              width: 30.0,
-              child: Checkbox(
-                value: settings.artistFolder,
-                onChanged: (v) {
-                  setState(() => settings.artistFolder = v);
-                  settings.save();
-                },
-              ),
+            trailing: Switch(
+              value: settings.artistFolder,
+              onChanged: (v) {
+                setState(() => settings.artistFolder = v);
+                settings.save();
+              },
             ),
+            leading: Icon(Icons.folder),
           ),
           ListTile(
             title: Text('Create folders for albums'.i18n),
-            leading: Container(
-              width: 30.0,
-              child: Checkbox(
-                value: settings.albumFolder,
-                onChanged: (v) {
-                  setState(() => settings.albumFolder = v);
-                  settings.save();
-                },
-              ),
+            trailing: Switch(
+              value: settings.albumFolder,
+              onChanged: (v) {
+                setState(() => settings.albumFolder = v);
+                settings.save();
+              },
             ),
+            leading: Icon(Icons.folder)
           ),
           ListTile(
             title: Text('Create folder for playlist'.i18n),
-            leading: Container(
-              width: 30.0,
-              child: Checkbox(
-                value: settings.playlistFolder,
-                onChanged: (v) {
-                  setState(() => settings.playlistFolder = v);
-                  settings.save();
-                },
-              ),
+            trailing: Switch(
+              value: settings.playlistFolder,
+              onChanged: (v) {
+                setState(() => settings.playlistFolder = v);
+                settings.save();
+              },
             ),
+            leading: Icon(Icons.folder)
           ),
-          Divider(),
+          FreezerDivider(),
           ListTile(
             title: Text('Separate albums by discs'.i18n),
-            leading: Container(
-              width: 30.0,
-              child: Checkbox(
-                value: settings.albumDiscFolder,
-                onChanged: (v) {
-                  setState(() => settings.albumDiscFolder = v);
-                  settings.save();
-                },
-              ),
+            trailing: Switch(
+              value: settings.albumDiscFolder,
+              onChanged: (v) {
+                setState(() => settings.albumDiscFolder = v);
+                settings.save();
+              },
             ),
+            leading: Icon(Icons.album)
           ),
           ListTile(
             title: Text('Overwrite already downloaded files'.i18n),
-            leading: Container(
-              width: 30.0,
-              child: Checkbox(
-                value: settings.overwriteDownload,
-                onChanged: (v) {
-                  setState(() => settings.overwriteDownload = v);
-                  settings.save();
-                },
-              ),
+            trailing: Switch(
+              value: settings.overwriteDownload,
+              onChanged: (v) {
+                setState(() => settings.overwriteDownload = v);
+                settings.save();
+              },
             ),
+            leading: Icon(Icons.delete)
           ),
           ListTile(
             title: Text('Download .LRC lyrics'.i18n),
-            leading: Container(
-              width: 30.0,
-              child: Checkbox(
-                value: settings.downloadLyrics,
-                onChanged: (v) {
-                  setState(() => settings.downloadLyrics = v);
-                  settings.save();
-                },
-              ),
+            trailing: Switch(
+              value: settings.downloadLyrics,
+              onChanged: (v) {
+                setState(() => settings.downloadLyrics = v);
+                settings.save();
+              },
             ),
+            leading: Icon(Icons.subtitles)
           ),
-          Divider(),
+          FreezerDivider(),
           ListTile(
             title: Text('Save cover file for every track'.i18n),
-            leading: Container(
-              width: 30.0,
-              child: Checkbox(
-                value: settings.trackCover,
-                onChanged: (v) {
-                  setState(() => settings.trackCover = v);
-                  settings.save();
-                },
-              ),
+            trailing: Switch(
+              value: settings.trackCover,
+              onChanged: (v) {
+                setState(() => settings.trackCover = v);
+                settings.save();
+              },
             ),
+            leading: Icon(Icons.image)
           ),
           ListTile(
             title: Text('Save album cover'.i18n),
-            leading: Container(
-              width: 30.0,
-              child: Checkbox(
-                value: settings.albumCover,
-                onChanged: (v) {
-                  setState(() => settings.albumCover = v);
-                  settings.save();
-                },
-              ),
+            trailing: Switch(
+              value: settings.albumCover,
+              onChanged: (v) {
+                setState(() => settings.albumCover = v);
+                settings.save();
+              },
             ),
+            leading: Icon(Icons.image)
           ),
           ListTile(
             title: Text('Create .nomedia files'.i18n),
             subtitle: Text('To prevent gallery being filled with album art'.i18n),
-            leading: Container(
-              width: 30.0,
-              child: Checkbox(
-                value: settings.nomediaFiles,
-                onChanged: (v) {
-                  setState(() => settings.nomediaFiles = v);
-                  settings.save();
-                },
-              ),
+            trailing: Switch(
+              value: settings.nomediaFiles,
+              onChanged: (v) {
+                setState(() => settings.nomediaFiles = v);
+                settings.save();
+              },
             ),
+            leading: Icon(Icons.insert_drive_file)
           ),
-          Divider(),
+          FreezerDivider(),
           ListTile(
             title: Text('Download Log'.i18n),
             leading: Icon(Icons.sticky_note_2),
@@ -841,51 +828,49 @@ class _GeneralSettingsState extends State<GeneralSettings> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text('General'.i18n),),
+      appBar: FreezerAppBar('General'.i18n),
       body: ListView(
         children: <Widget>[
           ListTile(
             title: Text('Offline mode'.i18n),
             subtitle: Text('Will be overwritten on start.'.i18n),
-            leading: Container(
-              width: 30.0,
-              child: Checkbox(
-                value: settings.offlineMode,
-                onChanged: (bool v) {
-                  if (v) {
-                    setState(() => settings.offlineMode = true);
-                    return;
-                  }
-                  showDialog(
-                      context: context,
-                      builder: (context) {
-                        deezerAPI.authorize().then((v) {
-                          if (v) {
-                            setState(() => settings.offlineMode = false);
-                          } else {
-                            Fluttertoast.showToast(
-                                msg: 'Error logging in, check your internet connections.'.i18n,
-                                gravity: ToastGravity.BOTTOM,
-                                toastLength: Toast.LENGTH_SHORT
-                            );
-                          }
-                          Navigator.of(context).pop();
-                        });
-                        return AlertDialog(
-                            title: Text('Logging in...'.i18n),
-                            content: Row(
-                              mainAxisSize: MainAxisSize.max,
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: <Widget>[
-                                CircularProgressIndicator()
-                              ],
-                            )
-                        );
-                      }
-                  );
-                },
-              ),
+            trailing: Switch(
+              value: settings.offlineMode,
+              onChanged: (bool v) {
+                if (v) {
+                  setState(() => settings.offlineMode = true);
+                  return;
+                }
+                showDialog(
+                    context: context,
+                    builder: (context) {
+                      deezerAPI.authorize().then((v) {
+                        if (v) {
+                          setState(() => settings.offlineMode = false);
+                        } else {
+                          Fluttertoast.showToast(
+                              msg: 'Error logging in, check your internet connections.'.i18n,
+                              gravity: ToastGravity.BOTTOM,
+                              toastLength: Toast.LENGTH_SHORT
+                          );
+                        }
+                        Navigator.of(context).pop();
+                      });
+                      return AlertDialog(
+                          title: Text('Logging in...'.i18n),
+                          content: Row(
+                            mainAxisSize: MainAxisSize.max,
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: <Widget>[
+                              CircularProgressIndicator()
+                            ],
+                          )
+                      );
+                    }
+                );
+              },
             ),
+            leading: Icon(Icons.lock),
           ),
           ListTile(
             title: Text('Copy ARL'.i18n),
@@ -933,6 +918,18 @@ class _GeneralSettingsState extends State<GeneralSettings> {
                 }
               );
             }
+          ),
+          ListTile(
+            title: Text('Ignore interruptions'.i18n),
+            subtitle: Text('Requires app restart to apply!'.i18n),
+            leading: Icon(Icons.not_interested),
+            trailing: Switch(
+              value: settings.ignoreInterruptions,
+              onChanged: (bool v) async {
+                setState(() => settings.ignoreInterruptions = v);
+                await settings.save();
+              },
+            ),
           )
         ],
       ),
@@ -965,8 +962,8 @@ class _DirectoryPickerState extends State<DirectoryPicker> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: Text('Pick-a-Path'.i18n),
+      appBar: FreezerAppBar(
+        'Pick-a-Path'.i18n,
         actions: <Widget>[
           IconButton(
             icon: Icon(Icons.sd_card),
@@ -1110,7 +1107,8 @@ class _CreditsScreenState extends State<CreditsScreen> {
     ['kobyrevah', 'Hebrew'],
     ['HoScHaKaL', 'Turkish'],
     ['MicroMihai', 'Romanian'],
-    ['LenteraMalam', 'Indonesian']
+    ['LenteraMalam', 'Indonesian'],
+    ['RTWO2', 'Persian']
   ];
 
   @override
@@ -1126,9 +1124,6 @@ class _CreditsScreenState extends State<CreditsScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: Text('About'.i18n),
-      ),
       body: ListView(
         children: [
           FreezerTitle(),
@@ -1139,7 +1134,7 @@ class _CreditsScreenState extends State<CreditsScreen> {
               fontStyle: FontStyle.italic
             ),
           ),
-          Divider(),
+          FreezerDivider(),
           ListTile(
             title: Text('Telegram Channel'.i18n),
             subtitle: Text('To get latest releases'.i18n),
@@ -1164,7 +1159,7 @@ class _CreditsScreenState extends State<CreditsScreen> {
               launch('https://notabug.org/exttex/freezer');
             },
           ),
-          Divider(),
+          FreezerDivider(),
           ListTile(
             title: Text('exttex'),
             subtitle: Text('Developer'),
@@ -1203,7 +1198,7 @@ class _CreditsScreenState extends State<CreditsScreen> {
             title: Text('Annexhack'),
             subtitle: Text('Android Auto help'),
           ),
-          Divider(),
+          FreezerDivider(),
           ...List.generate(translators.length, (i) => ListTile(
             title: Text(translators[i][0]),
             subtitle: Text(translators[i][1]),

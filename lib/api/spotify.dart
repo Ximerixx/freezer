@@ -1,9 +1,11 @@
-import 'package:dio/dio.dart';
+import 'package:flutter/material.dart';
 import 'package:freezer/api/deezer.dart';
 import 'package:freezer/api/download.dart';
 import 'package:freezer/api/definitions.dart';
+import 'package:freezer/settings.dart';
 import 'package:html/parser.dart';
-import 'package:html/dom.dart';
+import 'package:html/dom.dart' as dom;
+import 'package:http/http.dart' as http;
 
 import 'dart:convert';
 import 'dart:async';
@@ -32,11 +34,10 @@ class SpotifyAPI {
   //Extract JSON data form spotify embed page
   Future<Map> getEmbedData(String url) async {
     //Fetch
-    Dio dio = Dio();
-    Response response = await dio.get(url);
+    http.Response response = await http.get(url);
     //Parse
-    Document document = parse(response.data);
-    Element element = document.getElementById('resource');
+    dom.Document document = parse(response.body);
+    dom.Element element = document.getElementById('resource');
     return jsonDecode(element.innerHtml);
   }
 
@@ -50,7 +51,7 @@ class SpotifyAPI {
   }
 
   
-  Future convertPlaylist(SpotifyPlaylist playlist, {bool downloadOnly = false}) async {
+  Future convertPlaylist(SpotifyPlaylist playlist, {bool downloadOnly = false, BuildContext context, AudioQuality quality}) async {
     doneImporting = false;
     importingSpotifyPlaylist = playlist;
 
@@ -60,6 +61,7 @@ class SpotifyAPI {
       playlistId = await deezerAPI.createPlaylist(playlist.name, description: playlist.description);
 
     //Search for tracks
+    List<Track> downloadTracks = [];
     for (SpotifyTrack track in playlist.tracks) {
       Map deezer;
       try {
@@ -71,12 +73,21 @@ class SpotifyAPI {
         if (!downloadOnly)
           await deezerAPI.addToPlaylist(id, playlistId);
         if (downloadOnly)
-          await downloadManager.addOfflineTrack(Track(id: id), private: false);
+          downloadTracks.add(Track(id: id));
         track.state = TrackImportState.OK;
       } catch (e) {
         //On error
         track.state = TrackImportState.ERROR;
       }
+
+      //Download
+      if (downloadOnly)
+        await downloadManager.addOfflinePlaylist(
+          Playlist(trackCount: downloadTracks.length, tracks: downloadTracks, title: playlist.name),
+          private: false,
+          quality: quality
+        );
+
       //Add playlist id to stream, stream is for updating ui only
       importingStream.add(playlistId);
       importingSpotifyPlaylist = playlist;

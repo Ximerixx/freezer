@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:disk_space/disk_space.dart';
 import 'package:filesize/filesize.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_cache_manager/flutter_cache_manager.dart';
 import 'package:fluttertoast/fluttertoast.dart';
@@ -110,9 +111,63 @@ class DownloadManager {
     return batch;
   }
 
-  Future addOfflineTrack(Track track, {private = true}) async {
+  //Quality selector for custom quality
+  Future qualitySelect(BuildContext context) async {
+    AudioQuality quality;
+    await showModalBottomSheet(
+      context: context,
+      builder: (context) {
+        return Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Padding(
+              padding: EdgeInsets.fromLTRB(0, 12, 0, 2),
+              child: Text(
+                'Quality'.i18n,
+                style: TextStyle(
+                  fontWeight: FontWeight.bold,
+                  fontSize: 20.0
+                ),
+              ),
+            ),
+            ListTile(
+              title: Text('MP3 128kbps'),
+              onTap: () {
+                quality = AudioQuality.MP3_128;
+                Navigator.of(context).pop();
+              },
+            ),
+            ListTile(
+              title: Text('MP3 320kbps'),
+              onTap: () {
+                quality = AudioQuality.MP3_320;
+                Navigator.of(context).pop();
+              },
+            ),
+            ListTile(
+              title: Text('FLAC'),
+              onTap: () {
+                quality = AudioQuality.FLAC;
+                Navigator.of(context).pop();
+              },
+            )
+          ],
+        );
+      }
+    );
+    return quality;
+  }
+
+  Future<bool> addOfflineTrack(Track track, {private = true, BuildContext context}) async {
     //Permission
-    if (!private && !(await checkPermission())) return;
+    if (!private && !(await checkPermission())) return false;
+
+    //Ask for quality
+    AudioQuality quality;
+    if (!private && settings.downloadQuality == AudioQuality.ASK) {
+       quality = await qualitySelect(context);
+      if (quality == null) return false;
+    }
 
     //Add to DB
     if (private) {
@@ -127,13 +182,20 @@ class DownloadManager {
 
     //Get path
     String path = _generatePath(track, private);
-    await platform.invokeMethod('addDownloads', [await Download.jsonFromTrack(track, path, private: private)]);
+    await platform.invokeMethod('addDownloads', [await Download.jsonFromTrack(track, path, private: private, quality: quality)]);
     await start();
   }
 
-  Future addOfflineAlbum(Album album, {private = true}) async {
+  Future addOfflineAlbum(Album album, {private = true, BuildContext context}) async {
     //Permission
     if (!private && !(await checkPermission())) return;
+
+    //Ask for quality
+    AudioQuality quality;
+    if (!private && settings.downloadQuality == AudioQuality.ASK) {
+      quality = await qualitySelect(context);
+      if (quality == null) return false;
+    }
 
     //Get from API if no tracks
     if (album.tracks == null || album.tracks.length == 0) {
@@ -157,15 +219,21 @@ class DownloadManager {
     //Create downloads
     List<Map> out = [];
     for (Track t in album.tracks) {
-      out.add(await Download.jsonFromTrack(t, _generatePath(t, private), private: private));
+      out.add(await Download.jsonFromTrack(t, _generatePath(t, private), private: private, quality: quality));
     }
     await platform.invokeMethod('addDownloads', out);
     await start();
   }
 
-  Future addOfflinePlaylist(Playlist playlist, {private = true}) async {
+  Future addOfflinePlaylist(Playlist playlist, {private = true, BuildContext context, AudioQuality quality}) async {
     //Permission
     if (!private && !(await checkPermission())) return;
+
+    //Ask for quality
+    if (!private && settings.downloadQuality == AudioQuality.ASK && quality == null) {
+      quality = await qualitySelect(context);
+      if (quality == null) return false;
+    }
 
     //Get tracks if missing
     if (playlist.tracks == null || playlist.tracks.length < playlist.trackCount) {
@@ -193,8 +261,8 @@ class DownloadManager {
           t,
           private,
           playlistName: playlist.title,
-          playlistTrackNumber: i
-      ), private: private));
+          playlistTrackNumber: i,
+      ), private: private, quality: quality));
     }
     await platform.invokeMethod('addDownloads', out);
     await start();
@@ -375,7 +443,7 @@ class DownloadManager {
       return true;
     }
     //Playlist
-    if (playlist != null) {
+    if (playlist != null && playlist.id != null) {
       List res = await db.query('Playlists', where: 'id == ?', whereArgs: [playlist.id]);
       if (res.length == 0) return false;
       return true;
@@ -553,7 +621,7 @@ class Download {
   }
   
   //Track to download JSON for service
-  static Future<Map> jsonFromTrack(Track t, String path, {private = true}) async {
+  static Future<Map> jsonFromTrack(Track t, String path, {private = true, AudioQuality quality}) async {
     //Get download info
     if (t.playbackDetails == null || t.playbackDetails == []) {
       t = await deezerAPI.track(t.id);
@@ -565,7 +633,7 @@ class Download {
       "mediaVersion": t.playbackDetails[1],
       "quality": private
       ? settings.getQualityInt(settings.offlineQuality)
-      : settings.getQualityInt(settings.downloadQuality),
+      : settings.getQualityInt((quality??settings.downloadQuality)),
       "title": t.title,
       "path": path,
       "image": t.albumArt.thumb
