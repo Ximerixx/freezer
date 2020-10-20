@@ -32,7 +32,7 @@ Cache _$CacheFromJson(Map<String, dynamic> json) {
     ..trackSort = _$enumDecodeNullable(_$SortTypeEnumMap, json['trackSort']) ??
         SortType.DEFAULT
     ..searchHistory =
-        (json['searchHistory'] as List)?.map((e) => e as String)?.toList() ?? []
+        Cache._searchHistoryFromJson(json['searchHistory2'] as List)
     ..threadsWarning = json['threadsWarning'] as bool ?? false;
 }
 
@@ -46,7 +46,7 @@ Map<String, dynamic> _$CacheToJson(Cache instance) => <String, dynamic>{
       'libraryPlaylistSort':
           _$PlaylistSortTypeEnumMap[instance.libraryPlaylistSort],
       'trackSort': _$SortTypeEnumMap[instance.trackSort],
-      'searchHistory': instance.searchHistory,
+      'searchHistory2': Cache._searchHistoryToJson(instance.searchHistory),
       'threadsWarning': instance.threadsWarning,
     };
 
@@ -109,4 +109,24 @@ const _$PlaylistSortTypeEnumMap = {
   PlaylistSortType.ALPHABETIC: 'ALPHABETIC',
   PlaylistSortType.USER: 'USER',
   PlaylistSortType.TRACK_COUNT: 'TRACK_COUNT',
+};
+
+SearchHistoryItem _$SearchHistoryItemFromJson(Map<String, dynamic> json) {
+  return SearchHistoryItem(
+    json['data'],
+    _$enumDecodeNullable(_$SearchHistoryItemTypeEnumMap, json['type']),
+  );
+}
+
+Map<String, dynamic> _$SearchHistoryItemToJson(SearchHistoryItem instance) =>
+    <String, dynamic>{
+      'data': instance.data,
+      'type': _$SearchHistoryItemTypeEnumMap[instance.type],
+    };
+
+const _$SearchHistoryItemTypeEnumMap = {
+  SearchHistoryItemType.TRACK: 'TRACK',
+  SearchHistoryItemType.ALBUM: 'ALBUM',
+  SearchHistoryItemType.ARTIST: 'ARTIST',
+  SearchHistoryItemType.PLAYLIST: 'PLAYLIST',
 };

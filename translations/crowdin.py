@@ -20,7 +20,9 @@ lang_crowdin = {
     'tr': 'tr_tr',
     'pl': 'pl_pl',
     'uk': 'uk_ua',
-    'hu': 'hu_hu'
+    'hu': 'hu_hu',
+    'ur-PK': 'ur_pk',
+    'hi': 'hi_in'
 }
 
 def generate_dart():

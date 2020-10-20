@@ -273,7 +273,7 @@ class HomePageItemWidget extends StatelessWidget {
           onTap: () {
             Navigator.of(context).push(MaterialPageRoute(
                 builder: (context) => Scaffold(
-                  appBar: AppBar(title: Text(item.value.title.toString()),),
+                  appBar: FreezerAppBar(item.value.title.toString()),
                   body: SingleChildScrollView(
                     child: HomePageScreen(channel: item.value,)
                   ),

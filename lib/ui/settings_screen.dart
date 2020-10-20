@@ -1124,6 +1124,7 @@ class _CreditsScreenState extends State<CreditsScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      appBar: FreezerAppBar('About'.i18n),
       body: ListView(
         children: [
           FreezerTitle(),

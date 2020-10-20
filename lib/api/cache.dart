@@ -49,8 +49,10 @@ class Cache {
   @JsonKey(ignore: true)
   StreamSubscription sleepTimer;
 
-  @JsonKey(defaultValue: [])
-  List<String> searchHistory;
+  //Search history
+  @JsonKey(name: 'searchHistory2', toJson: _searchHistoryToJson, fromJson: _searchHistoryFromJson)
+  List<SearchHistoryItem> searchHistory;
+
 
   //If download threads warning was shown
   @JsonKey(defaultValue: false)
@@ -63,6 +65,23 @@ class Cache {
     if (t.favorite != null && t.favorite) return true;
     if (libraryTracks == null || libraryTracks.length == 0) return false;
     return libraryTracks.contains(t.id);
+  }
+
+  //Add to history
+  void addToSearchHistory(dynamic item) async {
+    if (searchHistory == null)
+      searchHistory = [];
+
+    if (item is Track)
+      searchHistory.add(SearchHistoryItem(item, SearchHistoryItemType.TRACK));
+    if (item is Album)
+      searchHistory.add(SearchHistoryItem(item, SearchHistoryItemType.ALBUM));
+    if (item is Artist)
+      searchHistory.add(SearchHistoryItem(item, SearchHistoryItemType.ARTIST));
+    if (item is Playlist)
+      searchHistory.add(SearchHistoryItem(item, SearchHistoryItemType.PLAYLIST));
+
+    await save();
   }
 
   //Save, load
@@ -89,4 +108,45 @@ class Cache {
   //JSON
   factory Cache.fromJson(Map<String, dynamic> json) => _$CacheFromJson(json);
   Map<String, dynamic> toJson() => _$CacheToJson(this);
+
+  //Search History JSON
+  static List<SearchHistoryItem> _searchHistoryFromJson(List<dynamic> json) {
+    return (json??[]).map<SearchHistoryItem>((i) => _searchHistoryItemFromJson(i)).toList();
+  }
+  static SearchHistoryItem _searchHistoryItemFromJson(Map<String, dynamic> json) {
+    SearchHistoryItemType type = SearchHistoryItemType.values[json['type']];
+    dynamic data;
+    switch (type) {
+      case SearchHistoryItemType.TRACK:
+        data = Track.fromJson(json['data']);
+        break;
+      case SearchHistoryItemType.ALBUM:
+        data = Album.fromJson(json['data']);
+        break;
+      case SearchHistoryItemType.ARTIST:
+        data = Artist.fromJson(json['data']);
+        break;
+      case SearchHistoryItemType.PLAYLIST:
+        data = Playlist.fromJson(json['data']);
+        break;
+    }
+    return SearchHistoryItem(data, type);
+  }
+  static List<Map<String, dynamic>> _searchHistoryToJson(List<SearchHistoryItem> data) => (data??[]).map<Map<String, dynamic>>((i) => {"type": i.type.index, "data": i.data.toJson()}).toList();
+}
+
+@JsonSerializable()
+class SearchHistoryItem {
+  dynamic data;
+  SearchHistoryItemType type;
+
+  SearchHistoryItem(this.data, this.type);
+}
+
+
+enum SearchHistoryItemType {
+  TRACK,
+  ALBUM,
+  ARTIST,
+  PLAYLIST
 }

@@ -78,6 +78,6 @@ class FreezerDivider extends StatelessWidget {
 
 TextStyle popupMenuTextStyle() {
   return TextStyle(
-    color: (settings.theme == Themes.Light)?Colors.black:Colors.white
+    color: settings.isDark?Colors.white:Colors.black
   );
 }

@@ -255,6 +255,10 @@ const language_en_us = {
     "Library shuffle": "Library shuffle",
     "Ignore interruptions": "Ignore interruptions",
     "Requires app restart to apply!": "Requires app restart to apply!",
-    "Ask before downloading": "Ask before downloading"
+    "Ask before downloading": "Ask before downloading",
+
+    //0.6.1 Strings:
+    "Search history": "Search history",
+    "Clear search history": "Clear search history"
   }
 };

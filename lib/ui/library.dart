@@ -1031,11 +1031,11 @@ class _HistoryScreenState extends State<HistoryScreen> {
       body: ListView.builder(
         itemCount: (cache.history??[]).length,
         itemBuilder: (BuildContext context, int i) {
-          Track t = cache.history[i];
+          Track t = cache.history[cache.history.length - i - 1];
           return TrackTile(
             t,
             onTap: () {
-              playerHelper.playFromTrackList(cache.history, t.id, QueueSource(
+              playerHelper.playFromTrackList(cache.history.reversed.toList(), t.id, QueueSource(
                 id: null,
                 text: 'History'.i18n,
                 source: 'history'

@@ -187,12 +187,23 @@ class Settings {
     return 8; //default
   }
 
+  //Check if is dark, can't use theme directly, because of system themes, and Theme.of(context).brightness broke
+  bool get isDark {
+    if (useSystemTheme) {
+      if (SchedulerBinding.instance.window.platformBrightness == Brightness.light) return false;
+      return true;
+    }
+    if (theme == Themes.Light) return false;
+    return true;
+  }
+
   static const deezerBg = Color(0xFF1F1A16);
   static const deezerBottom = Color(0xFF1b1714);
   static const font = 'MabryPro';
   Map<Themes, ThemeData> get _themeData => {
     Themes.Light: ThemeData(
       fontFamily: font,
+      brightness: Brightness.light,
       primaryColor: primaryColor,
       accentColor: primaryColor,
       sliderTheme: _sliderTheme,
@@ -235,8 +246,9 @@ class Settings {
       sliderTheme: _sliderTheme,
       toggleableActiveColor: primaryColor,
       bottomSheetTheme: BottomSheetThemeData(
-      backgroundColor: Colors.black
-    ))
+        backgroundColor: Colors.black,
+      )
+    )
   };
 
   Future<String> getPath() async => p.join((await getApplicationDocumentsDirectory()).path, 'settings.json');

@@ -456,7 +456,7 @@ class AudioPlayerTask extends BackgroundAudioTask {
         MediaAction.seekTo,
         MediaAction.seekForward,
         MediaAction.seekBackward,
-        //MediaAction.stop
+        MediaAction.stop
       ],
       processingState: _getProcessingState(),
       playing: _player.playing,

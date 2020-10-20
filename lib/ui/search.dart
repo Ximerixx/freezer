@@ -66,13 +66,6 @@ class _SearchScreenState extends State<SearchScreen> {
       return;
     }
 
-    //Add to search history
-    try {cache.searchHistory.remove(_query);} catch (_) {}
-    if (cache.searchHistory == null)
-      cache.searchHistory = [];
-    cache.searchHistory.insert(0, _query);
-    cache.save();
-
     Navigator.of(context).push(
         MaterialPageRoute(builder: (context) => SearchResultsScreen(_query, offline: _offline,))
     );
@@ -80,7 +73,7 @@ class _SearchScreenState extends State<SearchScreen> {
 
   @override
   void initState() {
-    _cancel = true;
+    _cancel = false;
     //Check for connectivity and enable offline mode
     Connectivity().checkConnectivity().then((res) {
       if (res == ConnectivityResult.none) setState(() {
@@ -102,10 +95,22 @@ class _SearchScreenState extends State<SearchScreen> {
     List sugg;
     try {
       sugg = await deezerAPI.searchSuggestions(_query);
-    } catch (e) {}
+    } catch (e) {print(e);}
 
     if (sugg != null && !_cancel)
       setState(() => _suggestions = sugg);
+  }
+
+  Widget _removeHistoryItemWidget(int index) {
+    return IconButton(
+      icon: Icon(Icons.close),
+      onPressed: () async {
+        if (cache.searchHistory != null)
+          cache.searchHistory.removeAt(index);
+        setState((){});
+        await cache.save();
+      }
+    );
   }
 
   @override
@@ -136,6 +141,8 @@ class _SearchScreenState extends State<SearchScreen> {
                         },
                         decoration: InputDecoration(
                           labelText: 'Search or paste URL'.i18n,
+                          fillColor: Theme.of(context).bottomAppBarColor,
+                          filled: true,
                           focusedBorder: OutlineInputBorder(
                             borderSide: BorderSide(color: Colors.grey)
                           ),
@@ -189,15 +196,84 @@ class _SearchScreenState extends State<SearchScreen> {
           FreezerDivider(),
 
           //History
-          if (cache.searchHistory != null && cache.searchHistory.length > 0 && (_query??'').length == 0)
-            ...List.generate(cache.searchHistory.length > 10 ? 10 : cache.searchHistory.length, (int i) => ListTile(
-              title: Text(cache.searchHistory[i]??''),
-              leading: Icon(Icons.history),
+          if (cache.searchHistory != null && cache.searchHistory.length > 0 && (_query??'').length < 2)
+            ...List.generate(cache.searchHistory.length > 10 ? 10 : cache.searchHistory.length, (int i) {
+              dynamic data = cache.searchHistory[i].data;
+              switch (cache.searchHistory[i].type) {
+                case SearchHistoryItemType.TRACK:
+                  return TrackTile(
+                    data,
+                    onTap: () {
+                      List<Track> queue = cache.searchHistory.where((h) => h.type == SearchHistoryItemType.TRACK).map<Track>((t) => t.data).toList();
+                      playerHelper.playFromTrackList(queue, queue.first.id, QueueSource(
+                        text: 'Search history'.i18n,
+                        source: 'searchhistory',
+                        id: 'searchhistory'
+                      ));
+                    },
+                    onHold: () {
+                      MenuSheet m = MenuSheet(context);
+                      m.defaultTrackMenu(data);
+                    },
+                    trailing: _removeHistoryItemWidget(i),
+                  );
+                case SearchHistoryItemType.ALBUM:
+                  return AlbumTile(
+                    data,
+                    onTap: () {
+                      Navigator.of(context).push(
+                        MaterialPageRoute(builder: (context) => AlbumDetails(data))
+                      );
+                    },
+                    onHold: () {
+                      MenuSheet m = MenuSheet(context);
+                      m.defaultAlbumMenu(data);
+                    },
+                    trailing: _removeHistoryItemWidget(i),
+                  );
+                case SearchHistoryItemType.ARTIST:
+                  return ArtistHorizontalTile(
+                    data,
+                    onTap: () {
+                      Navigator.of(context).push(
+                        MaterialPageRoute(builder: (context) => ArtistDetails(data))
+                      );
+                    },
+                    onHold: () {
+                      MenuSheet m = MenuSheet(context);
+                      m.defaultArtistMenu(data);
+                    },
+                    trailing: _removeHistoryItemWidget(i),
+                  );
+                case SearchHistoryItemType.PLAYLIST:
+                  return PlaylistTile(
+                    data,
+                    onTap: () {
+                      Navigator.of(context).push(
+                        MaterialPageRoute(builder: (context) => PlaylistDetails(data))
+                      );
+                    },
+                    onHold: () {
+                      MenuSheet m = MenuSheet(context);
+                      m.defaultPlaylistMenu(data);
+                    },
+                    trailing: _removeHistoryItemWidget(i),
+                  );
+              }
+              return Container();
+          }),
+
+          //Clear history
+          if (cache.searchHistory != null && cache.searchHistory.length > 2)
+            ListTile(
+              title: Text('Clear search history'.i18n),
+              leading: Icon(Icons.clear_all),
               onTap: () {
-                setState(() => _query = cache.searchHistory[i]);
-                _submit(context);
+                cache.searchHistory = [];
+                cache.save();
+                setState((){});
               },
-            )),
+            ),
 
           //Suggestions
           ...List.generate((_suggestions??[]).length, (i) => ListTile(
@@ -278,6 +354,7 @@ class SearchResultsScreen extends StatelessWidget {
                 return TrackTile(
                   t,
                   onTap: () {
+                    cache.addToSearchHistory(t);
                     playerHelper.playFromTrackList(results.tracks, t.id, QueueSource(
                       text: 'Search'.i18n,
                       id: query,
@@ -331,8 +408,9 @@ class SearchResultsScreen extends StatelessWidget {
                     m.defaultAlbumMenu(a);
                   },
                   onTap: () {
+                    cache.addToSearchHistory(a);
                     Navigator.of(context).push(
-                        MaterialPageRoute(builder: (context) => AlbumDetails(a))
+                      MaterialPageRoute(builder: (context) => AlbumDetails(a))
                     );
                   },
                 );
@@ -373,6 +451,7 @@ class SearchResultsScreen extends StatelessWidget {
                     return ArtistTile(
                       a,
                       onTap: () {
+                        cache.addToSearchHistory(a);
                         Navigator.of(context).push(
                           MaterialPageRoute(builder: (context) => ArtistDetails(a))
                         );
@@ -410,6 +489,7 @@ class SearchResultsScreen extends StatelessWidget {
                 return PlaylistTile(
                   p,
                   onTap: () {
+                    cache.addToSearchHistory(p);
                     Navigator.of(context).push(
                       MaterialPageRoute(builder: (context) => PlaylistDetails(p))
                     );

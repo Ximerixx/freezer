@@ -115,7 +115,7 @@ class DeezerAPI {
   //Search
   Future<SearchResults> search(String query) async {
     Map<dynamic, dynamic> data = await callApi('deezer.pageSearch', params: {
-      'nb': 50,
+      'nb': 128,
       'query': query,
       'start': 0
     });

@@ -67,7 +67,7 @@ class _FreezerAppState extends State<FreezerApp> {
     });
     SystemChrome.setSystemUIOverlayStyle(SystemUiOverlayStyle(
       systemNavigationBarColor: settings.themeData.bottomAppBarColor,
-      systemNavigationBarIconBrightness: (settings.theme == Themes.Light)?Brightness.dark:Brightness.light
+      systemNavigationBarIconBrightness: settings.isDark? Brightness.light : Brightness.dark
     ));
   }
 
