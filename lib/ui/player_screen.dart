@@ -1,3 +1,4 @@
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:audio_service/audio_service.dart';
 import 'package:flutter/services.dart';
@@ -14,6 +15,7 @@ import 'package:freezer/ui/tiles.dart';
 import 'package:async/async.dart';
 import 'package:just_audio/just_audio.dart';
 import 'package:marquee/marquee.dart';
+import 'package:photo_view/photo_view.dart';
 
 import 'cached_image.dart';
 import '../api/definitions.dart';
@@ -429,6 +431,8 @@ class _BigAlbumArtState extends State<BigAlbumArt> {
   );
   StreamSubscription _currentItemSub;
   bool _animationLock = true;
+  PhotoViewController controller;
+  bool photoViewOpened = false;
 
   @override
   void initState() {
@@ -438,6 +442,8 @@ class _BigAlbumArtState extends State<BigAlbumArt> {
       _animationLock = false;
     });
     super.initState();
+    controller = PhotoViewController()
+      ..outputStateStream.listen(listener);
   }
 
   @override
@@ -445,6 +451,14 @@ class _BigAlbumArtState extends State<BigAlbumArt> {
     if (_currentItemSub != null)
       _currentItemSub.cancel();
     super.dispose();
+  }
+
+  // Listener of PhotoView scale changes. Used for closing PhotoView by pinch-in
+  void listener(PhotoViewControllerValue value){
+    if (value.scale < 0.16 && photoViewOpened) {
+      Navigator.pop(context);
+      photoViewOpened = false;  // to avoid multiple pop() when picture are being scaled out too slowly
+    }
   }
 
   @override
@@ -461,10 +475,32 @@ class _BigAlbumArtState extends State<BigAlbumArt> {
           if (_animationLock) return;
           AudioService.skipToQueueItem(AudioService.queue[index].id);
         },
-        children: List.generate(AudioService.queue.length, (i) => CachedImage(
-          url: AudioService.queue[i].artUri,
-          fullThumb: true,
-        )),
+        children: List.generate(AudioService.queue.length, (i) {
+          String artUri = AudioService.queue[i].artUri;
+          return FlatButton(
+              child: CachedImage(
+                url: artUri,
+                fullThumb: true,
+              ),
+              onPressed: () {
+                Navigator.of(context).push(PageRouteBuilder(
+                    opaque: false, // transparent background
+                    pageBuilder: (context, a, b) {
+                      if (AudioService.queue != null) {
+                        photoViewOpened = true;
+                        return PhotoView(
+                            imageProvider: CachedNetworkImageProvider(artUri),
+                            maxScale: 8.0,
+                            minScale: 0.2,
+                            controller: controller,
+                            backgroundDecoration: BoxDecoration(
+                                color: Color.fromARGB(0x90, 0, 0, 0)));
+                      } else {
+                        return null;
+                      }
+                    }));
+              });
+        }),
       ),
     );
   }

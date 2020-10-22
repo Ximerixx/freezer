@@ -29,7 +29,7 @@ class PlayerHelper {
   QueueSource queueSource;
   LoopMode repeatType = LoopMode.off;
   //Find queue index by id
-  int get queueIndex => AudioService.queue.indexWhere((mi) => mi.id == AudioService.currentMediaItem?.id??'Random string so it returns -1');
+  int get queueIndex => AudioService.queue == null ? 0 : AudioService.queue.indexWhere((mi) => mi.id == AudioService.currentMediaItem?.id??'Random string so it returns -1');
 
   Future start() async {
      //Subscribe to custom events
