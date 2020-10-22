@@ -2,6 +2,7 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:palette_generator/palette_generator.dart';
 import 'package:cached_network_image/cached_network_image.dart';
+import 'package:photo_view/photo_view.dart';
 
 ImagesDatabase imagesDatabase = ImagesDatabase();
 
@@ -76,5 +77,63 @@ class _CachedImageState extends State<CachedImage> {
       },
       errorWidget: (context, url, error) => Image.asset('assets/cover_thumb.jpg', width: widget.width, height: widget.height),
     );
+  }
+}
+
+class ZoomableImage extends StatefulWidget {
+  final String url;
+  final bool rounded;
+  final double width;
+
+  ZoomableImage({@required this.url, this.rounded = false, this.width});
+
+  @override
+  _ZoomableImageState createState() => _ZoomableImageState();
+}
+
+class _ZoomableImageState extends State<ZoomableImage> {
+  BuildContext ctx;
+  PhotoViewController controller;
+  bool photoViewOpened = false;
+
+  @override
+  void initState() {
+    super.initState();
+    controller = PhotoViewController()
+      ..outputStateStream.listen(listener);
+  }
+
+  // Listener of PhotoView scale changes. Used for closing PhotoView by pinch-in
+  void listener(PhotoViewControllerValue value) {
+    if (value.scale < 0.16 && photoViewOpened) {
+      Navigator.pop(ctx);
+      photoViewOpened = false; // to avoid multiple pop() when picture are being scaled out too slowly
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    ctx = context;
+    return FlatButton(
+        child: CachedImage(
+          url: widget.url,
+          rounded: widget.rounded,
+          width: widget.width,
+          fullThumb: true,
+        ),
+        onPressed: () {
+          Navigator.of(context).push(PageRouteBuilder(
+              opaque: false, // transparent background
+              pageBuilder: (context, a, b) {
+                photoViewOpened = true;
+                return PhotoView(
+                    imageProvider: CachedNetworkImageProvider(widget.url),
+                    maxScale: 8.0,
+                    minScale: 0.2,
+                    controller: controller,
+                    backgroundDecoration:
+                        BoxDecoration(color: Color.fromARGB(0x90, 0, 0, 0)));
+              }));
+        });
   }
 }

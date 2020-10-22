@@ -303,11 +303,10 @@ class ArtistDetails extends StatelessWidget {
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                   children: <Widget>[
-                    CachedImage(
+                    ZoomableImage(
                       url: artist.picture.full,
                       width: MediaQuery.of(context).size.width / 2 - 8,
                       rounded: true,
-                      fullThumb: true,
                     ),
                     Container(
                       width: MediaQuery.of(context).size.width / 2 - 8,
