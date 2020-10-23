@@ -47,6 +47,7 @@ class DeezerAPI {
     });
     //Post
     http.Response res = await http.post(uri, headers: headers, body: jsonEncode(params));
+    dynamic body = jsonDecode(res.body);
     //Grab SID
     if (method == 'deezer.getUserData') {
       for (String cookieHeader in res.headers['set-cookie'].split(';')) {
@@ -55,8 +56,11 @@ class DeezerAPI {
         }
       }
     }
-
-    return jsonDecode(res.body);
+    // In case of error "Invalid CSRF token" retrieve new one and retry the same call
+    if (body['error'].isNotEmpty && body['error'].containsKey('VALID_TOKEN_REQUIRED') && await rawAuthorize()) {
+        return callApi(method, params: params, gatewayInput: gatewayInput);
+    }
+    return body;
   }
 
   Future<Map<dynamic, dynamic>> callPublicApi(String path) async {

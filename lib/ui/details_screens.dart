@@ -752,14 +752,15 @@ class _PlaylistDetailsState extends State<PlaylistDetails> {
     if (playlist.tracks.length == 0) {
       //Get correct metadata
       deezerAPI.playlist(playlist.id)
-      .catchError((e) => setState(() => _error = true))
       .then((Playlist p) {
-        if (p == null) return;
         setState(() {
           playlist = p;
         });
         //Load tracks
         _load();
+      })
+      .catchError((e) {
+        setState(() => _error = true);
       });
     }
 
@@ -805,7 +806,7 @@ class _PlaylistDetailsState extends State<PlaylistDetails> {
                       ),
                       Container(height: 4.0),
                       Text(
-                        playlist.user.name,
+                        playlist.user.name??'',
                         overflow: TextOverflow.ellipsis,
                         maxLines: 2,
                         textAlign: TextAlign.center,
