@@ -60,10 +60,9 @@ class AlbumDetails extends StatelessWidget {
                   mainAxisSize: MainAxisSize.min,
                   children: <Widget>[
                     Container(height: 8.0,),
-                    CachedImage(
+                    ZoomableImage(
                       url: album.art.full,
                       width: MediaQuery.of(context).size.width / 2,
-                      fullThumb: true,
                       rounded: true,
                     ),
                     Container(height: 8,),
