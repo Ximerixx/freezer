@@ -152,7 +152,7 @@ class _PlayerScreenHorizontalState extends State<PlayerScreenHorizontal> {
                   ),
                   Container(height: 4,),
                   Text(
-                    AudioService.currentMediaItem.displaySubtitle,
+                    AudioService.currentMediaItem.displaySubtitle ?? '',
                     maxLines: 1,
                     textAlign: TextAlign.center,
                     overflow: TextOverflow.clip,
@@ -280,7 +280,7 @@ class _PlayerScreenVerticalState extends State<PlayerScreenVertical> {
             ),
             Container(height: 4,),
             Text(
-              AudioService.currentMediaItem.displaySubtitle,
+              AudioService.currentMediaItem.displaySubtitle ?? '',
               maxLines: 1,
               textAlign: TextAlign.center,
               overflow: TextOverflow.clip,
