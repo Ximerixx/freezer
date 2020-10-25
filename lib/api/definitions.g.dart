@@ -71,6 +71,7 @@ Album _$AlbumFromJson(Map<String, dynamic> json) {
     library: json['library'] as bool,
     type: _$enumDecodeNullable(_$AlbumTypeEnumMap, json['type']),
     releaseDate: json['releaseDate'] as String,
+    favoriteDate: json['favoriteDate'] as String
   );
 }
 
@@ -85,6 +86,7 @@ Map<String, dynamic> _$AlbumToJson(Album instance) => <String, dynamic>{
       'library': instance.library,
       'type': _$AlbumTypeEnumMap[instance.type],
       'releaseDate': instance.releaseDate,
+      'favoriteDate': instance.favoriteDate
     };
 
 T _$enumDecode<T>(

@@ -195,8 +195,9 @@ class Album {
   bool library;
   AlbumType type;
   String releaseDate;
+  String favoriteDate;
 
-  Album({this.id, this.title, this.art, this.artists, this.tracks, this.fans, this.offline, this.library, this.type, this.releaseDate});
+  Album({this.id, this.title, this.art, this.artists, this.tracks, this.fans, this.offline, this.library, this.type, this.releaseDate, this.favoriteDate});
 
   String get artistString => artists.map<String>((art) => art.name).join(', ');
   Duration get duration => Duration(seconds: tracks.fold(0, (v, t) => v += t.duration.inSeconds));
@@ -218,7 +219,8 @@ class Album {
       fans: json['NB_FAN'],
       library: library,
       type: type,
-      releaseDate: json['DIGITAL_RELEASE_DATE']??json['PHYSICAL_RELEASE_DATE']
+      releaseDate: json['DIGITAL_RELEASE_DATE']??json['PHYSICAL_RELEASE_DATE'],
+      favoriteDate: json['DATE_FAVORITE']
     );
   }
   Map<String, dynamic> toSQL({off = false}) => {
@@ -231,7 +233,8 @@ class Album {
     'offline': off?1:0,
     'library': (library??false)?1:0,
     'type': AlbumType.values.indexOf(type),
-    'releaseDate': releaseDate
+    'releaseDate': releaseDate,
+    'favoriteDate': favoriteDate
   };
   factory Album.fromSQL(Map<String, dynamic> data) => Album(
     id: data['id'],
@@ -247,7 +250,8 @@ class Album {
     offline: (data['offline'] == 1) ? true:false,
     library: (data['library'] == 1) ? true:false,
     type: AlbumType.values[data['type']],
-    releaseDate: data['releaseDate']
+    releaseDate: data['releaseDate'],
+    favoriteDate: data['favoriteDate']
   );
 
   factory Album.fromJson(Map<String, dynamic> json) => _$AlbumFromJson(json);
@@ -266,8 +270,9 @@ class Artist {
   bool offline;
   bool library;
   bool radio;
+  String favoriteDate;
 
-  Artist({this.id, this.name, this.albums, this.albumCount, this.topTracks, this.picture, this.fans, this.offline, this.library, this.radio});
+  Artist({this.id, this.name, this.albums, this.albumCount, this.topTracks, this.picture, this.fans, this.offline, this.library, this.radio, this.favoriteDate});
 
   String get fansString => NumberFormat.compact().format(fans);
 
@@ -292,6 +297,7 @@ class Artist {
       topTracks: (topJson['data']??[]).map<Track>((dynamic data) => Track.fromPrivateJson(data)).toList(),
       library: library,
       radio: _radio,
+      favoriteDate: json['DATE_FAVORITE']
     );
   }
   Map<String, dynamic> toSQL({off = false}) => {
@@ -304,7 +310,8 @@ class Artist {
     'albumCount': this.albumCount??(this.albums??[]).length,
     'offline': off?1:0,
     'library': (library??false)?1:0,
-    'radio': radio?1:0
+    'radio': radio?1:0,
+    'favoriteDate': favoriteDate
   };
   factory Artist.fromSQL(Map<String, dynamic> data) => Artist(
     id: data['id'],
@@ -320,7 +327,8 @@ class Artist {
     fans: data['fans'],
     offline: (data['offline'] == 1)?true:false,
     library: (data['library'] == 1)?true:false,
-    radio: (data['radio'] == 1)?true:false
+    radio: (data['radio'] == 1)?true:false,
+    favoriteDate: data['favoriteDate']
   );
 
   factory Artist.fromJson(Map<String, dynamic> json) => _$ArtistFromJson(json);
