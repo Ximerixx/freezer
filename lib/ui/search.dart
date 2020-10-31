@@ -1,5 +1,6 @@
 import 'package:connectivity/connectivity.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/src/services/keyboard_key.dart';
 import 'package:freezer/api/cache.dart';
 import 'package:freezer/api/download.dart';
 import 'package:freezer/api/player.dart';
@@ -121,6 +122,7 @@ class _SearchScreenState extends State<SearchScreen> {
 
   @override
   Widget build(BuildContext context) {
+    var textFielFocusNode = FocusNode();
     return Scaffold(
       appBar: FreezerAppBar('Search'.i18n),
       body: ListView(
@@ -134,24 +136,36 @@ class _SearchScreenState extends State<SearchScreen> {
                   child: Stack(
                     alignment: Alignment(1.0, 0.0),
                     children: [
-                      TextField(
-                        onChanged: (String s) {
-                          setState(() => _query = s);
-                          _loadSuggestions();
-                        },
-                        decoration: InputDecoration(
-                          labelText: 'Search or paste URL'.i18n,
-                          fillColor: Theme.of(context).bottomAppBarColor,
-                          filled: true,
-                          focusedBorder: OutlineInputBorder(
-                            borderSide: BorderSide(color: Colors.grey)
-                          ),
-                          enabledBorder: OutlineInputBorder(
-                            borderSide: BorderSide(color: Colors.grey)
-                          ),
-                        ),
-                        controller: _controller,
-                        onSubmitted: (String s) => _submit(context, query: s),
+                      RawKeyboardListener(
+                          focusNode: FocusNode(),
+                          onKey: (event) {    // For Android TV: quit search textfield
+                            if (event.runtimeType.toString() == 'RawKeyUpEvent') {
+                              LogicalKeyboardKey key = event.data.logicalKey;
+                              if (key == LogicalKeyboardKey.arrowDown) {
+                                textFielFocusNode.unfocus();
+                              }
+                            }
+                          },
+                          child: TextField(
+                            onChanged: (String s) {
+                              setState(() => _query = s);
+                              _loadSuggestions();
+                            },
+                            focusNode: textFielFocusNode,
+                            decoration: InputDecoration(
+                              labelText: 'Search or paste URL'.i18n,
+                              fillColor: Theme.of(context).bottomAppBarColor,
+                              filled: true,
+                              focusedBorder: OutlineInputBorder(
+                                  borderSide: BorderSide(color: Colors.grey)
+                              ),
+                              enabledBorder: OutlineInputBorder(
+                                  borderSide: BorderSide(color: Colors.grey)
+                              ),
+                            ),
+                            controller: _controller,
+                            onSubmitted: (String s) => _submit(context, query: s),
+                          )
                       ),
                       Row(
                         mainAxisSize: MainAxisSize.min,
