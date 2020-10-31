@@ -628,6 +628,7 @@ class _SeekBarState extends State<SeekBar> {
             Container(
               height: 32.0,
               child: Slider(
+                focusNode: FocusNode(canRequestFocus: false, skipTraversal: true), // Don't focus on Slider - it doesn't work (and not needed)
                 value: position,
                 max: duration,
                 onChangeStart: (double d) {

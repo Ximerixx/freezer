@@ -84,6 +84,10 @@ class _FreezerAppState extends State<FreezerApp> {
   Widget build(BuildContext context) {
     return MaterialApp(
       title: 'Freezer',
+      shortcuts: <LogicalKeySet, Intent>{
+        ...WidgetsApp.defaultShortcuts,
+        LogicalKeySet(LogicalKeyboardKey.select): const ActivateIntent(), // DPAD center key, for remote controls
+      },
       theme: settings.themeData,
       localizationsDelegates: [
         GlobalMaterialLocalizations.delegate,
@@ -163,6 +167,7 @@ class _MainScreenState extends State<MainScreen> with SingleTickerProviderStateM
   List<Widget> _screens = [HomeScreen(), SearchScreen(), LibraryScreen()];
   int _selected = 0;
   StreamSubscription _urlLinkStream;
+  int _keyPressed = 0;
 
   @override
   void initState() {
@@ -237,49 +242,103 @@ class _MainScreenState extends State<MainScreen> with SingleTickerProviderStateM
     } catch (e) {}
   }
 
+  ValueChanged<RawKeyEvent> _handleKey(FocusScopeNode navigatorFocusNode, FocusNode rootFocusNode){
+    return (event) {
+      if (event.runtimeType.toString() == 'RawKeyDownEvent') {
+        int keyCode = (event.data as RawKeyEventDataAndroid).keyCode;
+        // Movement to navigation bar and back
+        switch (keyCode) {
+          case 127: // Menu on Android TV
+          case 327: // EPG on Hisense TV
+            navigatorFocusNode.requestFocus();
+            navigatorFocusNode.focusInDirection(TraversalDirection.down);
+            break;
+          case 22: // LEFT + RIGHT
+          case 21:
+            if (_keyPressed == 21 && keyCode == 22 || _keyPressed == 22 && keyCode == 21) {
+              navigatorFocusNode.requestFocus();
+              navigatorFocusNode.focusInDirection(TraversalDirection.down);
+            }
+            _keyPressed = keyCode;
+            Future.delayed(Duration(milliseconds: 100), () =>  {
+              _keyPressed = 0
+            });
+            break;
+          case 19: // UP
+            if (navigatorFocusNode.hasFocus) {
+              rootFocusNode.focusInDirection(TraversalDirection.up);
+            }
+            if (navigatorFocusNode.parent.hasPrimaryFocus || navigatorFocusNode.parent.parent.hasPrimaryFocus) {
+              navigatorFocusNode.parent.children.first.children.first.requestFocus();
+            }
+            break;
+        }
+      }
+      // WA for returning from search: focus on first child if parent is focused
+      if (event.runtimeType.toString() == 'RawKeyUpEvent') {
+        LogicalKeyboardKey key = event.data.logicalKey;
+        var modalFocusNode = navigatorFocusNode.parent.parent.children.first.children.first
+            .children.first;
+        if (key == LogicalKeyboardKey.arrowRight && modalFocusNode.hasPrimaryFocus) {
+          modalFocusNode.unfocus();
+          modalFocusNode.focusInDirection(TraversalDirection.right);
+        }
+      }
+    };
+  }
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      bottomNavigationBar: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: <Widget>[
-          PlayerBar(),
-          BottomNavigationBar(
-            backgroundColor: Theme.of(context).bottomAppBarColor,
-            currentIndex: _selected,
-            onTap: (int s) async {
+    FocusScopeNode navigatorFocusNode = FocusScopeNode(); // for bottom navigator
+    FocusNode rootFocusNode = FocusNode();  // for Scaffold
+           
+    return RawKeyboardListener(
+        focusNode: rootFocusNode,
+        onKey: _handleKey(navigatorFocusNode, rootFocusNode),
+        child: Scaffold(
+            bottomNavigationBar:
+                FocusScope(
+                    node: navigatorFocusNode,
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: <Widget>[
+                        PlayerBar(),
+                        BottomNavigationBar(
+                          backgroundColor: Theme.of(context).bottomAppBarColor,
+                          currentIndex: _selected,
+                          onTap: (int s) async {
+                            //Pop all routes until home screen
+                            while (navigatorKey.currentState.canPop()) {
+                              await navigatorKey.currentState.maybePop();
+                            }
 
-              //Pop all routes until home screen
-              while (navigatorKey.currentState.canPop()) {
-                await navigatorKey.currentState.maybePop();
-              }
-
-              await navigatorKey.currentState.maybePop();
-              setState(() {
-                _selected = s;
-              });
-            },
-            selectedItemColor: Theme.of(context).primaryColor,
-            items: <BottomNavigationBarItem>[
-              BottomNavigationBarItem(
-                  icon: Icon(Icons.home), title: Text('Home'.i18n)),
-              BottomNavigationBarItem(
-                icon: Icon(Icons.search),
-                title: Text('Search'.i18n),
+                            await navigatorKey.currentState.maybePop();
+                            setState(() {
+                              _selected = s;
+                            });
+                          },
+                          selectedItemColor: Theme.of(context).primaryColor,
+                          items: <BottomNavigationBarItem>[
+                            BottomNavigationBarItem(
+                                icon: Icon(Icons.home),
+                                title: Text('Home'.i18n)),
+                            BottomNavigationBarItem(
+                              icon: Icon(Icons.search),
+                              title: Text('Search'.i18n),
+                            ),
+                            BottomNavigationBarItem(
+                                icon: Icon(Icons.library_music),
+                                title: Text('Library'.i18n))
+                          ],
+                        )
+                      ],
+                    )),
+            body: AudioServiceWidget(
+              child: CustomNavigator(
+                navigatorKey: navigatorKey,
+                home: _screens[_selected],
+                pageRoute: PageRoutes.materialPageRoute,
               ),
-              BottomNavigationBarItem(
-                  icon: Icon(Icons.library_music), title: Text('Library'.i18n))
-            ],
-          )
-        ],
-      ),
-      body: AudioServiceWidget(
-        child: CustomNavigator(
-          navigatorKey: navigatorKey,
-          home: _screens[_selected],
-          pageRoute: PageRoutes.materialPageRoute,
-        ),
-      ));
+            )));
   }
 }
