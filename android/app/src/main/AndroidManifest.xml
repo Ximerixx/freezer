@@ -24,7 +24,8 @@
         <service
             android:name=".DownloadService"
             android:enabled="true"
-            android:exported="true"></service>
+            android:exported="true"
+            android:process=':downloads'></service>
 
         <activity
             android:name=".MainActivity"

@@ -182,16 +182,18 @@ class _PlayerScreenHorizontalState extends State<PlayerScreenHorizontal> {
                             setState(() => _lyrics = !_lyrics);
                           },
                         ),
-                        FlatButton(
-                          onPressed: () => Navigator.push(
-                            context,
-                            MaterialPageRoute(builder: (context) => QualitySettings())
+                        if (AudioService.currentMediaItem.extras['qualityString'] != null)
+                          FlatButton(
+                            onPressed: () => Navigator.push(
+                              context,
+                              MaterialPageRoute(builder: (context) => QualitySettings())
+                            ),
+                            child: Text(
+                              AudioService.currentMediaItem.extras['qualityString'] ?? '',
+                              style: TextStyle(fontSize: ScreenUtil().setSp(24)),
+                            ),
                           ),
-                          child: Text(
-                            AudioService.currentMediaItem.extras['qualityString'] ?? '',
-                            style: TextStyle(fontSize: ScreenUtil().setSp(24)),
-                          ),
-                        ),
+                        RepeatButton(ScreenUtil().setWidth(32)),
                         IconButton(
                           icon: Icon(Icons.more_vert, size: ScreenUtil().setWidth(32)),
                           onPressed: () {
@@ -305,27 +307,20 @@ class _PlayerScreenVerticalState extends State<PlayerScreenVertical> {
                   setState(() => _lyrics = !_lyrics);
                 },
               ),
-              FlatButton(
-                onPressed: () => Navigator.push(
-                  context,
-                  MaterialPageRoute(builder: (context) => QualitySettings())
-                ),
-                child: Text(
-                  AudioService.currentMediaItem.extras['qualityString'] ?? '',
-                  style: TextStyle(
-                    fontSize: ScreenUtil().setSp(32),
+              if (AudioService.currentMediaItem.extras['qualityString'] != null)
+                FlatButton(
+                  onPressed: () => Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (context) => QualitySettings())
+                  ),
+                  child: Text(
+                    AudioService.currentMediaItem.extras['qualityString'] ?? '',
+                    style: TextStyle(
+                      fontSize: ScreenUtil().setSp(32),
+                    ),
                   ),
                 ),
-              ),
-              IconButton(
-                icon: Icon(Icons.sentiment_very_dissatisfied, size:  ScreenUtil().setWidth(46)),
-                onPressed: () async {
-                  await deezerAPI.dislikeTrack(AudioService.currentMediaItem.id);
-                  if (playerHelper.queueIndex < (AudioService.queue??[]).length - 1) {
-                    AudioService.skipToNext();
-                  }
-                }
-              ),
+              RepeatButton(ScreenUtil().setWidth(46)),
               IconButton(
                 icon: Icon(Icons.more_vert, size: ScreenUtil().setWidth(46)),
                 onPressed: () {
@@ -342,6 +337,54 @@ class _PlayerScreenVerticalState extends State<PlayerScreenVertical> {
   }
 }
 
+
+class RepeatButton extends StatefulWidget {
+
+  final double iconSize;
+  RepeatButton(this.iconSize, {Key key}): super(key: key);
+
+  @override
+  _RepeatButtonState createState() => _RepeatButtonState();
+}
+
+class _RepeatButtonState extends State<RepeatButton> {
+
+  Icon get repeatIcon {
+    switch (playerHelper.repeatType) {
+      case LoopMode.off:
+        return Icon(
+            Icons.repeat,
+            size: widget.iconSize
+        );
+      case LoopMode.all:
+        return Icon(
+            Icons.repeat,
+            color: Theme.of(context).primaryColor,
+            size: widget.iconSize
+        );
+      case LoopMode.one:
+        return Icon(
+          Icons.repeat_one,
+          color: Theme.of(context).primaryColor,
+          size: widget.iconSize
+        );
+    }
+  }
+
+
+  @override
+  Widget build(BuildContext context) {
+    return IconButton(
+      icon: repeatIcon,
+      onPressed: () async {
+        await playerHelper.changeRepeat();
+        setState(() {});
+      },
+    );
+  }
+}
+
+
 class PlaybackControls extends StatefulWidget {
 
   final double iconSize;
@@ -352,28 +395,6 @@ class PlaybackControls extends StatefulWidget {
 }
 
 class _PlaybackControlsState extends State<PlaybackControls> {
-
-  Icon get repeatIcon {
-    switch (playerHelper.repeatType) {
-      case LoopMode.off:
-        return Icon(
-            Icons.repeat,
-            size: widget.iconSize * 0.64
-        );
-      case LoopMode.all:
-        return Icon(
-            Icons.repeat,
-            color: Theme.of(context).primaryColor,
-            size: widget.iconSize * 0.64
-        );
-      case LoopMode.one:
-        return Icon(
-          Icons.repeat_one,
-          color: Theme.of(context).primaryColor,
-          size: widget.iconSize * 0.64,
-        );
-    }
-  }
 
   Icon get libraryIcon {
     if (cache.checkTrackFavorite(Track.fromMediaItem(AudioService.currentMediaItem))) {
@@ -391,11 +412,13 @@ class _PlaybackControlsState extends State<PlaybackControls> {
         mainAxisSize: MainAxisSize.max,
         children: [
           IconButton(
-            icon: repeatIcon,
-            onPressed: () async {
-              await playerHelper.changeRepeat();
-              setState(() {});
-            },
+              icon: Icon(Icons.sentiment_very_dissatisfied, size:  ScreenUtil().setWidth(46)),
+              onPressed: () async {
+                await deezerAPI.dislikeTrack(AudioService.currentMediaItem.id);
+                if (playerHelper.queueIndex < (AudioService.queue??[]).length - 1) {
+                  AudioService.skipToNext();
+                }
+              }
           ),
           PrevNextButton(widget.iconSize, prev: true),
           PlayPauseButton(widget.iconSize * 1.25),

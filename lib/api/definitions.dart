@@ -430,7 +430,7 @@ class ImageDetails {
   //JSON
   factory ImageDetails.fromPrivateString(String art, {String type='cover'}) => ImageDetails(
     fullUrl: 'https://e-cdns-images.dzcdn.net/images/$type/$art/1400x1400-000000-80-0-0.jpg',
-    thumbUrl: 'https://e-cdns-images.dzcdn.net/images/$type/$art/180x180-000000-80-0-0.jpg'
+    thumbUrl: 'https://e-cdns-images.dzcdn.net/images/$type/$art/140x140-000000-80-0-0.jpg'
   );
   factory ImageDetails.fromPrivateJson(Map<dynamic, dynamic> json) => ImageDetails.fromPrivateString(
     json['MD5'].split('-').first,

@@ -134,9 +134,8 @@ class ArtistTile extends StatelessWidget {
   Widget build(BuildContext context) {
     return SizedBox(
       width: 150,
-      child: Card(
+      child: Container(
         color: Theme.of(context).scaffoldBackgroundColor,
-        elevation: 0.0,
         child: InkWell(
           onTap: onTap,
           onLongPress: onHold,
@@ -245,9 +244,8 @@ class PlaylistCardTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Card(
+    return Container(
       color: Theme.of(context).scaffoldBackgroundColor,
-      elevation: 0.0,
       child: InkWell(
         onTap: onTap,
         onLongPress: onHold,
@@ -291,8 +289,7 @@ class SmartTrackListTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Card(
-      elevation: 0,
+    return Container(
       color: Theme.of(context).scaffoldBackgroundColor,
       child: InkWell(
         onTap: onTap,
@@ -338,9 +335,8 @@ class AlbumCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Card(
+    return Container(
       color: Theme.of(context).scaffoldBackgroundColor,
-      elevation: 0.0,
       child: InkWell(
         onTap: onTap,
         onLongPress: onHold,
