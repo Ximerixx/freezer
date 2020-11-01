@@ -512,11 +512,12 @@ class _LibraryAlbumsState extends State<LibraryAlbums> {
 
   List<Album> get _sorted {
     List<Album> albums = List.from(_albums);
+    albums.sort((a, b) => a.favoriteDate.compareTo(b.favoriteDate));
     switch (_sort) {
       case AlbumSortType.DEFAULT:
-        return _albums;
+        return albums;
       case AlbumSortType.REVERSE:
-        return _albums.reversed.toList();
+        return albums.reversed.toList();
       case AlbumSortType.ALPHABETIC:
         albums.sort((a, b) => a.title.toLowerCase().compareTo(b.title.toLowerCase()));
         return albums;
@@ -677,11 +678,12 @@ class _LibraryArtistsState extends State<LibraryArtists> {
 
   List<Artist> get _sorted {
     List<Artist> artists = List.from(_artists);
+    artists.sort((a, b) => a.favoriteDate.compareTo(b.favoriteDate));
     switch (_sort) {
       case ArtistSortType.DEFAULT:
-        return _artists;
+        return artists;
       case ArtistSortType.REVERSE:
-        return _artists.reversed.toList();
+        return artists.reversed.toList();
       case ArtistSortType.POPULARITY:
         artists.sort((a, b) => b.fans - a.fans);
         return artists;
