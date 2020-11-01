@@ -7,6 +7,7 @@ import 'package:fluttertoast/fluttertoast.dart';
 import 'package:freezer/api/cache.dart';
 import 'package:freezer/api/deezer.dart';
 import 'package:freezer/api/download.dart';
+import 'package:freezer/api/player.dart';
 import 'package:freezer/ui/details_screens.dart';
 import 'package:freezer/ui/error.dart';
 import 'package:freezer/translations.i18n.dart';
@@ -132,6 +133,7 @@ class MenuSheet {
       addToPlaylist(track),
       downloadTrack(track),
       shareTile('track', track.id),
+      playMix(track),
       showAlbum(track.album),
       ...List.generate(track.artists.length, (i) => showArtist(track.artists[i])),
       ...options
@@ -289,6 +291,14 @@ class MenuSheet {
     },
   );
 
+  Widget playMix(Track track) => ListTile(
+    title: Text('Play mix'.i18n),
+    leading: Icon(Icons.online_prediction),
+    onTap: () async {
+      playerHelper.playMix(track.id, track.title);
+      _close();
+    },
+  );
 
   //===================
   // ALBUM

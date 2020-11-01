@@ -439,5 +439,13 @@ class DeezerAPI {
     });
     return data['results']['data'].map<Track>((t) => Track.fromPrivateJson(t)).toList();
   }
+
+  // Get similar tracks for track with id [trackId]
+  Future<List<Track>> playMix(String trackId) async {
+    Map data = await callApi('song.getContextualTrackMix', params: {
+      'sng_ids': [trackId]
+    });
+    return data['results']['data'].map<Track>((t) => Track.fromPrivateJson(t)).toList();
+  }
 }
 

@@ -150,33 +150,30 @@ class PlayerHelper {
     //Flow
     if (queueSource == null) return;
 
-    if (queueSource.id == 'flow') {
-      List<Track> tracks = await deezerAPI.flow();
-      List<MediaItem> mi = tracks.map<MediaItem>((t) => t.toMediaItem()).toList();
-      await AudioService.addQueueItems(mi);
-      AudioService.skipToNext();
-      return;
+    List<Track> tracks = [];
+    switch(queueSource.source) {
+      case 'flow':
+        tracks = await deezerAPI.flow();
+        break;
+      case 'smartradio':      //SmartRadio/Artist radio
+        tracks = await deezerAPI.smartRadio(queueSource.id);
+        break;
+      case 'libraryshuffle':  //Library shuffle
+        tracks = await deezerAPI.libraryShuffle(start: AudioService.queue.length);
+        break;
+      case 'mix':
+        tracks = await deezerAPI.playMix(queueSource.id);
+        // Deduplicate tracks with the same id
+        List<String> queueIds = AudioService.queue.map((e) => e.id).toList();
+        tracks.removeWhere((track) => queueIds.contains(track.id));
+        break;
+      default:
+        print(queueSource.toJson());
     }
 
-    //SmartRadio/Artist radio
-    if (queueSource.source == 'smartradio') {
-      List<Track> tracks = await deezerAPI.smartRadio(queueSource.id);
-      List<MediaItem> mi = tracks.map<MediaItem>((t) => t.toMediaItem()).toList();
-      await AudioService.addQueueItems(mi);
-      AudioService.skipToNext();
-      return;
-    }
-
-    //Library shuffle
-    if (queueSource.source == 'libraryshuffle') {
-      List<Track> tracks = await deezerAPI.libraryShuffle(start: AudioService.queue.length);
-      List<MediaItem> mi = tracks.map<MediaItem>((t) => t.toMediaItem()).toList();
-      await AudioService.addQueueItems(mi);
-      AudioService.skipToNext();
-      return;
-    }
-
-    print(queueSource.toJson());
+    List<MediaItem> mi = tracks.map<MediaItem>((t) => t.toMediaItem()).toList();
+    await AudioService.addQueueItems(mi);
+    AudioService.skipToNext();
   }
 
   //Play track from album
@@ -185,6 +182,16 @@ class PlayerHelper {
       id: album.id,
       text: album.title,
       source: 'album'
+    ));
+  }
+
+  //Play mix by track
+  Future playMix(String trackId, String trackTitle) async {
+    List<Track> tracks = await deezerAPI.playMix(trackId);
+    playFromTrackList(tracks, tracks[0].id, QueueSource(
+        id: trackId,
+        text: 'Mix based on'.i18n + ' $trackTitle',
+        source: 'mix'
     ));
   }
   //Play from artist top tracks
