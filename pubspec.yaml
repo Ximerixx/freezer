@@ -69,6 +69,7 @@ dependencies:
   share: ^0.6.5+2
   numberpicker: ^1.2.1
   quick_actions: ^0.4.0+10
+  photo_view:
 
   audio_session: ^0.0.9
   audio_service:

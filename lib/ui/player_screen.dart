@@ -470,10 +470,7 @@ class _BigAlbumArtState extends State<BigAlbumArt> {
           if (_animationLock) return;
           AudioService.skipToQueueItem(AudioService.queue[index].id);
         },
-        children: List.generate(AudioService.queue.length, (i) => CachedImage(
-          url: AudioService.queue[i].artUri,
-          fullThumb: true,
-        )),
+        children: List.generate(AudioService.queue.length, (i) => ZoomableImage(url: AudioService.queue[i].artUri)),
       ),
     );
   }
