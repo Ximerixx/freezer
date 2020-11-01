@@ -33,11 +33,12 @@ class Track {
   bool favorite;
   int diskNumber;
   bool explicit;
+  int favoriteDate;
 
   List<dynamic> playbackDetails;
 
   Track({this.id, this.title, this.duration, this.album, this.playbackDetails, this.albumArt,
-    this.artists, this.trackNumber, this.offline, this.lyrics, this.favorite, this.diskNumber, this.explicit});
+    this.artists, this.trackNumber, this.offline, this.lyrics, this.favorite, this.diskNumber, this.explicit, this.favoriteDate});
 
   String get artistString => artists.map<String>((art) => art.name).join(', ');
   String get durationString => "${duration.inMinutes}:${duration.inSeconds.remainder(60).toString().padLeft(2, '0')}";
@@ -139,7 +140,8 @@ class Track {
       lyrics: Lyrics(id: json['LYRICS_ID'].toString()),
       favorite: favorite,
       diskNumber: int.parse(json['DISK_NUMBER']??'1'),
-      explicit: (json['EXPLICIT_LYRICS'].toString() == '1') ? true:false
+      explicit: (json['EXPLICIT_LYRICS'].toString() == '1') ? true:false,
+      favoriteDate: json['DATE_ADD']
     );
   }
   Map<String, dynamic> toSQL({off = false}) => {
@@ -154,7 +156,8 @@ class Track {
     'lyrics': jsonEncode(lyrics.toJson()),
     'favorite': (favorite??0)?1:0,
     'diskNumber': diskNumber,
-    'explicit': explicit?1:0
+    'explicit': explicit?1:0,
+    'favoriteDate': favoriteDate
   };
   factory Track.fromSQL(Map<String, dynamic> data) => Track(
     id: data['trackId']??data['id'], //If loading from downloads table
@@ -170,7 +173,8 @@ class Track {
     lyrics: Lyrics.fromJson(jsonDecode(data['lyrics'])),
     favorite: (data['favorite'] == 1) ? true:false,
     diskNumber: data['diskNumber'],
-    explicit: (data['explicit'] == 1) ? true:false
+    explicit: (data['explicit'] == 1) ? true:false,
+    favoriteDate: data['favoriteDate']
   );
 
   factory Track.fromJson(Map<String, dynamic> json) => _$TrackFromJson(json);
