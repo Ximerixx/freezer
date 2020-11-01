@@ -32,6 +32,7 @@ Track _$TrackFromJson(Map<String, dynamic> json) {
     favorite: json['favorite'] as bool,
     diskNumber: json['diskNumber'] as int,
     explicit: json['explicit'] as bool,
+    favoriteDate: json['favoriteDate'] as int,
   );
 }
 
@@ -49,6 +50,7 @@ Map<String, dynamic> _$TrackToJson(Track instance) => <String, dynamic>{
       'diskNumber': instance.diskNumber,
       'explicit': instance.explicit,
       'playbackDetails': instance.playbackDetails,
+      'favoriteDate': instance.favoriteDate,
     };
 
 Album _$AlbumFromJson(Map<String, dynamic> json) {

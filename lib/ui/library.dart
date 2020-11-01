@@ -225,6 +225,7 @@ class _LibraryTracksState extends State<LibraryTracks> {
 
   List<Track> get _sorted {
     List<Track> tcopy = List.from(tracks);
+    tcopy.sort((a, b) => a.favoriteDate.compareTo(b.favoriteDate));
     switch (_sort) {
       case SortType.ALPHABETIC:
         tcopy.sort((a, b) => a.title.compareTo(b.title));
