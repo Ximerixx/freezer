@@ -199,6 +199,11 @@ class DeezerAPI {
     await callApi('artist.deleteFavorite', params: {'ART_ID': id});
   }
 
+  // Mark track as disliked
+  Future dislikeTrack(String id) async {
+    await callApi('favorite_dislike.add', params: {'ID': id, 'TYPE': 'song'});
+  }
+
   //Add tracks to playlist
   Future addToPlaylist(String trackId, String playlistId, {int offset = -1}) async {
     await callApi('playlist.addSongs', params: {

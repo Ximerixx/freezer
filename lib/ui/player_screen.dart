@@ -318,6 +318,15 @@ class _PlayerScreenVerticalState extends State<PlayerScreenVertical> {
                 ),
               ),
               IconButton(
+                icon: Icon(Icons.sentiment_very_dissatisfied, size:  ScreenUtil().setWidth(46)),
+                onPressed: () async {
+                  await deezerAPI.dislikeTrack(AudioService.currentMediaItem.id);
+                  if (playerHelper.queueIndex < (AudioService.queue??[]).length - 1) {
+                    AudioService.skipToNext();
+                  }
+                }
+              ),
+              IconButton(
                 icon: Icon(Icons.more_vert, size: ScreenUtil().setWidth(46)),
                 onPressed: () {
                   Track t = Track.fromMediaItem(AudioService.currentMediaItem);
