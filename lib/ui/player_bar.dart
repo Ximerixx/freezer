@@ -70,7 +70,7 @@ class PlayerBar extends StatelessWidget {
                     maxLines: 1,
                   ),
                   subtitle: Text(
-                    AudioService.currentMediaItem.displaySubtitle,
+                    AudioService.currentMediaItem.displaySubtitle ?? '',
                     overflow: TextOverflow.clip,
                     maxLines: 1,
                   ),
