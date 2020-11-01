@@ -13,6 +13,7 @@ import 'package:freezer/ui/error.dart';
 import 'package:freezer/ui/importer_screen.dart';
 import 'package:freezer/ui/tiles.dart';
 import 'package:freezer/translations.i18n.dart';
+import 'package:draggable_scrollbar/draggable_scrollbar.dart';
 
 import 'menu.dart';
 import 'settings_screen.dart';
@@ -399,97 +400,100 @@ class _LibraryTracksState extends State<LibraryTracks> {
           Container(width: 8.0),
         ],
       ),
-      body: ListView(
+      body: DraggableScrollbar.rrect(
         controller: _scrollController,
-        children: <Widget>[
-          Container(
-            child: Row(
-              mainAxisSize: MainAxisSize.max,
-              mainAxisAlignment: MainAxisAlignment.spaceAround,
-              children: <Widget>[
-                MakePlaylistOffline(_playlist),
-                FlatButton(
-                  child: Row(
-                    children: <Widget>[
-                      Icon(Icons.file_download, size: 32.0,),
-                      Container(width: 4,),
-                      Text('Download'.i18n)
-                    ],
-                  ),
-                  onPressed: () async {
-                    if (await downloadManager.addOfflinePlaylist(_playlist, private: false, context: context) != false)
-                      MenuSheet(context).showDownloadStartedToast();
-                  },
-                )
-              ],
-            )
-          ),
-          FreezerDivider(),
-          //Loved tracks
-          ...List.generate(tracks.length, (i) {
-            Track t = (tracks.length == (trackCount??0))?_sorted[i]:tracks[i];
-            return TrackTile(
-              t,
-              onTap: () {
-                playerHelper.playFromTrackList((tracks.length == (trackCount??0))?_sorted:tracks, t.id, QueueSource(
-                  id: deezerAPI.favoritesPlaylistId,
-                  text: 'Favorites'.i18n,
-                  source: 'playlist'
-                ));
-              },
-              onHold: () {
-                MenuSheet m = MenuSheet(context);
-                m.defaultTrackMenu(
-                  t,
-                  onRemove: () {
-                    setState(() {
-                      tracks.removeWhere((track) => t.id == track.id);
-                    });
-                  }
-                );
-              },
-            );
-          }),
-          if (_loading)
-            Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: <Widget>[
-                Padding(
-                  padding: EdgeInsets.symmetric(vertical: 8.0),
-                  child: CircularProgressIndicator(),
-                )
-              ],
+        backgroundColor: Theme.of(context).primaryColor,
+        child: ListView(
+          controller: _scrollController,
+          children: <Widget>[
+            Container(
+              child: Row(
+                mainAxisSize: MainAxisSize.max,
+                mainAxisAlignment: MainAxisAlignment.spaceAround,
+                children: <Widget>[
+                  MakePlaylistOffline(_playlist),
+                  FlatButton(
+                    child: Row(
+                      children: <Widget>[
+                        Icon(Icons.file_download, size: 32.0,),
+                        Container(width: 4,),
+                        Text('Download'.i18n)
+                      ],
+                    ),
+                    onPressed: () async {
+                      if (await downloadManager.addOfflinePlaylist(_playlist, private: false, context: context) != false)
+                        MenuSheet(context).showDownloadStartedToast();
+                    },
+                  )
+                ],
+              )
             ),
-          FreezerDivider(),
-          Text(
-            'All offline tracks'.i18n,
-            textAlign: TextAlign.center,
-            style: TextStyle(
-              fontSize: 24,
-              fontWeight: FontWeight.bold
-            ), 
-          ),
-          Container(height: 8,),
-          ...List.generate(allTracks.length, (i) {
-            Track t = allTracks[i];
-            return TrackTile(
-              t,
-              onTap: () {
-                playerHelper.playFromTrackList(allTracks, t.id, QueueSource(
-                  id: 'allTracks',
-                  text: 'All offline tracks'.i18n,
-                  source: 'offline'
-                ));
-              },
-              onHold: () {
-                MenuSheet m = MenuSheet(context);
-                m.defaultTrackMenu(t);
-              },
-            );
-          })
-        ],
+            FreezerDivider(),
+            //Loved tracks
+            ...List.generate(tracks.length, (i) {
+              Track t = (tracks.length == (trackCount??0))?_sorted[i]:tracks[i];
+              return TrackTile(
+                t,
+                onTap: () {
+                  playerHelper.playFromTrackList((tracks.length == (trackCount??0))?_sorted:tracks, t.id, QueueSource(
+                    id: deezerAPI.favoritesPlaylistId,
+                    text: 'Favorites'.i18n,
+                    source: 'playlist'
+                  ));
+                },
+                onHold: () {
+                  MenuSheet m = MenuSheet(context);
+                  m.defaultTrackMenu(
+                    t,
+                    onRemove: () {
+                      setState(() {
+                        tracks.removeWhere((track) => t.id == track.id);
+                      });
+                    }
+                  );
+                },
+              );
+            }),
+            if (_loading)
+              Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: <Widget>[
+                  Padding(
+                    padding: EdgeInsets.symmetric(vertical: 8.0),
+                    child: CircularProgressIndicator(),
+                  )
+                ],
+              ),
+            FreezerDivider(),
+            Text(
+              'All offline tracks'.i18n,
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                fontSize: 24,
+                fontWeight: FontWeight.bold
+              ),
+            ),
+            Container(height: 8,),
+            ...List.generate(allTracks.length, (i) {
+              Track t = allTracks[i];
+              return TrackTile(
+                t,
+                onTap: () {
+                  playerHelper.playFromTrackList(allTracks, t.id, QueueSource(
+                    id: 'allTracks',
+                    text: 'All offline tracks'.i18n,
+                    source: 'offline'
+                  ));
+                },
+                onHold: () {
+                  MenuSheet m = MenuSheet(context);
+                  m.defaultTrackMenu(t);
+                },
+              );
+            })
+          ],
       )
-    );
+      ));
   }
 }
 
@@ -510,6 +514,7 @@ class _LibraryAlbumsState extends State<LibraryAlbums> {
 
   List<Album> _albums;
   AlbumSortType _sort = AlbumSortType.DEFAULT;
+  ScrollController _scrollController = ScrollController();
 
   List<Album> get _sorted {
     List<Album> albums = List.from(_albums);
@@ -581,80 +586,84 @@ class _LibraryAlbumsState extends State<LibraryAlbums> {
           Container(width: 8.0),
         ],
       ),
-      body: ListView(
-        children: <Widget>[
-          Container(height: 8.0,),
-          if (!settings.offlineMode && _albums == null)
-            Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: <Widget>[
-                CircularProgressIndicator()
-              ],
-            ),
-
-          if (_albums != null)
-            ...List.generate(_albums.length, (int i) {
-              Album a = _sorted[i];
-              return AlbumTile(
-                a,
-                onTap: () {
-                  Navigator.of(context).push(
-                      MaterialPageRoute(builder: (context) => AlbumDetails(a))
-                  );
-                },
-                onHold: () async {
-                  MenuSheet m = MenuSheet(context);
-                  m.defaultAlbumMenu(a, onRemove: () {
-                    setState(() => _albums.remove(a));
-                  });
-                },
-              );
-            }),
-
-          FutureBuilder(
-            future: downloadManager.getOfflineAlbums(),
-            builder: (context, snapshot) {
-              if (snapshot.hasError || !snapshot.hasData || snapshot.data.length == 0) return Container(height: 0, width: 0,);
-
-              List<Album> albums = snapshot.data;
-              return Column(
+      body: DraggableScrollbar.rrect(
+        controller: _scrollController,
+        backgroundColor: Theme.of(context).primaryColor,
+        child: ListView(
+          controller: _scrollController,
+          children: <Widget>[
+            Container(height: 8.0,),
+            if (!settings.offlineMode && _albums == null)
+              Row(
+                mainAxisAlignment: MainAxisAlignment.center,
                 children: <Widget>[
-                  FreezerDivider(),
-                  Text(
-                    'Offline albums'.i18n,
-                    textAlign: TextAlign.center,
-                    style: TextStyle(
-                      fontWeight: FontWeight.bold,
-                      fontSize: 24.0
-                    ),
-                  ),
-                  ...List.generate(albums.length, (i) {
-                    Album a = albums[i];
-                    return AlbumTile(
-                      a,
-                      onTap: () {
-                        Navigator.of(context).push(
-                            MaterialPageRoute(builder: (context) => AlbumDetails(a))
-                        );
-                      },
-                      onHold: () async {
-                        MenuSheet m = MenuSheet(context);
-                        m.defaultAlbumMenu(a, onRemove: () {
-                          setState(() {
-                            albums.remove(a);
-                            _albums.remove(a);
-                          });
-                        });
-                      },
-                    );
-                  })
+                  CircularProgressIndicator()
                 ],
-              );
-            },
-          )
-        ],
-      ),
-    );
+              ),
+
+            if (_albums != null)
+              ...List.generate(_albums.length, (int i) {
+                Album a = _sorted[i];
+                return AlbumTile(
+                  a,
+                  onTap: () {
+                    Navigator.of(context).push(
+                        MaterialPageRoute(builder: (context) => AlbumDetails(a))
+                    );
+                  },
+                  onHold: () async {
+                    MenuSheet m = MenuSheet(context);
+                    m.defaultAlbumMenu(a, onRemove: () {
+                      setState(() => _albums.remove(a));
+                    });
+                  },
+                );
+              }),
+
+            FutureBuilder(
+              future: downloadManager.getOfflineAlbums(),
+              builder: (context, snapshot) {
+                if (snapshot.hasError || !snapshot.hasData || snapshot.data.length == 0) return Container(height: 0, width: 0,);
+
+                List<Album> albums = snapshot.data;
+                return Column(
+                  children: <Widget>[
+                    FreezerDivider(),
+                    Text(
+                      'Offline albums'.i18n,
+                      textAlign: TextAlign.center,
+                      style: TextStyle(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 24.0
+                      ),
+                    ),
+                    ...List.generate(albums.length, (i) {
+                      Album a = albums[i];
+                      return AlbumTile(
+                        a,
+                        onTap: () {
+                          Navigator.of(context).push(
+                              MaterialPageRoute(builder: (context) => AlbumDetails(a))
+                          );
+                        },
+                        onHold: () async {
+                          MenuSheet m = MenuSheet(context);
+                          m.defaultAlbumMenu(a, onRemove: () {
+                            setState(() {
+                              albums.remove(a);
+                              _albums.remove(a);
+                            });
+                          });
+                        },
+                      );
+                    })
+                  ],
+                );
+              },
+            )
+          ],
+        ),
+      ));
   }
 }
 
@@ -676,6 +685,7 @@ class _LibraryArtistsState extends State<LibraryArtists> {
   ArtistSortType _sort = ArtistSortType.DEFAULT;
   bool _loading = true;
   bool _error = false;
+  ScrollController _scrollController = ScrollController();
 
   List<Artist> get _sorted {
     List<Artist> artists = List.from(_artists);
@@ -757,43 +767,47 @@ class _LibraryArtistsState extends State<LibraryArtists> {
           Container(width: 8.0),
         ],
       ),
-      body: ListView(
-        children: <Widget>[
-          if (_loading)
-            Padding(
-              padding: EdgeInsets.all(8.0),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [CircularProgressIndicator()],
+      body: DraggableScrollbar.rrect(
+        controller: _scrollController,
+        backgroundColor: Theme.of(context).primaryColor,
+        child: ListView(
+          controller: _scrollController,
+          children: <Widget>[
+            if (_loading)
+              Padding(
+                padding: EdgeInsets.all(8.0),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [CircularProgressIndicator()],
+                ),
               ),
-            ),
 
-          if (_error)
-            Center(child: ErrorScreen()),
+            if (_error)
+              Center(child: ErrorScreen()),
 
-          if (!_loading && !_error)
-            ...List.generate(_artists.length, (i) {
-              Artist a = _sorted[i];
-              return ArtistHorizontalTile(
-                a,
-                onTap: () {
-                  Navigator.of(context).push(
-                      MaterialPageRoute(builder: (context) => ArtistDetails(a))
-                  );
-                },
-                onHold: () {
-                  MenuSheet m = MenuSheet(context);
-                  m.defaultArtistMenu(a, onRemove: () {
-                    setState(() {
-                      _artists.remove(a);
+            if (!_loading && !_error)
+              ...List.generate(_artists.length, (i) {
+                Artist a = _sorted[i];
+                return ArtistHorizontalTile(
+                  a,
+                  onTap: () {
+                    Navigator.of(context).push(
+                        MaterialPageRoute(builder: (context) => ArtistDetails(a))
+                    );
+                  },
+                  onHold: () {
+                    MenuSheet m = MenuSheet(context);
+                    m.defaultArtistMenu(a, onRemove: () {
+                      setState(() {
+                        _artists.remove(a);
+                      });
                     });
-                  });
-                },
-              );
-            }),
-        ],
+                  },
+                );
+              }),
+          ],
       ),
-    );
+    ));
   }
 }
 
@@ -814,6 +828,7 @@ class _LibraryPlaylistsState extends State<LibraryPlaylists> {
 
   List<Playlist> _playlists;
   PlaylistSortType _sort = PlaylistSortType.DEFAULT;
+  ScrollController _scrollController = ScrollController();
 
   List<Playlist> get _sorted {
     List<Playlist> playlists = List.from(_playlists);
@@ -902,111 +917,115 @@ class _LibraryPlaylistsState extends State<LibraryPlaylists> {
           Container(width: 8.0),
         ],
       ),
-      body: ListView(
-        children: <Widget>[
-          ListTile(
-            title: Text('Create new playlist'.i18n),
-            leading: LeadingIcon(Icons.playlist_add, color: Color(0xff009a85)),
-            onTap: () async {
-              if (settings.offlineMode) {
-                Fluttertoast.showToast(
-                  msg: 'Cannot create playlists in offline mode'.i18n,
-                  gravity: ToastGravity.BOTTOM
-                );
-                return;
-              }
-              MenuSheet m = MenuSheet(context);
-              await m.createPlaylist();
-              await _load();
-            },
-          ),
-          FreezerDivider(),
+      body: DraggableScrollbar.rrect(
+        controller: _scrollController,
+        backgroundColor: Theme.of(context).primaryColor,
+        child: ListView(
+          controller: _scrollController,
+          children: <Widget>[
+            ListTile(
+              title: Text('Create new playlist'.i18n),
+              leading: LeadingIcon(Icons.playlist_add, color: Color(0xff009a85)),
+              onTap: () async {
+                if (settings.offlineMode) {
+                  Fluttertoast.showToast(
+                    msg: 'Cannot create playlists in offline mode'.i18n,
+                    gravity: ToastGravity.BOTTOM
+                  );
+                  return;
+                }
+                MenuSheet m = MenuSheet(context);
+                await m.createPlaylist();
+                await _load();
+              },
+            ),
+            FreezerDivider(),
 
-          if (!settings.offlineMode && _playlists == null)
-            Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: <Widget>[
-                CircularProgressIndicator(),
-              ],
+            if (!settings.offlineMode && _playlists == null)
+              Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: <Widget>[
+                  CircularProgressIndicator(),
+                ],
+              ),
+
+            //Favorites playlist
+            PlaylistTile(
+              favoritesPlaylist,
+              onTap: () async {
+                Navigator.of(context).push(MaterialPageRoute(
+                    builder: (context) => PlaylistDetails(favoritesPlaylist)
+                ));
+              },
+              onHold: () {
+                MenuSheet m = MenuSheet(context);
+                favoritesPlaylist.library = true;
+                m.defaultPlaylistMenu(favoritesPlaylist);
+              },
             ),
 
-          //Favorites playlist
-          PlaylistTile(
-            favoritesPlaylist,
-            onTap: () async {
-              Navigator.of(context).push(MaterialPageRoute(
-                  builder: (context) => PlaylistDetails(favoritesPlaylist)
-              ));
-            },
-            onHold: () {
-              MenuSheet m = MenuSheet(context);
-              favoritesPlaylist.library = true;
-              m.defaultPlaylistMenu(favoritesPlaylist);
-            },
-          ),
-
-          if (_playlists != null)
-            ...List.generate(_playlists.length, (int i) {
-              Playlist p = (_sorted??[])[i];
-              return PlaylistTile(
-                p,
-                onTap: () => Navigator.of(context).push(MaterialPageRoute(
-                  builder: (context) => PlaylistDetails(p)
-                )),
-                onHold: () {
-                  MenuSheet m = MenuSheet(context);
-                  m.defaultPlaylistMenu(
-                    p,
-                    onRemove: () {setState(() => _playlists.remove(p));},
-                    onUpdate: () {_load();});
-                },
-              );
-            }),
-
-          FutureBuilder(
-            future: downloadManager.getOfflinePlaylists(),
-            builder: (context, snapshot) {
-              if (snapshot.hasError || !snapshot.hasData) return Container(height: 0, width: 0,);
-              if (snapshot.data.length == 0) return Container(height: 0, width: 0,);
-
-              List<Playlist> playlists = snapshot.data;
-              return Column(
-                children: <Widget>[
-                  FreezerDivider(),
-                  Text(
-                    'Offline playlists'.i18n,
-                    textAlign: TextAlign.center,
-                    style: TextStyle(
-                      fontSize: 24.0,
-                      fontWeight: FontWeight.bold
-                    ),
-                  ),
-                  ...List.generate(playlists.length, (i) {
-                    Playlist p = playlists[i];
-                    return PlaylistTile(
+            if (_playlists != null)
+              ...List.generate(_playlists.length, (int i) {
+                Playlist p = (_sorted??[])[i];
+                return PlaylistTile(
+                  p,
+                  onTap: () => Navigator.of(context).push(MaterialPageRoute(
+                    builder: (context) => PlaylistDetails(p)
+                  )),
+                  onHold: () {
+                    MenuSheet m = MenuSheet(context);
+                    m.defaultPlaylistMenu(
                       p,
-                      onTap: () => Navigator.of(context).push(MaterialPageRoute(
-                          builder: (context) => PlaylistDetails(p)
-                      )),
-                      onHold: () {
-                        MenuSheet m = MenuSheet(context);
-                        m.defaultPlaylistMenu(p, onRemove: () {
-                          setState(() {
-                            playlists.remove(p);
-                            _playlists.remove(p);
+                      onRemove: () {setState(() => _playlists.remove(p));},
+                      onUpdate: () {_load();});
+                  },
+                );
+              }),
+
+            FutureBuilder(
+              future: downloadManager.getOfflinePlaylists(),
+              builder: (context, snapshot) {
+                if (snapshot.hasError || !snapshot.hasData) return Container(height: 0, width: 0,);
+                if (snapshot.data.length == 0) return Container(height: 0, width: 0,);
+
+                List<Playlist> playlists = snapshot.data;
+                return Column(
+                  children: <Widget>[
+                    FreezerDivider(),
+                    Text(
+                      'Offline playlists'.i18n,
+                      textAlign: TextAlign.center,
+                      style: TextStyle(
+                        fontSize: 24.0,
+                        fontWeight: FontWeight.bold
+                      ),
+                    ),
+                    ...List.generate(playlists.length, (i) {
+                      Playlist p = playlists[i];
+                      return PlaylistTile(
+                        p,
+                        onTap: () => Navigator.of(context).push(MaterialPageRoute(
+                            builder: (context) => PlaylistDetails(p)
+                        )),
+                        onHold: () {
+                          MenuSheet m = MenuSheet(context);
+                          m.defaultPlaylistMenu(p, onRemove: () {
+                            setState(() {
+                              playlists.remove(p);
+                              _playlists.remove(p);
+                            });
                           });
-                        });
-                      },
-                    );
-                  })
-                ],
-              );
-            },
-          )
+                        },
+                      );
+                    })
+                  ],
+                );
+              },
+            )
 
         ],
       ),
-    );
+    ));
   }
 }
 
@@ -1016,6 +1035,7 @@ class HistoryScreen extends StatefulWidget {
 }
 
 class _HistoryScreenState extends State<HistoryScreen> {
+  ScrollController _scrollController = ScrollController();
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -1031,25 +1051,30 @@ class _HistoryScreenState extends State<HistoryScreen> {
           )
         ],
       ),
-      body: ListView.builder(
-        itemCount: (cache.history??[]).length,
-        itemBuilder: (BuildContext context, int i) {
-          Track t = cache.history[cache.history.length - i - 1];
-          return TrackTile(
-            t,
-            onTap: () {
-              playerHelper.playFromTrackList(cache.history.reversed.toList(), t.id, QueueSource(
-                id: null,
-                text: 'History'.i18n,
-                source: 'history'
-              ));
-            },
-            onHold: () {
-              MenuSheet m = MenuSheet(context);
-              m.defaultTrackMenu(t);
-            },
-          );
-        },
+      body: DraggableScrollbar.rrect(
+        controller: _scrollController,
+        backgroundColor: Theme.of(context).primaryColor,
+        child: ListView.builder(
+          controller: _scrollController,
+          itemCount: (cache.history??[]).length,
+          itemBuilder: (BuildContext context, int i) {
+            Track t = cache.history[cache.history.length - i - 1];
+            return TrackTile(
+              t,
+              onTap: () {
+                playerHelper.playFromTrackList(cache.history.reversed.toList(), t.id, QueueSource(
+                  id: null,
+                  text: 'History'.i18n,
+                  source: 'history'
+                ));
+              },
+              onHold: () {
+                MenuSheet m = MenuSheet(context);
+                m.defaultTrackMenu(t);
+              },
+            );
+          },
+        )
       ),
     );
   }
