@@ -250,19 +250,26 @@ class _MainScreenState extends State<MainScreen> with SingleTickerProviderStateM
         switch (keyCode) {
           case 127: // Menu on Android TV
           case 327: // EPG on Hisense TV
-            navigatorFocusNode.requestFocus();
-            navigatorFocusNode.focusInDirection(TraversalDirection.down);
+            focusToNavbar(navigatorFocusNode);
             break;
           case 22: // LEFT + RIGHT
           case 21:
             if (_keyPressed == 21 && keyCode == 22 || _keyPressed == 22 && keyCode == 21) {
-              navigatorFocusNode.requestFocus();
-              navigatorFocusNode.focusInDirection(TraversalDirection.down);
+              focusToNavbar(navigatorFocusNode);
             }
             _keyPressed = keyCode;
             Future.delayed(Duration(milliseconds: 100), () =>  {
               _keyPressed = 0
             });
+            break;
+          case 20: // DOWN
+            // If it's bottom row, go to navigation bar
+            var row = FocusManager.instance.primaryFocus.parent;
+            var column = row.parent;
+
+            if (column.children.last == row) {
+              focusToNavbar(navigatorFocusNode);
+            }
             break;
           case 19: // UP
             if (navigatorFocusNode.hasFocus) {
@@ -285,6 +292,11 @@ class _MainScreenState extends State<MainScreen> with SingleTickerProviderStateM
         }
       }
     };
+  }
+
+  void focusToNavbar(FocusScopeNode navigatorFocusNode) {
+    navigatorFocusNode.requestFocus();
+    navigatorFocusNode.focusInDirection(TraversalDirection.down); // If player bar is hidden, focus won't be visible, so go down once more
   }
 
   @override
