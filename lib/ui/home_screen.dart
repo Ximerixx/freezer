@@ -144,8 +144,20 @@ class _HomePageScreenState extends State<HomePageScreen> {
     if (_error)
       return ErrorScreen();
     return Column(
-      children: List.generate(_homePage.sections.length, (i) {
-        HomePageSection section = _homePage.sections[i];
+        children: List.generate(_homePage.sections.length, (i) {
+          return HomepageSectionWidget(_homePage.sections[i]);
+        },
+    ));
+  }
+}
+
+class HomepageSectionWidget extends StatelessWidget {
+
+  final HomePageSection section;
+  HomepageSectionWidget(this.section);
+
+  @override
+  Widget build(BuildContext context) {
         return ListTile(
             title: Text(
               section.title??'',
@@ -194,8 +206,6 @@ class _HomePageScreenState extends State<HomePageScreen> {
               ),
             )
         );
-      })
-    );
   }
 }
 
