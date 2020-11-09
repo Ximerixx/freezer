@@ -1,3 +1,4 @@
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:audio_service/audio_service.dart';
 import 'package:flutter/services.dart';
@@ -8,12 +9,14 @@ import 'package:freezer/api/player.dart';
 import 'package:freezer/settings.dart';
 import 'package:freezer/translations.i18n.dart';
 import 'package:freezer/ui/elements.dart';
+import 'package:freezer/ui/lyrics.dart';
 import 'package:freezer/ui/menu.dart';
 import 'package:freezer/ui/settings_screen.dart';
 import 'package:freezer/ui/tiles.dart';
 import 'package:async/async.dart';
 import 'package:just_audio/just_audio.dart';
 import 'package:marquee/marquee.dart';
+import 'package:palette_generator/palette_generator.dart';
 
 import 'cached_image.dart';
 import '../api/definitions.dart';
@@ -29,8 +32,39 @@ class PlayerScreen extends StatefulWidget {
 
 class _PlayerScreenState extends State<PlayerScreen> {
 
+  LinearGradient _bgGradient;
+  StreamSubscription _mediaItemSub;
+
+  //Calculate background color
+  Future _calculateColor() async {
+    if (!settings.colorGradientBackground)
+      return;
+    PaletteGenerator palette = await PaletteGenerator.fromImageProvider(CachedNetworkImageProvider(AudioService.currentMediaItem.extras['thumb'] ?? AudioService.currentMediaItem.artUri));
+    setState(() => _bgGradient = LinearGradient(
+      begin: Alignment.topCenter,
+      end: Alignment.bottomCenter,
+      colors: [palette.dominantColor.color.withOpacity(0.5), Theme.of(context).bottomAppBarColor],
+      stops: [
+        0.0,
+        0.4
+      ]
+    ));
+  }
+
+  @override
+  void initState() {
+    _calculateColor();
+    _mediaItemSub = AudioService.currentMediaItemStream.listen((event) {
+      _calculateColor();
+    });
+    super.initState();
+  }
+
   @override
   void dispose() {
+    if (_mediaItemSub != null)
+        _mediaItemSub.cancel();
+    //Fix bottom buttons
     SystemChrome.setSystemUIOverlayStyle(SystemUiOverlayStyle(
       systemNavigationBarColor: settings.themeData.bottomAppBarColor,
     ));
@@ -44,29 +78,34 @@ class _PlayerScreenState extends State<PlayerScreen> {
 
     return Scaffold(
       body: SafeArea(
-        child: StreamBuilder(
-          stream: StreamZip([AudioService.playbackStateStream, AudioService.currentMediaItemStream]),
-          builder: (BuildContext context, AsyncSnapshot snapshot) {
+        child: Container(
+          decoration: BoxDecoration(
+            gradient: _bgGradient
+          ),
+          child: StreamBuilder(
+            stream: StreamZip([AudioService.playbackStateStream, AudioService.currentMediaItemStream]),
+            builder: (BuildContext context, AsyncSnapshot snapshot) {
 
-            //When disconnected
-            if (AudioService.currentMediaItem == null) {
-              playerHelper.startService();
-              return Center(child: CircularProgressIndicator(),);
-            }
+              //When disconnected
+              if (AudioService.currentMediaItem == null) {
+                playerHelper.startService();
+                return Center(child: CircularProgressIndicator(),);
+              }
 
-            return OrientationBuilder(
-              builder: (context, orientation) {
-                //Landscape
-                if (orientation == Orientation.landscape) {
-                  return PlayerScreenHorizontal();
-                }
-                //Portrait
-                return PlayerScreenVertical();
-              },
-            );
+              return OrientationBuilder(
+                builder: (context, orientation) {
+                  //Landscape
+                  if (orientation == Orientation.landscape) {
+                    return PlayerScreenHorizontal();
+                  }
+                  //Portrait
+                  return PlayerScreenVertical();
+                },
+              );
 
-          },
-        ),
+            },
+          ),
+        )
       )
     );
   }
@@ -79,9 +118,6 @@ class PlayerScreenHorizontal extends StatefulWidget {
 }
 
 class _PlayerScreenHorizontalState extends State<PlayerScreenHorizontal> {
-
-  bool _lyrics = false;
-
   @override
   Widget build(BuildContext context) {
     return Row(
@@ -95,12 +131,6 @@ class _PlayerScreenHorizontalState extends State<PlayerScreenHorizontal> {
               child: Stack(
                 children: <Widget>[
                   BigAlbumArt(),
-                  if (_lyrics) LyricsWidget(
-                    artUri: AudioService.currentMediaItem.extras['thumb'],
-                    trackId: AudioService.currentMediaItem.id,
-                    lyrics: Track.fromMediaItem(AudioService.currentMediaItem).lyrics,
-                    height: ScreenUtil().setWidth(500),
-                  ),
                 ],
               ),
             ),
@@ -179,7 +209,9 @@ class _PlayerScreenHorizontalState extends State<PlayerScreenHorizontal> {
                         IconButton(
                           icon: Icon(Icons.subtitles, size: ScreenUtil().setWidth(32)),
                           onPressed: () {
-                            setState(() => _lyrics = !_lyrics);
+                            Navigator.of(context).push(MaterialPageRoute(
+                              builder: (context) => LyricsScreen(trackId: AudioService.currentMediaItem.id)
+                            ));
                           },
                         ),
                         if (AudioService.currentMediaItem.extras['qualityString'] != null)
@@ -223,8 +255,6 @@ class PlayerScreenVertical extends StatefulWidget {
 }
 
 class _PlayerScreenVerticalState extends State<PlayerScreenVertical> {
-  bool _lyrics = false;
-
   @override
   Widget build(BuildContext context) {
     return Column(
@@ -242,12 +272,6 @@ class _PlayerScreenVerticalState extends State<PlayerScreenVertical> {
             child: Stack(
               children: <Widget>[
                 BigAlbumArt(),
-                if (_lyrics) LyricsWidget(
-                  artUri: AudioService.currentMediaItem.extras['thumb'],
-                  trackId: AudioService.currentMediaItem.id,
-                  lyrics: Track.fromMediaItem(AudioService.currentMediaItem).lyrics,
-                  height: ScreenUtil().setHeight(1000),
-                ),
               ],
             ),
           ),
@@ -304,7 +328,9 @@ class _PlayerScreenVerticalState extends State<PlayerScreenVertical> {
               IconButton(
                 icon: Icon(Icons.subtitles, size: ScreenUtil().setWidth(46)),
                 onPressed: () {
-                  setState(() => _lyrics = !_lyrics);
+                  Navigator.of(context).push(MaterialPageRoute(
+                    builder: (context) => LyricsScreen(trackId: AudioService.currentMediaItem.id)
+                  ));
                 },
               ),
               if (AudioService.currentMediaItem.extras['qualityString'] != null)
@@ -494,164 +520,6 @@ class _BigAlbumArtState extends State<BigAlbumArt> {
           AudioService.skipToQueueItem(AudioService.queue[index].id);
         },
         children: List.generate(AudioService.queue.length, (i) => ZoomableImage(url: AudioService.queue[i].artUri)),
-      ),
-    );
-  }
-}
-
-
-class LyricsWidget extends StatefulWidget {
-
-  final Lyrics lyrics;
-  final String trackId;
-  final String artUri;
-  final double height;
-  LyricsWidget({this.artUri, this.lyrics, this.trackId, this.height, Key key}): super(key: key);
-
-  @override
-  _LyricsWidgetState createState() => _LyricsWidgetState();
-}
-
-class _LyricsWidgetState extends State<LyricsWidget> {
-
-  bool _loading = true;
-  Lyrics _l;
-  Color _textColor = Colors.black;
-  ScrollController _scrollController = ScrollController();
-  Timer _timer;
-  int _currentIndex;
-  double _boxHeight;
-  double _lyricHeight = 128;
-  String _trackId;
-
-  Future _load() async {
-    _trackId = widget.trackId;
-
-    //Get text color by album art (black or white)
-    if (widget.artUri != null) {
-      bool bw = await imagesDatabase.isDark(widget.artUri);
-      if (bw != null) setState(() => _textColor = bw?Colors.white:Colors.black);
-    }
-
-    if (widget.lyrics.lyrics == null || widget.lyrics.lyrics.length == 0) {
-      //Load from api
-      try {
-        _l = await deezerAPI.lyrics(_trackId);
-        setState(() => _loading = false);
-      } catch (e) {
-        print(e);
-        //Error Lyrics
-        setState(() => _l = Lyrics.error());
-      }
-
-      //Empty lyrics
-      if (_l.lyrics.length == 0) {
-        setState(() {
-          _l = Lyrics.error();
-          _loading = false;
-        });
-      }
-
-    } else {
-      //Use provided lyrics
-      _l = widget.lyrics;
-      setState(() => _loading = false);
-    }
-  }
-
-  @override
-  void initState() {
-    this._boxHeight = widget.height??400.0;
-    _load();
-
-    Timer.periodic(Duration(milliseconds: 500), (timer) {
-      _timer = timer;
-      if (_loading) return;
-      //Update index of current lyric
-      setState(() {
-        _currentIndex = _l.lyrics.lastIndexWhere((l) => l.offset <= AudioService.playbackState.currentPosition);
-      });
-      //Scroll to current lyric
-      if (_currentIndex <= 0) return;
-      _scrollController.animateTo(
-        (_lyricHeight * _currentIndex) + (_lyricHeight / 2) - (_boxHeight / 2),
-        duration: Duration(milliseconds: 250),
-        curve: Curves.ease
-      );
-
-    });
-    super.initState();
-  }
-
-  @override
-  void dispose() {
-    if (_timer != null) _timer.cancel();
-    super.dispose();
-  }
-
-  @override
-  void didUpdateWidget(LyricsWidget oldWidget) {
-    if (this._trackId != widget.trackId) {
-      setState(() {
-        _loading = true;
-        this._trackId = widget.trackId;
-      });
-      _load();
-    }
-    super.didUpdateWidget(oldWidget);
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      height: _boxHeight,
-      width: _boxHeight,
-      child: BackdropFilter(
-        filter: ImageFilter.blur(
-          sigmaX: 7.0,
-          sigmaY: 7.0
-        ),
-        child: Container(
-            child: _loading?
-            Center(child: CircularProgressIndicator(),) :
-            SingleChildScrollView(
-              controller: _scrollController,
-              child: Column(
-                children: List.generate(_l.lyrics.length, (i) {
-                  return Container(
-                      height: _lyricHeight,
-                      child: Center(
-                        child: Stack(
-                          children: <Widget>[
-                            Text(
-                              _l.lyrics[i].text,
-                              textAlign: TextAlign.center,
-                              style: TextStyle(
-                                fontSize: 28.0,
-                                fontWeight: (_currentIndex == i)?FontWeight.bold:FontWeight.normal,
-                                foreground: Paint()
-                                  ..strokeWidth = 6
-                                  ..style = PaintingStyle.stroke
-                                  ..color = (_textColor==Colors.black)?Colors.white:Colors.black,
-                              ),
-                            ),
-                            Text(
-                              _l.lyrics[i].text,
-                              textAlign: TextAlign.center,
-                              style: TextStyle(
-                                  color: _textColor,
-                                  fontSize: 28.0,
-                                  fontWeight: (_currentIndex == i)?FontWeight.bold:FontWeight.normal
-                              ),
-                            ),
-                          ],
-                        )
-                      )
-                  );
-                }),
-              ),
-            )
-        ),
       ),
     );
   }

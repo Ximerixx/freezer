@@ -25,7 +25,7 @@
             android:name=".DownloadService"
             android:enabled="true"
             android:exported="true"
-            android:process=':downloads'></service>
+            android:process="f.f.freezer.DownloadService" ></service>
 
         <activity
             android:name=".MainActivity"

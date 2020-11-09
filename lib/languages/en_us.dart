@@ -259,6 +259,18 @@ const language_en_us = {
 
     //0.6.1 Strings:
     "Search history": "Search history",
-    "Clear search history": "Clear search history"
+    "Clear search history": "Clear search history",
+
+    //0.6.2 Strings:
+    "LastFM": "LastFM",
+    "Login to enable scrobbling.": "Login to enable scrobbling.",
+    "Login to LastFM": "Login to LastFM",
+    "Username": "Username",
+    "Password": "Password",
+    "Login": "Login",
+    "Authorization error!": "Authorization error!",
+    "Logged out!": "Logged out!",
+    "Lyrics": "Lyrics",
+    "Player gradient background": "Player gradient background"
   }
 };

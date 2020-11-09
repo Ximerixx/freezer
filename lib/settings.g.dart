@@ -40,12 +40,15 @@ Settings _$SettingsFromJson(Map<String, dynamic> json) {
     ..theme =
         _$enumDecodeNullable(_$ThemesEnumMap, json['theme']) ?? Themes.Dark
     ..useSystemTheme = json['useSystemTheme'] as bool ?? false
+    ..colorGradientBackground = json['colorGradientBackground'] as bool ?? true
     ..primaryColor = Settings._colorFromJson(json['primaryColor'] as int)
     ..useArtColor = json['useArtColor'] as bool ?? false
     ..deezerLanguage = json['deezerLanguage'] as String ?? 'en'
     ..deezerCountry = json['deezerCountry'] as String ?? 'US'
     ..logListen = json['logListen'] as bool ?? false
-    ..proxyAddress = json['proxyAddress'] as String;
+    ..proxyAddress = json['proxyAddress'] as String
+    ..lastFMUsername = json['lastFMUsername'] as String
+    ..lastFMPassword = json['lastFMPassword'] as String;
 }
 
 Map<String, dynamic> _$SettingsToJson(Settings instance) => <String, dynamic>{
@@ -70,12 +73,15 @@ Map<String, dynamic> _$SettingsToJson(Settings instance) => <String, dynamic>{
       'nomediaFiles': instance.nomediaFiles,
       'theme': _$ThemesEnumMap[instance.theme],
       'useSystemTheme': instance.useSystemTheme,
+      'colorGradientBackground': instance.colorGradientBackground,
       'primaryColor': Settings._colorToJson(instance.primaryColor),
       'useArtColor': instance.useArtColor,
       'deezerLanguage': instance.deezerLanguage,
       'deezerCountry': instance.deezerCountry,
       'logListen': instance.logListen,
       'proxyAddress': instance.proxyAddress,
+      'lastFMUsername': instance.lastFMUsername,
+      'lastFMPassword': instance.lastFMPassword,
     };
 
 T _$enumDecode<T>(

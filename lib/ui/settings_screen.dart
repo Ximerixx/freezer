@@ -11,6 +11,7 @@ import 'package:fluttertoast/fluttertoast.dart';
 import 'package:freezer/api/cache.dart';
 import 'package:freezer/api/deezer.dart';
 import 'package:freezer/api/download.dart';
+import 'package:freezer/api/player.dart';
 import 'package:freezer/ui/downloads_screen.dart';
 import 'package:freezer/ui/elements.dart';
 import 'package:freezer/ui/error.dart';
@@ -23,6 +24,7 @@ import 'package:path_provider_ex/path_provider_ex.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:freezer/translations.i18n.dart';
 import 'package:clipboard/clipboard.dart';
+import 'package:scrobblenaut/scrobblenaut.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import '../settings.dart';
@@ -234,6 +236,17 @@ class _AppearanceSettingsState extends State<AppearanceSettings> {
               },
             ),
             leading: Icon(Icons.android)
+          ),
+          ListTile(
+            title: Text('Player gradient background'.i18n),
+            leading: Icon(Icons.colorize),
+            trailing: Switch(
+              value: settings.colorGradientBackground,
+              onChanged: (bool v) async {
+                setState(() => settings.colorGradientBackground = v);
+                await settings.save();
+              },
+            ),
           ),
           ListTile(
             title: Text('Primary color'.i18n),
@@ -884,6 +897,32 @@ class _GeneralSettingsState extends State<GeneralSettings> {
             },
           ),
           ListTile(
+            title: Text('LastFM'.i18n),
+            subtitle: Text(
+                (settings.lastFMPassword != null && settings.lastFMUsername != null)
+                ? 'Log out'.i18n
+                : 'Login to enable scrobbling.'.i18n
+            ),
+            leading: Icon(FontAwesome5.lastfm),
+            onTap: () async {
+              //Log out
+              if (settings.lastFMPassword != null && settings.lastFMUsername != null) {
+                settings.lastFMUsername = null;
+                settings.lastFMPassword = null;
+                playerHelper.scrobblenaut = null;
+                await settings.save();
+                setState(() {});
+                Fluttertoast.showToast(msg: 'Logged out!'.i18n);
+                return;
+              }
+              await showDialog(
+                context: context,
+                builder: (context) => LastFMLogin()
+              );
+              setState(() {});
+            },
+          ),
+          ListTile(
             title: Text('Log out'.i18n, style: TextStyle(color: Colors.red),),
             leading: Icon(Icons.exit_to_app),
             onTap: () {
@@ -936,6 +975,73 @@ class _GeneralSettingsState extends State<GeneralSettings> {
     );
   }
 }
+
+class LastFMLogin extends StatefulWidget {
+  @override
+  _LastFMLoginState createState() => _LastFMLoginState();
+}
+
+class _LastFMLoginState extends State<LastFMLogin> {
+
+  String _username = '';
+  String _password = '';
+
+  @override
+  Widget build(BuildContext context) {
+    return AlertDialog(
+      title: Text('Login to LastFM'.i18n),
+      content: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          TextField(
+            decoration: InputDecoration(
+              hintText: 'Username'.i18n
+            ),
+            onChanged: (v) => _username = v,
+          ),
+          Container(height: 8.0),
+          TextField(
+            obscureText: true,
+            decoration: InputDecoration(
+              hintText: 'Password'.i18n
+            ),
+            onChanged: (v) => _password = v,
+          )
+        ],
+      ),
+      actions: [
+        FlatButton(
+          child: Text('Cancel'.i18n),
+          onPressed: () => Navigator.of(context).pop(),
+        ),
+        FlatButton(
+          child: Text('Login'.i18n),
+          onPressed: () async {
+            LastFM last;
+            try {
+              last = await LastFM.authenticate(
+                  apiKey: 'b6ab5ae967bcd8b10b23f68f42493829',
+                  apiSecret: '861b0dff9a8a574bec747f9dab8b82bf',
+                  username: _username,
+                  password: _password
+              );
+            } catch (e) {
+              Fluttertoast.showToast(msg: 'Authorization error!'.i18n);
+              return;
+            }
+            //Save
+            settings.lastFMUsername = last.username;
+            settings.lastFMPassword = last.passwordHash;
+            await settings.save();
+            playerHelper.scrobblenaut = Scrobblenaut(lastFM: last);
+            Navigator.of(context).pop();
+          },
+        ),
+      ],
+    );
+  }
+}
+
 
 class DirectoryPicker extends StatefulWidget {
 

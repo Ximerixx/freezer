@@ -49,8 +49,8 @@ Map<String, dynamic> _$TrackToJson(Track instance) => <String, dynamic>{
       'favorite': instance.favorite,
       'diskNumber': instance.diskNumber,
       'explicit': instance.explicit,
-      'playbackDetails': instance.playbackDetails,
       'favoriteDate': instance.favoriteDate,
+      'playbackDetails': instance.playbackDetails,
     };
 
 Album _$AlbumFromJson(Map<String, dynamic> json) {
@@ -73,7 +73,7 @@ Album _$AlbumFromJson(Map<String, dynamic> json) {
     library: json['library'] as bool,
     type: _$enumDecodeNullable(_$AlbumTypeEnumMap, json['type']),
     releaseDate: json['releaseDate'] as String,
-    favoriteDate: json['favoriteDate'] as String
+    favoriteDate: json['favoriteDate'] as String,
   );
 }
 
@@ -88,7 +88,7 @@ Map<String, dynamic> _$AlbumToJson(Album instance) => <String, dynamic>{
       'library': instance.library,
       'type': _$AlbumTypeEnumMap[instance.type],
       'releaseDate': instance.releaseDate,
-      'favoriteDate': instance.favoriteDate
+      'favoriteDate': instance.favoriteDate,
     };
 
 T _$enumDecode<T>(
@@ -149,6 +149,7 @@ Artist _$ArtistFromJson(Map<String, dynamic> json) {
     offline: json['offline'] as bool,
     library: json['library'] as bool,
     radio: json['radio'] as bool,
+    favoriteDate: json['favoriteDate'] as String,
   );
 }
 
@@ -163,6 +164,7 @@ Map<String, dynamic> _$ArtistToJson(Artist instance) => <String, dynamic>{
       'offline': instance.offline,
       'library': instance.library,
       'radio': instance.radio,
+      'favoriteDate': instance.favoriteDate,
     };
 
 Playlist _$PlaylistFromJson(Map<String, dynamic> json) {

@@ -73,6 +73,8 @@ class Settings {
   Themes theme;
   @JsonKey(defaultValue: false)
   bool useSystemTheme;
+  @JsonKey(defaultValue: true)
+  bool colorGradientBackground;
 
   //Colors
   @JsonKey(toJson: _colorToJson, fromJson: _colorFromJson)
@@ -94,6 +96,13 @@ class Settings {
   bool logListen;
   @JsonKey(defaultValue: null)
   String proxyAddress;
+
+  //LastFM
+  @JsonKey(defaultValue: null)
+  String lastFMUsername;
+  @JsonKey(defaultValue: null)
+  String lastFMPassword;
+
 
   Settings({this.downloadPath, this.arl});
 

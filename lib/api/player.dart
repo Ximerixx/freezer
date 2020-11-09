@@ -1,5 +1,3 @@
-import 'dart:math';
-
 import 'package:audio_service/audio_service.dart';
 import 'package:audio_session/audio_session.dart';
 import 'package:fluttertoast/fluttertoast.dart';
@@ -11,6 +9,7 @@ import 'package:connectivity/connectivity.dart';
 import 'package:path/path.dart' as p;
 import 'package:path_provider/path_provider.dart';
 import 'package:freezer/translations.i18n.dart';
+import 'package:scrobblenaut/scrobblenaut.dart';
 
 import 'definitions.dart';
 import '../settings.dart';
@@ -28,6 +27,8 @@ class PlayerHelper {
   StreamSubscription _playbackStateStreamSubscription;
   QueueSource queueSource;
   LoopMode repeatType = LoopMode.off;
+  Timer _timer;
+  Scrobblenaut scrobblenaut;
   //Find queue index by id
   int get queueIndex => AudioService.queue == null ? 0 : AudioService.queue.indexWhere((mi) => mi.id == AudioService.currentMediaItem?.id??'Random string so it returns -1');
 
@@ -63,18 +64,6 @@ class PlayerHelper {
         await androidAuto.playItem(event['id']);
       }
     });
-    _playbackStateStreamSubscription = AudioService.playbackStateStream.listen((event) {
-      //Log song (if allowed)
-      if (event == null) return;
-      if (event.processingState == AudioProcessingState.ready && event.playing) {
-        if (settings.logListen) {
-          //Check if duplicate
-          if (cache.loggedTrackId == AudioService.currentMediaItem.id) return;
-          cache.loggedTrackId = AudioService.currentMediaItem.id;
-          deezerAPI.logListen(AudioService.currentMediaItem.id);
-        }
-      }
-    });
     _mediaItemSubscription = AudioService.currentMediaItemStream.listen((event) {
       if (event == null) return;
       //Save queue
@@ -84,6 +73,31 @@ class PlayerHelper {
       if (cache.history.length > 0 && cache.history.last.id == event.id) return;
       cache.history.add(Track.fromMediaItem(event));
       cache.save();
+    });
+
+    //Logging listen timer
+    _timer = Timer.periodic(Duration(seconds: 2), (timer) async {
+      if (AudioService.currentMediaItem == null || !AudioService.playbackState.playing) return;
+      if (AudioService.playbackState.currentPosition.inSeconds > (AudioService.currentMediaItem.duration.inSeconds * 0.75)) {
+        if (cache.loggedTrackId == AudioService.currentMediaItem.id) return;
+        cache.loggedTrackId = AudioService.currentMediaItem.id;
+        await cache.save();
+
+        //Log to Deezer
+        if (settings.logListen) {
+          deezerAPI.logListen(AudioService.currentMediaItem.id);
+        }
+
+        //LastFM
+        if (scrobblenaut != null) {
+          await scrobblenaut.track.scrobble(
+            track: AudioService.currentMediaItem.title,
+            artist: AudioService.currentMediaItem.artist,
+            album: AudioService.currentMediaItem.album,
+          );
+        }
+      }
+
     });
 
     //Start audio_service
@@ -106,6 +120,19 @@ class PlayerHelper {
         androidNotificationIcon: 'drawable/ic_logo',
         params: {'ignoreInterruptions': settings.ignoreInterruptions}
       );
+  }
+
+  Future authorizeLastFM() async {
+    if (settings.lastFMUsername == null || settings.lastFMPassword == null) return;
+    try {
+      LastFM lastFM = await LastFM.authenticateWithPasswordHash(
+        apiKey: 'b6ab5ae967bcd8b10b23f68f42493829',
+        apiSecret: '861b0dff9a8a574bec747f9dab8b82bf',
+        username: settings.lastFMUsername,
+        passwordHash: settings.lastFMPassword
+      );
+      scrobblenaut = Scrobblenaut(lastFM: lastFM);
+    } catch (e) {}
   }
 
   Future toggleShuffle() async {

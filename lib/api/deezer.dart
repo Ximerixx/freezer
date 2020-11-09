@@ -1,4 +1,5 @@
 import 'package:freezer/api/definitions.dart';
+import 'package:freezer/api/spotify.dart';
 import 'package:freezer/settings.dart';
 import 'package:http/http.dart' as http;
 
@@ -113,6 +114,23 @@ class DeezerAPI {
       http.StreamedResponse response = await request.send();
       String newUrl = response.headers['location'];
       return parseLink(newUrl);
+    }
+    //Spotify
+    if (uri.host == 'open.spotify.com') {
+      if (uri.pathSegments.length < 2) return null;
+      String spotifyUri = 'spotify:' + uri.pathSegments.sublist(0, 2).join(':');
+      try {
+        //Tracks
+        if (uri.pathSegments[0] == 'track') {
+          String id = await spotify.convertTrack(spotifyUri);
+          return DeezerLinkResponse(type: DeezerLinkType.TRACK, id: id);
+        }
+        //Albums
+        if (uri.pathSegments[0] == 'album') {
+          String id = await spotify.convertAlbum(spotifyUri);
+          return DeezerLinkResponse(type: DeezerLinkType.ALBUM, id: id);
+        }
+      } catch (e) {}
     }
   }
 

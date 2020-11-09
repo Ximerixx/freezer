@@ -352,7 +352,10 @@ public class Deezer {
         //Genres
         String genres = "";
         for (int i=0; i<publicAlbum.getJSONObject("genres").getJSONArray("data").length(); i++) {
-            genres += ", " + publicAlbum.getJSONObject("genres").getJSONArray("data").getJSONObject(0).getString("name");
+            String genre = publicAlbum.getJSONObject("genres").getJSONArray("data").getJSONObject(0).getString("name");
+            if (!genres.contains(genre)) {
+                genres += ", " + genre;
+            }
         }
         if (genres.length() > 2)
             tag.setField(FieldKey.GENRE, genres.substring(2));

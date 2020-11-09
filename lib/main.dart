@@ -38,6 +38,9 @@ void main() async {
   await downloadManager.init();
   cache = await Cache.load();
 
+  //Do on BG
+  playerHelper.authorizeLastFM();
+
   runApp(FreezerApp());
 }
 

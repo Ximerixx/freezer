@@ -38,7 +38,13 @@ class SpotifyAPI {
     //Parse
     dom.Document document = parse(response.body);
     dom.Element element = document.getElementById('resource');
-    return jsonDecode(element.innerHtml);
+
+    //Some are URL encoded
+    try {
+      return jsonDecode(element.innerHtml);
+    } catch (e) {
+      return jsonDecode(Uri.decodeComponent(element.innerHtml));
+    }
   }
 
   Future<SpotifyPlaylist> playlist(String uri) async {
@@ -50,6 +56,21 @@ class SpotifyAPI {
     return playlist;
   }
 
+  //Get Deezer track ID from Spotify URI
+  Future<String> convertTrack(String uri) async {
+    Map data = await getEmbedData(getEmbedUrl(uri));
+    SpotifyTrack track = SpotifyTrack.fromJson(data);
+    Map deezer = await deezerAPI.callPublicApi('track/isrc:' + track.isrc);
+    return deezer['id'].toString();
+  }
+
+  //Get Deezer album ID by UPC
+  Future<String> convertAlbum(String uri) async {
+    Map data = await getEmbedData(getEmbedUrl(uri));
+    SpotifyAlbum album = SpotifyAlbum.fromJson(data);
+    Map deezer = await deezerAPI.callPublicApi('album/upc:' + album.upc);
+    return deezer['id'].toString();
+  }
   
   Future convertPlaylist(SpotifyPlaylist playlist, {bool downloadOnly = false, BuildContext context, AudioQuality quality}) async {
     doneImporting = false;
@@ -129,6 +150,17 @@ class SpotifyPlaylist {
     description: json['description'],
     image: (json['images'].length > 0) ? json['images'][0]['url'] : null,
     tracks: json['tracks']['items'].map<SpotifyTrack>((j) => SpotifyTrack.fromJson(j['track'])).toList()
+  );
+}
+
+class SpotifyAlbum {
+  String upc;
+
+  SpotifyAlbum({this.upc});
+
+  //JSON
+  factory SpotifyAlbum.fromJson(Map json) => SpotifyAlbum(
+    upc: json['external_ids']['upc']
   );
 }
 
