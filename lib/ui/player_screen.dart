@@ -43,7 +43,7 @@ class _PlayerScreenState extends State<PlayerScreen> {
     setState(() => _bgGradient = LinearGradient(
       begin: Alignment.topCenter,
       end: Alignment.bottomCenter,
-      colors: [palette.dominantColor.color.withOpacity(0.5), Theme.of(context).bottomAppBarColor],
+      colors: [palette.dominantColor.color.withOpacity(0.5), Color.fromARGB(0, 0, 0, 0)],
       stops: [
         0.0,
         0.4
