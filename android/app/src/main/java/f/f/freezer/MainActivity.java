@@ -180,6 +180,11 @@ public class MainActivity extends FlutterActivity {
                 intentPreload = null;
                 return;
             }
+            //Get architecture
+            if (call.method.equals("arch")) {
+                result.success(System.getProperty("os.arch"));
+                return;
+            }
 
             result.error("0", "Not implemented!", "Not implemented!");
         })));

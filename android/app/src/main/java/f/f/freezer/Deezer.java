@@ -326,7 +326,7 @@ public class Deezer {
                 artists += ", " + artist;
         }
         tag.addField(FieldKey.ARTIST, artists.substring(2));
-        tag.setField(FieldKey.TRACK, Integer.toString(publicTrack.getInt("track_position")));
+        tag.setField(FieldKey.TRACK, String.format("%02d", publicTrack.getInt("track_position")));
         tag.setField(FieldKey.DISC_NO, Integer.toString(publicTrack.getInt("disk_number")));
         tag.setField(FieldKey.ALBUM_ARTIST, publicAlbum.getJSONObject("artist").getString("name"));
         tag.setField(FieldKey.YEAR, publicTrack.getString("release_date").substring(0, 4));

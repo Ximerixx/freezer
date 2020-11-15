@@ -16,6 +16,7 @@ import 'package:freezer/ui/downloads_screen.dart';
 import 'package:freezer/ui/elements.dart';
 import 'package:freezer/ui/error.dart';
 import 'package:freezer/ui/home_screen.dart';
+import 'package:freezer/ui/updater.dart';
 import 'package:i18n_extension/i18n_widget.dart';
 import 'package:language_pickers/language_pickers.dart';
 import 'package:language_pickers/languages.dart';
@@ -142,8 +143,15 @@ class _SettingsScreenState extends State<SettingsScreen> {
             },
           ),
           ListTile(
+            title: Text('Updates'.i18n),
+            leading: LeadingIcon(Icons.update, color: Color(0xff2ba766)),
+            onTap: () => Navigator.push(context, MaterialPageRoute(
+              builder: (context) => UpdaterScreen()
+            )),
+          ),
+          ListTile(
             title: Text('About'.i18n),
-            leading: LeadingIcon(Icons.info, color: Color(0xff2ba766)),
+            leading: LeadingIcon(Icons.info, color: Colors.grey),
             onTap: () => Navigator.push(context, MaterialPageRoute(
                 builder: (context) => CreditsScreen()
             )),
@@ -1282,9 +1290,6 @@ class _CreditsScreenState extends State<CreditsScreen> {
           ListTile(
             title: Text('Deemix'),
             subtitle: Text('Better app <3'),
-            onTap: () {
-              launch('https://codeberg.org/RemixDev/deemix');
-            },
           ),
           ListTile(
             title: Text('Xandar Null'),

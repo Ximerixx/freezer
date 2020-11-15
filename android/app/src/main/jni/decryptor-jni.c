@@ -45,8 +45,6 @@ JNIEXPORT void JNICALL Java_f_f_freezer_Deezer_decryptFile(JNIEnv *env, jobject 
             fwrite(decrypted, sizeof(unsigned char), sizeof(decrypted), ofile);
         } else {
             int written = fwrite(buffer, sizeof(unsigned char), (size_t)read, ofile);
-            if (read != 2048)
-                __android_log_print(ANDROID_LOG_WARN, "DECRYPTOR", "READ: %d, WRITE: %d", read, written);
         }
         i++;
     }

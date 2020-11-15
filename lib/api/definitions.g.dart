@@ -129,6 +129,25 @@ const _$AlbumTypeEnumMap = {
   AlbumType.FEATURED: 'FEATURED',
 };
 
+ArtistHighlight _$ArtistHighlightFromJson(Map<String, dynamic> json) {
+  return ArtistHighlight(
+    data: json['data'],
+    type: _$enumDecodeNullable(_$ArtistHighlightTypeEnumMap, json['type']),
+    title: json['title'] as String,
+  );
+}
+
+Map<String, dynamic> _$ArtistHighlightToJson(ArtistHighlight instance) =>
+    <String, dynamic>{
+      'data': instance.data,
+      'type': _$ArtistHighlightTypeEnumMap[instance.type],
+      'title': instance.title,
+    };
+
+const _$ArtistHighlightTypeEnumMap = {
+  ArtistHighlightType.ALBUM: 'ALBUM',
+};
+
 Artist _$ArtistFromJson(Map<String, dynamic> json) {
   return Artist(
     id: json['id'] as String,
@@ -150,6 +169,9 @@ Artist _$ArtistFromJson(Map<String, dynamic> json) {
     library: json['library'] as bool,
     radio: json['radio'] as bool,
     favoriteDate: json['favoriteDate'] as String,
+    highlight: json['highlight'] == null
+        ? null
+        : ArtistHighlight.fromJson(json['highlight'] as Map<String, dynamic>),
   );
 }
 
@@ -165,6 +187,7 @@ Map<String, dynamic> _$ArtistToJson(Artist instance) => <String, dynamic>{
       'library': instance.library,
       'radio': instance.radio,
       'favoriteDate': instance.favoriteDate,
+      'highlight': instance.highlight,
     };
 
 Playlist _$PlaylistFromJson(Map<String, dynamic> json) {

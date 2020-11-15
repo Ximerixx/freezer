@@ -53,10 +53,13 @@ class Cache {
   @JsonKey(name: 'searchHistory2', toJson: _searchHistoryToJson, fromJson: _searchHistoryFromJson)
   List<SearchHistoryItem> searchHistory;
 
-
   //If download threads warning was shown
   @JsonKey(defaultValue: false)
   bool threadsWarning;
+
+  //Last time update check
+  @JsonKey(defaultValue: 0)
+  int lastUpdateCheck;
 
   Cache({this.libraryTracks});
 

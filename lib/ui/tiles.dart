@@ -178,6 +178,7 @@ class PlaylistTile extends StatelessWidget {
 
   String get subtitle {
     if (playlist.user == null || playlist.user.name == null || playlist.user.name == '' || playlist.user.id == deezerAPI.userId) {
+      if (playlist.trackCount == null) return '';
       return '${playlist.trackCount} ' + 'Tracks'.i18n;
     }
     return playlist.user.name;
@@ -246,6 +247,7 @@ class PlaylistCardTile extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       color: Theme.of(context).scaffoldBackgroundColor,
+      height: 180.0,
       child: InkWell(
         onTap: onTap,
         onLongPress: onHold,
@@ -290,6 +292,7 @@ class SmartTrackListTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
+      height: 200.0,
       color: Theme.of(context).scaffoldBackgroundColor,
       child: InkWell(
         onTap: onTap,
@@ -298,18 +301,43 @@ class SmartTrackListTile extends StatelessWidget {
           children: <Widget>[
             Padding(
               padding: EdgeInsets.all(8.0),
-              child: CachedImage(
-                width: 128,
-                height: 128,
-                url: smartTrackList.cover.thumb,
-                rounded: true,
-              ),
+              child: Stack(
+                children: [
+                  CachedImage(
+                    width: 128,
+                    height: 128,
+                    url: smartTrackList.cover.thumb,
+                    rounded: true,
+                  ),
+                  Container(
+                    width: 128.0,
+                    child: Padding(
+                      padding: EdgeInsets.symmetric(horizontal: 8.0, vertical: 6.0),
+                      child: Text(
+                        smartTrackList.title,
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                        style: TextStyle(
+                            fontSize: 18.0,
+                            shadows: [
+                              Shadow(
+                                  offset: Offset(1, 1),
+                                  blurRadius: 2,
+                                  color: Colors.black
+                              )
+                            ]
+                        ),
+                      ),
+                    ),
+                  )
+                ],
+              )
             ),
             Container(
               width: 144.0,
               child: Text(
-                smartTrackList.title,
-                maxLines: 1,
+                smartTrackList.subtitle,
+                maxLines: 3,
                 textAlign: TextAlign.center,
                 overflow: TextOverflow.ellipsis,
                 style: TextStyle(

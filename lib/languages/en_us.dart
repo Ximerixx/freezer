@@ -271,6 +271,16 @@ const language_en_us = {
     "Authorization error!": "Authorization error!",
     "Logged out!": "Logged out!",
     "Lyrics": "Lyrics",
-    "Player gradient background": "Player gradient background"
+    "Player gradient background": "Player gradient background",
+
+    //0.6.3 Strings:
+    "Updates": "Updates",
+    "You are running latest version!": "You are running latest version!",
+    "New update available!": "New update available!",
+    "Current version: ": "Current version: ",
+    "Unsupported platform!": "Unsupported platform!",
+    "Freezer Updates": "Freezer Updates",
+    "Update to latest version in the settings.": "Update to latest version in the settings.",
+    "Release date": "Release date"
   }
 };

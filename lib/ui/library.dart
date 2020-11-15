@@ -502,7 +502,8 @@ enum AlbumSortType {
   DEFAULT,
   REVERSE,
   ALPHABETIC,
-  ARTIST
+  ARTIST,
+  DATE
 }
 
 class LibraryAlbums extends StatefulWidget {
@@ -529,6 +530,9 @@ class _LibraryAlbumsState extends State<LibraryAlbums> {
         return albums;
       case AlbumSortType.ARTIST:
         albums.sort((a, b) => a.artists[0].name.toLowerCase().compareTo(b.artists[0].name.toLowerCase()));
+        return albums;
+      case AlbumSortType.DATE:
+        albums.sort((a, b) => DateTime.parse(a.releaseDate).compareTo(DateTime.parse(b.releaseDate)));
         return albums;
     }
     return albums;
@@ -580,6 +584,10 @@ class _LibraryAlbumsState extends State<LibraryAlbums> {
               PopupMenuItem(
                 value: AlbumSortType.ARTIST,
                 child: Text('Artist'.i18n, style: popupMenuTextStyle()),
+              ),
+              PopupMenuItem(
+                value: AlbumSortType.DATE,
+                child: Text('Release date'.i18n, style: popupMenuTextStyle()),
               ),
             ],
           ),
@@ -829,14 +837,15 @@ class _LibraryPlaylistsState extends State<LibraryPlaylists> {
   List<Playlist> _playlists;
   PlaylistSortType _sort = PlaylistSortType.DEFAULT;
   ScrollController _scrollController = ScrollController();
+  String _filter = '';
 
   List<Playlist> get _sorted {
-    List<Playlist> playlists = List.from(_playlists);
+    List<Playlist> playlists = List.from(_playlists.where((p) => p.title.toLowerCase().contains(_filter.toLowerCase())));
     switch (_sort) {
       case PlaylistSortType.DEFAULT:
-        return _playlists;
+        return playlists;
       case PlaylistSortType.REVERSE:
-        return _playlists.reversed.toList();
+        return playlists.reversed.toList();
       case PlaylistSortType.USER:
         playlists.sort((a, b) => (a.user.name??deezerAPI.userName).toLowerCase().compareTo((b.user.name??deezerAPI.userName).toLowerCase()));
         return playlists;
@@ -923,6 +932,24 @@ class _LibraryPlaylistsState extends State<LibraryPlaylists> {
         child: ListView(
           controller: _scrollController,
           children: <Widget>[
+            //Search
+            Padding(
+              padding: EdgeInsets.all(8.0),
+              child: TextField(
+                onChanged: (String s) => setState(() => _filter = s),
+                decoration: InputDecoration(
+                  labelText: 'Search'.i18n,
+                  fillColor: Theme.of(context).bottomAppBarColor,
+                  filled: true,
+                  focusedBorder: OutlineInputBorder(
+                      borderSide: BorderSide(color: Colors.grey)
+                  ),
+                  enabledBorder: OutlineInputBorder(
+                      borderSide: BorderSide(color: Colors.grey)
+                  ),
+                )
+              ),
+            ),
             ListTile(
               title: Text('Create new playlist'.i18n),
               leading: LeadingIcon(Icons.playlist_add, color: Color(0xff009a85)),
@@ -965,7 +992,7 @@ class _LibraryPlaylistsState extends State<LibraryPlaylists> {
             ),
 
             if (_playlists != null)
-              ...List.generate(_playlists.length, (int i) {
+              ...List.generate(_sorted.length, (int i) {
                 Playlist p = (_sorted??[])[i];
                 return PlaylistTile(
                   p,

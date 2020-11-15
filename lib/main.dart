@@ -11,6 +11,7 @@ import 'package:freezer/api/definitions.dart';
 import 'package:freezer/ui/library.dart';
 import 'package:freezer/ui/login_screen.dart';
 import 'package:freezer/ui/search.dart';
+import 'package:freezer/ui/updater.dart';
 import 'package:i18n_extension/i18n_widget.dart';
 import 'package:move_to_background/move_to_background.dart';
 import 'package:freezer/translations.i18n.dart';
@@ -171,6 +172,11 @@ class _MainScreenState extends State<MainScreen> with SingleTickerProviderStateM
     _setupUniLinks();
     _loadPreloadInfo();
     _prepareQuickActions();
+
+    //Check for updates on background
+    Future.delayed(Duration(seconds: 5), () {
+      FreezerVersions.checkUpdate();
+    });
 
     super.initState();
   }

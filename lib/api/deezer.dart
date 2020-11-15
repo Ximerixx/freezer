@@ -168,7 +168,8 @@ class DeezerAPI {
     return Artist.fromPrivateJson(
       data['results']['DATA'],
       topJson: data['results']['TOP'],
-      albumsJson: data['results']['ALBUMS']
+      albumsJson: data['results']['ALBUMS'],
+      highlight: data['results']['HIGHLIGHT']
     );
   }
 

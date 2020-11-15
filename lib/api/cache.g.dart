@@ -33,7 +33,8 @@ Cache _$CacheFromJson(Map<String, dynamic> json) {
         SortType.DEFAULT
     ..searchHistory =
         Cache._searchHistoryFromJson(json['searchHistory2'] as List)
-    ..threadsWarning = json['threadsWarning'] as bool ?? false;
+    ..threadsWarning = json['threadsWarning'] as bool ?? false
+    ..lastUpdateCheck = json['lastUpdateCheck'] as int ?? 0;
 }
 
 Map<String, dynamic> _$CacheToJson(Cache instance) => <String, dynamic>{
@@ -48,6 +49,7 @@ Map<String, dynamic> _$CacheToJson(Cache instance) => <String, dynamic>{
       'trackSort': _$SortTypeEnumMap[instance.trackSort],
       'searchHistory2': Cache._searchHistoryToJson(instance.searchHistory),
       'threadsWarning': instance.threadsWarning,
+      'lastUpdateCheck': instance.lastUpdateCheck,
     };
 
 T _$enumDecode<T>(
@@ -94,6 +96,7 @@ const _$AlbumSortTypeEnumMap = {
   AlbumSortType.REVERSE: 'REVERSE',
   AlbumSortType.ALPHABETIC: 'ALPHABETIC',
   AlbumSortType.ARTIST: 'ARTIST',
+  AlbumSortType.DATE: 'DATE',
 };
 
 const _$ArtistSortTypeEnumMap = {

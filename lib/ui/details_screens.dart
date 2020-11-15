@@ -308,7 +308,7 @@ class ArtistDetails extends StatelessWidget {
                       rounded: true,
                     ),
                     Container(
-                      width: MediaQuery.of(context).size.width / 2 - 8,
+                      width: MediaQuery.of(context).size.width / 2 - 24,
                       child: Column(
                         mainAxisSize: MainAxisSize.min,
                         mainAxisAlignment: MainAxisAlignment.center,
@@ -410,6 +410,32 @@ class ArtistDetails extends StatelessWidget {
               ),
               FreezerDivider(),
               Container(height: 12.0,),
+              //Highlight
+              if (artist.highlight != null)
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Padding(
+                      padding: EdgeInsets.symmetric(horizontal: 16.0, vertical: 2.0),
+                      child: Text(
+                        artist.highlight.title,
+                        textAlign: TextAlign.left,
+                        style: TextStyle(
+                          fontWeight: FontWeight.bold,
+                          fontSize: 20.0
+                        ),
+                      ),
+                    ),
+                    if (artist.highlight.type == ArtistHighlightType.ALBUM)
+                      AlbumTile(
+                        artist.highlight.data,
+                        onTap: () {
+                          Navigator.of(context).push(MaterialPageRoute(builder: (context) => AlbumDetails(artist.highlight.data)));
+                        },
+                      ),
+                    Container(height: 8.0)
+                  ],
+                ),
               //Top tracks
               Padding(
                 padding: EdgeInsets.symmetric(horizontal: 16.0, vertical: 2.0),
@@ -417,8 +443,8 @@ class ArtistDetails extends StatelessWidget {
                   'Top Tracks'.i18n,
                   textAlign: TextAlign.left,
                   style: TextStyle(
-                      fontWeight: FontWeight.bold,
-                      fontSize: 20.0
+                    fontWeight: FontWeight.bold,
+                    fontSize: 20.0
                   ),
                 ),
               ),

@@ -157,7 +157,7 @@ class Track {
     'favorite': (favorite??0)?1:0,
     'diskNumber': diskNumber,
     'explicit': explicit?1:0,
-    'favoriteDate': favoriteDate
+//    'favoriteDate': favoriteDate
   };
   factory Track.fromSQL(Map<String, dynamic> data) => Track(
     id: data['trackId']??data['id'], //If loading from downloads table
@@ -174,7 +174,7 @@ class Track {
     favorite: (data['favorite'] == 1) ? true:false,
     diskNumber: data['diskNumber'],
     explicit: (data['explicit'] == 1) ? true:false,
-    favoriteDate: data['favoriteDate']
+//    favoriteDate: data['favoriteDate']
   );
 
   factory Track.fromJson(Map<String, dynamic> json) => _$TrackFromJson(json);
@@ -238,7 +238,7 @@ class Album {
     'library': (library??false)?1:0,
     'type': AlbumType.values.indexOf(type),
     'releaseDate': releaseDate,
-    'favoriteDate': favoriteDate
+//    'favoriteDate': favoriteDate
   };
   factory Album.fromSQL(Map<String, dynamic> data) => Album(
     id: data['id'],
@@ -255,11 +255,37 @@ class Album {
     library: (data['library'] == 1) ? true:false,
     type: AlbumType.values[data['type']],
     releaseDate: data['releaseDate'],
-    favoriteDate: data['favoriteDate']
+//    favoriteDate: data['favoriteDate']
   );
 
   factory Album.fromJson(Map<String, dynamic> json) => _$AlbumFromJson(json);
   Map<String, dynamic> toJson() => _$AlbumToJson(this);
+}
+
+enum ArtistHighlightType {
+  ALBUM
+}
+
+@JsonSerializable()
+class ArtistHighlight {
+  dynamic data;
+  ArtistHighlightType type;
+  String title;
+
+  ArtistHighlight({this.data, this.type, this.title});
+
+  factory ArtistHighlight.fromPrivateJson(Map<dynamic, dynamic> json) {
+    if (json == null || json['ITEM'] == null) return null;
+    switch (json['TYPE']) {
+      case 'album':
+        return ArtistHighlight(data: Album.fromPrivateJson(json['ITEM']), type: ArtistHighlightType.ALBUM, title: json['TITLE']);
+    }
+    return null;
+  }
+
+  //JSON
+  factory ArtistHighlight.fromJson(Map<String, dynamic> json) => _$ArtistHighlightFromJson(json);
+  Map<String, dynamic> toJson() => _$ArtistHighlightToJson(this);
 }
 
 @JsonSerializable()
@@ -275,8 +301,9 @@ class Artist {
   bool library;
   bool radio;
   String favoriteDate;
+  ArtistHighlight highlight;
 
-  Artist({this.id, this.name, this.albums, this.albumCount, this.topTracks, this.picture, this.fans, this.offline, this.library, this.radio, this.favoriteDate});
+  Artist({this.id, this.name, this.albums, this.albumCount, this.topTracks, this.picture, this.fans, this.offline, this.library, this.radio, this.favoriteDate, this.highlight});
 
   String get fansString => NumberFormat.compact().format(fans);
 
@@ -285,6 +312,7 @@ class Artist {
       Map<dynamic, dynamic> json, {
         Map<dynamic, dynamic> albumsJson = const {},
         Map<dynamic, dynamic> topJson = const {},
+        Map<dynamic, dynamic> highlight = null,
         bool library = false
       }) {
     //Get wether radio is available
@@ -301,7 +329,8 @@ class Artist {
       topTracks: (topJson['data']??[]).map<Track>((dynamic data) => Track.fromPrivateJson(data)).toList(),
       library: library,
       radio: _radio,
-      favoriteDate: json['DATE_FAVORITE']
+      favoriteDate: json['DATE_FAVORITE'],
+      highlight: ArtistHighlight.fromPrivateJson(highlight)
     );
   }
   Map<String, dynamic> toSQL({off = false}) => {
@@ -315,7 +344,7 @@ class Artist {
     'offline': off?1:0,
     'library': (library??false)?1:0,
     'radio': radio?1:0,
-    'favoriteDate': favoriteDate
+//    'favoriteDate': favoriteDate
   };
   factory Artist.fromSQL(Map<String, dynamic> data) => Artist(
     id: data['id'],
@@ -332,7 +361,7 @@ class Artist {
     offline: (data['offline'] == 1)?true:false,
     library: (data['library'] == 1)?true:false,
     radio: (data['radio'] == 1)?true:false,
-    favoriteDate: data['favoriteDate']
+//    favoriteDate: data['favoriteDate']
   );
 
   factory Artist.fromJson(Map<String, dynamic> json) => _$ArtistFromJson(json);
