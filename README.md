@@ -1,7 +1,5 @@
 # freezer
 
-![Icon](https://git.rip/freezer/freezer/-/raw/master/android/app/src/main/res/mipmap-hdpi/ic_launcher_foreground.png)
-
 Free, unlimited, without DRM music streaming app, which uses Deezer as backend.
 This app is still in BETA, so it is missing features and contains bugs.  
 If you want to report bug or request feature, please open an issue.  
