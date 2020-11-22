@@ -125,7 +125,8 @@ class _SearchScreenState extends State<SearchScreen> {
     var textFielFocusNode = FocusNode();
     return Scaffold(
       appBar: FreezerAppBar('Search'.i18n),
-      body: ListView(
+      body: FocusScope(
+       child: ListView(
         children: <Widget>[
           Container(height: 4.0),
           Padding(
@@ -167,30 +168,32 @@ class _SearchScreenState extends State<SearchScreen> {
                             onSubmitted: (String s) => _submit(context, query: s),
                           )
                       ),
-                      Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Container(
-                            width: 40.0,
-                            child: IconButton(
-                              splashRadius: 20.0,
-                              icon: Icon(Icons.clear),
-                              onPressed: () {
-                                setState(() {
-                                  _suggestions = [];
-                                  _query = '';
-                                });
-                                _controller.clear();
-                              },
+                      Focus(
+                        canRequestFocus: false,          // Focus is moving to cross, and hangs out there,
+                        descendantsAreFocusable: false,  // so we disable focusing on it at all
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Container(
+                              width: 40.0,
+                              child: IconButton(
+                                splashRadius: 20.0,
+                                icon: Icon(Icons.clear),
+                                onPressed: () {
+                                  setState(() {
+                                    _suggestions = [];
+                                    _query = '';
+                                  });
+                                  _controller.clear();
+                                },
+                              ),
                             ),
-                          ),
-                        ],
+                          ],
+                        )
                       )
-
                     ],
                   )
                 ),
-
               ],
             ),
           ),
@@ -299,6 +302,7 @@ class _SearchScreenState extends State<SearchScreen> {
             },
           ))
         ],
+       )
       ),
     );
   }
