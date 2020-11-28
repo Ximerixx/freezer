@@ -1,6 +1,5 @@
 package f.f.freezer;
 
-import android.content.Context;
 import android.util.Log;
 
 import org.jaudiotagger.audio.AudioFile;
@@ -14,24 +13,17 @@ import org.jaudiotagger.tag.id3.valuepair.ImageFormats;
 import org.jaudiotagger.tag.images.Artwork;
 import org.jaudiotagger.tag.images.ArtworkFactory;
 import org.jaudiotagger.tag.reference.PictureTypes;
-import org.jaudiotagger.tag.vorbiscomment.VorbisCommentFieldKey;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
-import java.io.BufferedInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.DataOutputStream;
 import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
-import java.io.OutputStream;
 import java.io.RandomAccessFile;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.util.Arrays;
-import java.util.Map;
-import java.util.Objects;
 import java.util.Scanner;
 
 import javax.crypto.Cipher;
@@ -73,21 +65,6 @@ public class Deezer {
     }
 
     public native void decryptFile(String trackId, String inputFilename, String outputFilename);
-
-    //Get guest SID cookie from deezer.com
-    public static String getSidCookie() throws Exception {
-        URL url = new URL("https://deezer.com/");
-        HttpsURLConnection connection = (HttpsURLConnection) url.openConnection();
-        connection.setConnectTimeout(20000);
-        connection.setRequestMethod("HEAD");
-        String sid = "";
-        for (String cookie : connection.getHeaderFields().get("Set-Cookie")) {
-            if (cookie.startsWith("sid=")) {
-                sid = cookie.split(";")[0].split("=")[1];
-            }
-        }
-        return sid;
-    }
 
     public JSONObject callGWAPI(String method, String params) throws Exception {
         //Get token
@@ -173,26 +150,6 @@ public class Deezer {
         //Parse JSON
         JSONObject out = new JSONObject(data);
         return out;
-    }
-
-    public int qualityFallback(String trackId, String md5origin, String mediaVersion, int originalQuality) throws Exception {
-        //Create HEAD requests to check if exists
-        URL url = new URL(getTrackUrl(trackId, md5origin, mediaVersion, originalQuality));
-        HttpsURLConnection connection = (HttpsURLConnection) url.openConnection();
-        connection.setRequestMethod("HEAD");
-        connection.setRequestProperty("User-Agent", "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/79.0.3945.130 Safari/537.36");
-        connection.setRequestProperty("Accept-Language", "*");
-        connection.setRequestProperty("Accept", "*/*");
-        int rc = connection.getResponseCode();
-        //Track not available
-        if (rc > 400) {
-            logger.warn("Quality fallback, response code: " + Integer.toString(rc) + ", current: " + Integer.toString(originalQuality));
-            //Returns -1 if no quality available
-            if (originalQuality == 1) return -1;
-            if (originalQuality == 3) return qualityFallback(trackId, md5origin, mediaVersion, 1);
-            if (originalQuality == 9) return qualityFallback(trackId, md5origin, mediaVersion, 3);
-        }
-        return originalQuality;
     }
 
     //Generate track download URL
@@ -488,6 +445,140 @@ public class Deezer {
 
         if (counter == 0) throw new Exception("Empty Lyrics!");
         return output;
+    }
+
+    //Track decryption key
+    static byte[] getKey(String id) {
+        String secret = "g4el58wc0zvf9na1";
+        try {
+            MessageDigest md5 = MessageDigest.getInstance("MD5");
+            md5.update(id.getBytes());
+            byte[] md5id = md5.digest();
+            String idmd5 = bytesToHex(md5id).toLowerCase();
+            String key = "";
+            for(int i=0; i<16; i++) {
+                int s0 = idmd5.charAt(i);
+                int s1 = idmd5.charAt(i+16);
+                int s2 = secret.charAt(i);
+                key += (char)(s0^s1^s2);
+            }
+            return key.getBytes();
+        } catch (Exception e) {
+            Log.e("E", e.toString());
+            return new byte[0];
+        }
+    }
+
+    //Decrypt 2048b of data
+    static byte[] decryptChunk(byte[] key, byte[] data) {
+        try {
+            byte[] IV = {00, 01, 02, 03, 04, 05, 06, 07};
+            SecretKeySpec Skey = new SecretKeySpec(key, "Blowfish");
+            Cipher cipher = Cipher.getInstance("Blowfish/CBC/NoPadding");
+            cipher.init(Cipher.DECRYPT_MODE, Skey, new javax.crypto.spec.IvParameterSpec(IV));
+            return cipher.doFinal(data);
+        }catch (Exception e) {
+            Log.e("D", e.toString());
+            return new byte[0];
+        }
+    }
+
+    static class QualityInfo {
+        int quality;
+        String md5origin;
+        String mediaVersion;
+        String trackId;
+        int initialQuality;
+        DownloadLog logger;
+
+        QualityInfo(int quality, String trackId, String md5origin, String mediaVersion, DownloadLog logger) {
+            this.quality = quality;
+            this.initialQuality = quality;
+            this.trackId = trackId;
+            this.mediaVersion = mediaVersion;
+            this.md5origin = md5origin;
+            this.logger = logger;
+        }
+
+        boolean fallback(Deezer deezer) {
+            //Quality fallback
+            try {
+                qualityFallback();
+                //No quality
+                if (quality == -1)
+                    throw new Exception("No quality to fallback to!");
+
+                //Success
+                return true;
+            } catch (Exception e) {
+                logger.warn("Quality fallback failed! ID: " + trackId + " " + e.toString());
+                quality = initialQuality;
+            }
+
+            //Track ID Fallback
+            JSONObject privateJson = null;
+            try {
+                //Fetch meta
+                JSONObject privateRaw = deezer.callGWAPI("deezer.pageTrack", "{\"sng_id\": \"" + trackId + "\"}");
+                privateJson = privateRaw.getJSONObject("results").getJSONObject("DATA");
+                if (privateJson.has("FALLBACK")) {
+                    //Fetch new track
+                    String fallbackId = privateJson.getJSONObject("FALLBACK").getString("SNG_ID");
+                    if (!fallbackId.equals(trackId)) {
+                        JSONObject newPrivate = deezer.callGWAPI("song.getListData", "{\"sng_ids\": [" + fallbackId + "]}");
+                        JSONObject trackData = newPrivate.getJSONObject("results").getJSONArray("data").getJSONObject(0);
+                        trackId = trackData.getString("SNG_ID");
+                        md5origin = trackData.getString("MD5_ORIGIN");
+                        mediaVersion = trackData.getString("MEDIA_VERSION");
+                        return fallback(deezer);
+                    }
+                }
+            } catch (Exception e) {
+                logger.error("ID fallback failed! ID: " + trackId + " " + e.toString());
+            }
+
+            //ISRC Fallback
+            try {
+                JSONObject newTrackJson = Deezer.callPublicAPI("track", "isrc:" + privateJson.getString("ISRC"));
+                //Same track check
+                if (newTrackJson.getInt("id") == Integer.parseInt(trackId)) throw new Exception("No more to ISRC fallback!");
+                //Get private data
+                privateJson = deezer.callGWAPI("song.getListData", "{\"sng_ids\": [" + newTrackJson.getInt("id") + "]}");
+                JSONObject trackData = privateJson.getJSONObject("results").getJSONArray("data").getJSONObject(0);
+                trackId = trackData.getString("SNG_ID");
+                md5origin = trackData.getString("MD5_ORIGIN");
+                mediaVersion = trackData.getString("MEDIA_VERSION");
+                return fallback(deezer);
+            } catch (Exception e) {
+                logger.error("ISRC Fallback failed, track unavailable! ID: " + trackId + " " + e.toString());
+            }
+
+            return false;
+        }
+
+        private void qualityFallback() throws Exception {
+            //Create HEAD requests to check if exists
+            URL url = new URL(getTrackUrl(trackId, md5origin, mediaVersion, quality));
+            HttpsURLConnection connection = (HttpsURLConnection) url.openConnection();
+            connection.setRequestMethod("HEAD");
+            connection.setRequestProperty("User-Agent", "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/79.0.3945.130 Safari/537.36");
+            connection.setRequestProperty("Accept-Language", "*");
+            connection.setRequestProperty("Accept", "*/*");
+            int rc = connection.getResponseCode();
+            //Track not available
+            if (rc > 400) {
+                logger.warn("Quality fallback, response code: " + Integer.toString(rc) + ", current: " + Integer.toString(quality));
+                //-1 if no quality available
+                if (quality == 1) {
+                    quality = -1;
+                    return;
+                }
+                if (quality == 3) quality = 1;
+                if (quality == 9) quality = 3;
+                qualityFallback();
+            }
+        }
+
     }
 
 }

@@ -165,9 +165,10 @@ class PlayerHelper {
   Future _loadQueuePlay(List<MediaItem> queue, String trackId) async {
     await startService();
     await settings.updateAudioServiceQuality();
+    await AudioService.customAction('setIndex', queue.indexWhere((m) => m.id == trackId));
     await AudioService.updateQueue(queue);
-    if (queue[0].id != trackId)
-      await AudioService.skipToQueueItem(trackId);
+//    if (queue[0].id != trackId)
+//      await AudioService.skipToQueueItem(trackId);
     if (!AudioService.playbackState.playing)
       AudioService.play();
   }
@@ -236,6 +237,27 @@ class PlayerHelper {
       source: 'playlist'
     ));
   }
+
+  //Play episode from show, load whole show as queue
+  Future playShowEpisode(Show show, List<ShowEpisode> episodes, {int index = 0}) async {
+    QueueSource queueSource = QueueSource(
+      id: show.id,
+      text: show.name,
+      source: 'show'
+    );
+    //Generate media items
+    List<MediaItem> queue = episodes.map<MediaItem>((e) => e.toMediaItem(show)).toList();
+
+    //Load and play
+    await startService();
+    await settings.updateAudioServiceQuality();
+    await setQueueSource(queueSource);
+    await AudioService.customAction('setIndex', index);
+    await AudioService.updateQueue(queue);
+    if (!AudioService.playbackState.playing)
+      AudioService.play();
+  }
+
   //Load tracks as queue, play track id, set queue source
   Future playFromTrackList(List<Track> tracks, String trackId, QueueSource queueSource) async {
     await startService();
@@ -340,7 +362,7 @@ class AudioPlayerTask extends BackgroundAudioTask {
       //Quality string
       if (_queueIndex != -1 && _queueIndex < _queue.length) {
         Map extras = mediaItem.extras;
-        extras['qualityString'] = event.qualityString??'';
+        extras['qualityString'] = '';
         _queue[_queueIndex] = mediaItem.copyWith(extras: extras);
       }
       //Update
@@ -530,7 +552,6 @@ class AudioPlayerTask extends BackgroundAudioTask {
     this._queue = q;
     AudioServiceBackground.setQueue(_queue);
     //Load
-    _queueIndex = 0;
     await _loadQueue();
     //await _player.seek(Duration.zero, index: 0);
   }
@@ -550,8 +571,8 @@ class AudioPlayerTask extends BackgroundAudioTask {
     _audioSource = ConcatenatingAudioSource(children: sources);
     //Load in just_audio
     try {
-      await _player.load(_audioSource);
-      await _player.seek(Duration.zero, index: qi);
+      await _player.load(_audioSource, initialPosition: Duration.zero, initialIndex: qi);
+//      await _player.seek(Duration.zero, index: qi);
     } catch (e) {
       //Error loading tracks
     }
@@ -571,8 +592,14 @@ class AudioPlayerTask extends BackgroundAudioTask {
     String _offlinePath = p.join((await getExternalStorageDirectory()).path, 'offline/');
     File f = File(p.join(_offlinePath, mediaItem.id));
     if (await f.exists()) {
-      return f.path;
+      //return f.path;
+      //Stream server URL
+      return 'http://localhost:36958/?id=${mediaItem.id}';
     }
+
+    //Show episode direct link
+    if (mediaItem.extras['showUrl'] != null)
+      return mediaItem.extras['showUrl'];
 
     //Due to current limitations of just_audio, quality fallback moved to DeezerDataSource in ExoPlayer
     //This just returns fake url that contains metadata
@@ -583,7 +610,8 @@ class AudioPlayerTask extends BackgroundAudioTask {
     if (conn == ConnectivityResult.wifi) quality = wifiQuality;
 
     if ((playbackDetails??[]).length < 2) return null;
-    String url = 'https://dzcdn.net/?md5=${playbackDetails[0]}&mv=${playbackDetails[1]}&q=${quality.toString()}#${mediaItem.id}';
+    //String url = 'https://dzcdn.net/?md5=${playbackDetails[0]}&mv=${playbackDetails[1]}&q=${quality.toString()}#${mediaItem.id}';
+    String url = 'http://localhost:36958/?q=$quality&mv=${playbackDetails[1]}&md5origin=${playbackDetails[0]}&id=${mediaItem.id}';
     return url;
   }
 
@@ -631,6 +659,10 @@ class AudioPlayerTask extends BackgroundAudioTask {
       //Update UI
       AudioServiceBackground.setQueue(_queue);
       _broadcastState();
+    }
+    //Set index without affecting playback for loading
+    if (name == 'setIndex') {
+      this._queueIndex = args;
     }
 
     return true;

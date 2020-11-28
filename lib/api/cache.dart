@@ -29,19 +29,9 @@ class Cache {
   @JsonKey(defaultValue: [])
   List<Track> history = [];
 
-  //Cache playlist sort type {id: sort}
-  @JsonKey(defaultValue: {})
-  Map<String, SortType> playlistSort;
-
-  //Sort
-  @JsonKey(defaultValue: AlbumSortType.DEFAULT)
-  AlbumSortType albumSort;
-  @JsonKey(defaultValue: ArtistSortType.DEFAULT)
-  ArtistSortType artistSort;
-  @JsonKey(defaultValue: PlaylistSortType.DEFAULT)
-  PlaylistSortType libraryPlaylistSort;
-  @JsonKey(defaultValue: SortType.DEFAULT)
-  SortType trackSort;
+  //All sorting cached
+  @JsonKey(defaultValue: [])
+  List<Sorting> sorts = [];
 
   //Sleep timer
   @JsonKey(ignore: true)

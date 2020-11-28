@@ -2,6 +2,7 @@ import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:audio_service/audio_service.dart';
+import 'package:freezer/api/cache.dart';
 import 'package:json_annotation/json_annotation.dart';
 import 'package:intl/intl.dart';
 import 'package:path_provider/path_provider.dart';
@@ -33,12 +34,13 @@ class Track {
   bool favorite;
   int diskNumber;
   bool explicit;
-  int favoriteDate;
+  //Date added to playlist / favorites
+  int addedDate;
 
   List<dynamic> playbackDetails;
 
   Track({this.id, this.title, this.duration, this.album, this.playbackDetails, this.albumArt,
-    this.artists, this.trackNumber, this.offline, this.lyrics, this.favorite, this.diskNumber, this.explicit, this.favoriteDate});
+    this.artists, this.trackNumber, this.offline, this.lyrics, this.favorite, this.diskNumber, this.explicit, this.addedDate});
 
   String get artistString => artists.map<String>((art) => art.name).join(', ');
   String get durationString => "${duration.inMinutes}:${duration.inSeconds.remainder(60).toString().padLeft(2, '0')}";
@@ -141,7 +143,7 @@ class Track {
       favorite: favorite,
       diskNumber: int.parse(json['DISK_NUMBER']??'1'),
       explicit: (json['EXPLICIT_LYRICS'].toString() == '1') ? true:false,
-      favoriteDate: json['DATE_ADD']
+      addedDate: json['DATE_ADD']
     );
   }
   Map<String, dynamic> toSQL({off = false}) => {
@@ -157,7 +159,7 @@ class Track {
     'favorite': (favorite??0)?1:0,
     'diskNumber': diskNumber,
     'explicit': explicit?1:0,
-//    'favoriteDate': favoriteDate
+    //'favoriteDate': favoriteDate
   };
   factory Track.fromSQL(Map<String, dynamic> data) => Track(
     id: data['trackId']??data['id'], //If loading from downloads table
@@ -174,7 +176,7 @@ class Track {
     favorite: (data['favorite'] == 1) ? true:false,
     diskNumber: data['diskNumber'],
     explicit: (data['explicit'] == 1) ? true:false,
-//    favoriteDate: data['favoriteDate']
+    //favoriteDate: data['favoriteDate']
   );
 
   factory Track.fromJson(Map<String, dynamic> json) => _$TrackFromJson(json);
@@ -238,7 +240,7 @@ class Album {
     'library': (library??false)?1:0,
     'type': AlbumType.values.indexOf(type),
     'releaseDate': releaseDate,
-//    'favoriteDate': favoriteDate
+    //'favoriteDate': favoriteDate
   };
   factory Album.fromSQL(Map<String, dynamic> data) => Album(
     id: data['id'],
@@ -255,7 +257,7 @@ class Album {
     library: (data['library'] == 1) ? true:false,
     type: AlbumType.values[data['type']],
     releaseDate: data['releaseDate'],
-//    favoriteDate: data['favoriteDate']
+    //favoriteDate: data['favoriteDate']
   );
 
   factory Album.fromJson(Map<String, dynamic> json) => _$AlbumFromJson(json);
@@ -344,7 +346,7 @@ class Artist {
     'offline': off?1:0,
     'library': (library??false)?1:0,
     'radio': radio?1:0,
-//    'favoriteDate': favoriteDate
+    //'favoriteDate': favoriteDate
   };
   factory Artist.fromSQL(Map<String, dynamic> data) => Artist(
     id: data['id'],
@@ -361,7 +363,7 @@ class Artist {
     offline: (data['offline'] == 1)?true:false,
     library: (data['library'] == 1)?true:false,
     radio: (data['radio'] == 1)?true:false,
-//    favoriteDate: data['favoriteDate']
+    //favoriteDate: data['favoriteDate']
   );
 
   factory Artist.fromJson(Map<String, dynamic> json) => _$ArtistFromJson(json);
@@ -702,6 +704,8 @@ class HomePageItem {
         return HomePageItem(type: HomePageItemType.CHANNEL, value: DeezerChannel.fromPrivateJson(json));
       case 'album':
         return HomePageItem(type: HomePageItemType.ALBUM, value: Album.fromPrivateJson(json['data']));
+      case 'show':
+        return HomePageItem(type: HomePageItemType.SHOW, value: Show.fromPrivateJson(json['data']));
       default:
         return null;
     }
@@ -720,6 +724,8 @@ class HomePageItem {
         return HomePageItem(type: HomePageItemType.CHANNEL, value: DeezerChannel.fromJson(json['value']));
       case 'ALBUM':
         return HomePageItem(type: HomePageItemType.ALBUM, value: Album.fromJson(json['value']));
+      case 'SHOW':
+        return HomePageItem(type: HomePageItemType.SHOW, value: Show.fromPrivateJson(json['value']));
       default:
         return HomePageItem();
     }
@@ -762,7 +768,8 @@ enum HomePageItemType {
   PLAYLIST,
   ARTIST,
   CHANNEL,
-  ALBUM
+  ALBUM,
+  SHOW
 }
 
 enum HomePageSectionLayout {
@@ -796,5 +803,165 @@ class DeezerLinkResponse {
     if (t == 'playlist') return DeezerLinkType.PLAYLIST;
     if (t == 'track') return DeezerLinkType.TRACK;
     return null;
+  }
+}
+
+//Sorting
+enum SortType {
+  DEFAULT,
+  ALPHABETIC,
+  ARTIST,
+  ALBUM,
+  RELEASE_DATE,
+  POPULARITY,
+  USER,
+  TRACK_COUNT,
+  DATE_ADDED
+}
+
+enum SortSourceTypes {
+  //Library
+  TRACKS,
+  PLAYLISTS,
+  ALBUMS,
+  ARTISTS,
+
+  PLAYLIST
+}
+
+@JsonSerializable()
+class Sorting {
+  SortType type;
+  bool reverse;
+
+  //For preserving sorting
+  String id;
+  SortSourceTypes sourceType;
+
+  Sorting({this.type = SortType.DEFAULT, this.reverse = false, this.id, this.sourceType});
+
+  //Find index of sorting from cache
+  static int index(SortSourceTypes type, {String id}) {
+    //Empty cache
+    if (cache.sorts == null) {
+      cache.sorts = [];
+      cache.save();
+      return null;
+    }
+    //Find index
+    int index;
+    if (id != null)
+      index = cache.sorts.indexWhere((s) => s.sourceType == type && s.id == id);
+    else
+      index = cache.sorts.indexWhere((s) => s.sourceType == type);
+    if (index == -1)
+      return null;
+    return index;
+  }
+
+  factory Sorting.fromJson(Map<String, dynamic> json) => _$SortingFromJson(json);
+  Map<String, dynamic> toJson() => _$SortingToJson(this);
+}
+
+@JsonSerializable()
+class Show {
+
+  String name;
+  String description;
+  ImageDetails art;
+  String id;
+
+  Show({this.name, this.description, this.art, this.id});
+
+  //JSON
+  factory Show.fromPrivateJson(Map<dynamic, dynamic> json) => Show(
+    id: json['SHOW_ID'],
+    name: json['SHOW_NAME'],
+    art: ImageDetails.fromPrivateString(json['SHOW_ART_MD5'], type: 'talk'),
+    description: json['SHOW_DESCRIPTION']
+  );
+
+  factory Show.fromJson(Map<String, dynamic> json) => _$ShowFromJson(json);
+  Map<String, dynamic> toJson() => _$ShowToJson(this);
+}
+
+@JsonSerializable()
+class ShowEpisode {
+
+  String id;
+  String title;
+  String description;
+  String url;
+  Duration duration;
+  String publishedDate;
+
+  ShowEpisode({this.id, this.title, this.description, this.url, this.duration, this.publishedDate});
+
+  String get durationString => "${duration.inMinutes}:${duration.inSeconds.remainder(60).toString().padLeft(2, '0')}";
+
+  //Generate MediaItem for playback
+  MediaItem toMediaItem(Show show) {
+    return MediaItem(
+      title: title,
+      displayTitle: title,
+      displaySubtitle: show.name,
+      album: show.name,
+      id: id,
+      extras: {
+        'showUrl': url,
+        'show': jsonEncode(show.toJson()),
+        'thumb': show.art.thumb
+      },
+      displayDescription: description,
+      duration: duration,
+      artUri: show.art.full
+    );
+  }
+  factory ShowEpisode.fromMediaItem(MediaItem mi) {
+    return ShowEpisode(
+      id: mi.id,
+      title: mi.title,
+      description: mi.displayDescription,
+      url: mi.extras['showUrl'],
+      duration: mi.duration,
+    );
+  }
+
+  //JSON
+  factory ShowEpisode.fromPrivateJson(Map<dynamic, dynamic> json) => ShowEpisode(
+    id: json['EPISODE_ID'],
+    title: json['EPISODE_TITLE'],
+    description: json['EPISODE_DESCRIPTION'],
+    url: json['EPISODE_DIRECT_STREAM_URL'],
+    duration: Duration(seconds: int.parse(json['DURATION'].toString())),
+    publishedDate: json['EPISODE_PUBLISHED_TIMESTAMP']
+  );
+
+  factory ShowEpisode.fromJson(Map<String, dynamic> json) => _$ShowEpisodeFromJson(json);
+  Map<String, dynamic> toJson() => _$ShowEpisodeToJson(this);
+}
+
+class StreamQualityInfo {
+  String format;
+  int size;
+  String source;
+
+  StreamQualityInfo({this.format, this.size, this.source});
+
+  factory StreamQualityInfo.fromJson(Map json) => StreamQualityInfo(
+    format: json['format'],
+    size: json['size'],
+    source: json['source']
+  );
+
+  int bitrate(Duration duration) {
+    if (size == null || size == 0) return 0;
+    int bitrate = (((size * 8) / 1000) / duration.inSeconds).round();
+    //Round to known values
+    if (bitrate > 122 && bitrate < 134)
+      return 128;
+    if (bitrate > 315 && bitrate < 325)
+      return 320;
+    return bitrate;
   }
 }

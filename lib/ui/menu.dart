@@ -13,6 +13,7 @@ import 'package:freezer/ui/error.dart';
 import 'package:freezer/translations.i18n.dart';
 import 'package:numberpicker/numberpicker.dart';
 import 'package:share/share.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 import '../api/definitions.dart';
 import 'cached_image.dart';
@@ -501,6 +502,35 @@ class MenuSheet {
     },
   );
 
+  //===================
+  // SHOW/EPISODE
+  //===================
+
+  defaultShowEpisodeMenu(Show s, ShowEpisode e, {List<Widget> options = const []}) {
+    show([
+      shareTile('episode', e.id),
+      shareShow(s.id),
+      downloadExternalEpisode(e),
+      ...options
+    ]);
+  }
+
+  Widget shareShow(String id) => ListTile(
+    title: Text('Share show'.i18n),
+    leading: Icon(Icons.share),
+    onTap: () async {
+      Share.share('https://deezer.com/show/$id');
+    },
+  );
+
+  //Open direct download link in browser
+  Widget downloadExternalEpisode(ShowEpisode e) => ListTile(
+    title: Text('Download externally'.i18n),
+    leading: Icon(Icons.file_download),
+    onTap: () async {
+      launch(e.url);
+    },
+  );
 
   //===================
   // OTHER

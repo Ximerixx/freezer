@@ -122,15 +122,7 @@ class Settings {
 
   //JSON to forward into download service
   Map getServiceSettings() {
-    return {
-      "downloadThreads": downloadThreads,
-      "overwriteDownload": overwriteDownload,
-      "downloadLyrics": downloadLyrics,
-      "trackCover": trackCover,
-      "arl": arl,
-      "albumCover": albumCover,
-      "nomediaFiles": nomediaFiles
-    };
+    return {"json": jsonEncode(this.toJson())};
   }
 
   void updateUseArtColor(bool v) {

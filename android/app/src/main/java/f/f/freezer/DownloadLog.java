@@ -14,7 +14,7 @@ public class DownloadLog {
     BufferedWriter writer;
 
     //Open/Create file
-    public void open(Context context) {
+    void open(Context context) {
         File file = new File(context.getExternalFilesDir(""), "download.log");
         try {
             if (!file.exists()) {
@@ -27,7 +27,7 @@ public class DownloadLog {
     }
 
     //Close log
-    public void close() {
+    void close() {
         try {
             writer.close();
         } catch (Exception ignored) {
@@ -35,13 +35,13 @@ public class DownloadLog {
         }
     }
 
-    public String time() {
+    String time() {
         SimpleDateFormat format = new SimpleDateFormat("yyyy.MM.dd HH:mm:ss");
         return format.format(Calendar.getInstance().getTime());
     }
 
     //Write error to log
-    public void error(String info) {
+    void error(String info) {
         if (writer == null) return;
         String data = "E:" + time() + ": " + info;
         try {
@@ -55,7 +55,7 @@ public class DownloadLog {
     }
 
     //Write error to log with download info
-    public void error(String info, Download download) {
+    void error(String info, Download download) {
         if (writer == null) return;
         String data = "E:" +  time() + " (TrackID: " + download.trackId + ", ID: " + Integer.toString(download.id) + "): " +info;
         try {
@@ -69,7 +69,7 @@ public class DownloadLog {
     }
 
     //Write warning to log
-    public void warn(String info) {
+    void warn(String info) {
         if (writer == null) return;
         String data = "W:" + time() + ": " + info;
         try {
@@ -83,7 +83,7 @@ public class DownloadLog {
     }
 
     //Write warning to log with download info
-    public void warn(String info, Download download) {
+    void warn(String info, Download download) {
         if (writer == null) return;
         String data = "W:" +  time() + " (TrackID: " + download.trackId + ", ID: " + Integer.toString(download.id) + "): " +info;
         try {

@@ -23,13 +23,20 @@ import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
+import java.security.KeyManagementException;
 import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
+import java.security.cert.X509Certificate;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
 
 import javax.crypto.Cipher;
 import javax.crypto.spec.SecretKeySpec;
+import javax.net.ssl.HttpsURLConnection;
+import javax.net.ssl.SSLContext;
+import javax.net.ssl.TrustManager;
+import javax.net.ssl.X509TrustManager;
 
 import io.flutter.embedding.android.FlutterActivity;
 import io.flutter.embedding.engine.FlutterEngine;
@@ -48,6 +55,7 @@ public class MainActivity extends FlutterActivity {
     Messenger serviceMessenger;
     Messenger activityMessenger;
     SQLiteDatabase db;
+    StreamServer streamServer;
 
     //Data if started from intent
     String intentPreload;
@@ -122,13 +130,7 @@ public class MainActivity extends FlutterActivity {
             //Update settings from UI
             if (call.method.equals("updateSettings")) {
                 Bundle bundle = new Bundle();
-                bundle.putInt("downloadThreads", (int)call.argument("downloadThreads"));
-                bundle.putBoolean("overwriteDownload", (boolean)call.argument("overwriteDownload"));
-                bundle.putBoolean("downloadLyrics", (boolean)call.argument("downloadLyrics"));
-                bundle.putBoolean("trackCover", (boolean)call.argument("trackCover"));
-                bundle.putString("arl", (String)call.argument("arl"));
-                bundle.putBoolean("albumCover", (boolean)call.argument("albumCover"));
-                bundle.putBoolean("nomediaFiles", (boolean)call.argument("nomediaFiles"));
+                bundle.putString("json", call.argument("json").toString());
                 sendMessage(DownloadService.SERVICE_SETTINGS_UPDATE, bundle);
 
                 result.success(null);
@@ -185,6 +187,31 @@ public class MainActivity extends FlutterActivity {
                 result.success(System.getProperty("os.arch"));
                 return;
             }
+            //Start streaming server
+            if (call.method.equals("startServer")) {
+                if (streamServer == null) {
+                    //Get offline path
+                    String offlinePath = getExternalFilesDir("offline").getAbsolutePath();
+                    //Start server
+                    streamServer = new StreamServer(call.argument("arl"), offlinePath);
+                    streamServer.start();
+                }
+                result.success(null);
+                return;
+            }
+            //Get quality info from stream
+            if (call.method.equals("getStreamInfo")) {
+                if (streamServer == null) {
+                    result.success(null);
+                    return;
+                }
+                StreamServer.StreamInfo info = streamServer.streams.get(call.argument("id").toString());
+                if (info != null)
+                    result.success(info.toJSON());
+                else
+                    result.success(null);
+                return;
+            }
 
             result.error("0", "Not implemented!", "Not implemented!");
         })));
@@ -208,14 +235,38 @@ public class MainActivity extends FlutterActivity {
     @Override
     protected void onStart() {
         super.onStart();
+
         //Bind downloader service
         activityMessenger = new Messenger(new IncomingHandler(this));
         Intent intent = new Intent(this, DownloadService.class);
         intent.putExtra("activityMessenger", activityMessenger);
-        bindService(intent, connection, Context.BIND_AUTO_CREATE);
+        startService(intent);
+        bindService(intent, connection, 0);
         //Get DB
         DownloadsDatabase dbHelper = new DownloadsDatabase(getApplicationContext());
         db = dbHelper.getWritableDatabase();
+
+        //Trust all SSL Certs - Credits to Kilowatt36
+        TrustManager[] trustAllCerts = new TrustManager[]{
+                new X509TrustManager() {
+                    public java.security.cert.X509Certificate[] getAcceptedIssuers() {
+                        return null;
+                    }
+                    public void checkClientTrusted(X509Certificate[] certs, String authType) {
+                    }
+                    public void checkServerTrusted(X509Certificate[] certs, String authType) {
+                    }
+                }
+        };
+        SSLContext sc;
+        try {
+            sc = SSLContext.getInstance("SSL");
+            sc.init(null, trustAllCerts, new java.security.SecureRandom());
+            HttpsURLConnection.setDefaultSSLSocketFactory(sc.getSocketFactory());
+        } catch (NoSuchAlgorithmException | KeyManagementException e) {
+            Log.e(this.getLocalClassName(), e.getMessage());
+        }
+
     }
 
     @Override
@@ -227,6 +278,14 @@ public class MainActivity extends FlutterActivity {
             serviceBound = false;
         }
         db.close();
+    }
+
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        //Stop server
+        if (streamServer != null)
+            streamServer.stop();
     }
 
     //Connection to download service

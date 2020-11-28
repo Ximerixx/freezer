@@ -321,11 +321,12 @@ class SmartTrackListTile extends StatelessWidget {
                             fontSize: 18.0,
                             shadows: [
                               Shadow(
-                                  offset: Offset(1, 1),
-                                  blurRadius: 2,
-                                  color: Colors.black
+                                offset: Offset(1, 1),
+                                blurRadius: 2,
+                                color: Colors.black
                               )
-                            ]
+                            ],
+                          color: Colors.white
                         ),
                       ),
                     ),
@@ -450,6 +451,107 @@ class ChannelTile extends StatelessWidget {
             ),
           ),
         )
+      ),
+    );
+  }
+}
+
+class ShowCard extends StatelessWidget {
+
+  final Show show;
+  final Function onTap;
+  final Function onHold;
+
+  ShowCard(this.show, {this.onTap, this.onHold});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      child: InkWell(
+        onTap: onTap,
+        onLongPress: onHold,
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Padding(
+              padding: EdgeInsets.all(8.0),
+              child: CachedImage(
+                url: show.art.thumb,
+                width: 128.0,
+                height: 128.0,
+                rounded: true,
+              ),
+            ),
+            Container(
+              width: 144.0,
+              child: Text(
+                show.name,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  fontSize: 14.0
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class ShowEpisodeTile extends StatelessWidget {
+
+  final ShowEpisode episode;
+  final Function onTap;
+  final Function onHold;
+  final Widget trailing;
+
+  ShowEpisodeTile(this.episode, {this.onTap, this.onHold, this.trailing});
+
+  @override
+  Widget build(BuildContext context) {
+    return InkWell(
+      onLongPress: onHold,
+      onTap: onTap,
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          ListTile(
+            title: Text(episode.title, maxLines: 2),
+            trailing: trailing,
+          ),
+          Padding(
+            padding: EdgeInsets.symmetric(horizontal: 16.0),
+            child: Text(
+              episode.description,
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
+              style: TextStyle(
+                color: Theme.of(context).textTheme.subtitle1.color.withOpacity(0.9)
+              ),
+            ),
+          ),
+          Padding(
+            padding: EdgeInsets.fromLTRB(16, 8.0, 0, 0),
+            child: Row(
+              mainAxisSize: MainAxisSize.max,
+              children: [
+                Text(
+                  '${episode.publishedDate} | ${episode.durationString}',
+                  textAlign: TextAlign.left,
+                  style: TextStyle(
+                    fontSize: 12.0,
+                    fontWeight: FontWeight.bold,
+                    color: Theme.of(context).textTheme.subtitle1.color.withOpacity(0.6)
+                  ),
+                ),
+              ],
+            ),
+          ),
+          Divider(),
+        ],
       ),
     );
   }

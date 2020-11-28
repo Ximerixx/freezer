@@ -71,7 +71,7 @@ class _FreezerAppState extends State<FreezerApp> {
     });
     SystemChrome.setSystemUIOverlayStyle(SystemUiOverlayStyle(
       systemNavigationBarColor: settings.themeData.bottomAppBarColor,
-      systemNavigationBarIconBrightness: settings.isDark? Brightness.light : Brightness.dark
+      systemNavigationBarIconBrightness: settings.isDark ? Brightness.light : Brightness.dark,
     ));
   }
 
@@ -168,6 +168,8 @@ class _MainScreenState extends State<MainScreen> with SingleTickerProviderStateM
   void initState() {
     navigatorKey = GlobalKey<NavigatorState>();
 
+    _startStreamingServer();
+
     //Start with parameters
     _setupUniLinks();
     _loadPreloadInfo();
@@ -179,6 +181,10 @@ class _MainScreenState extends State<MainScreen> with SingleTickerProviderStateM
     });
 
     super.initState();
+  }
+
+  void _startStreamingServer() async {
+    await DownloadManager.platform.invokeMethod("startServer", {"arl": settings.arl});
   }
 
   void _prepareQuickActions() {

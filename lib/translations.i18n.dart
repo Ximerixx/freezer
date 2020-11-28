@@ -27,7 +27,8 @@ const supportedLocales = [
   const Locale('hi', 'IN'),
   const Locale('sk', 'SK'),
   const Locale('cs', 'CZ'),
-  const Locale('fil', 'PH')
+  const Locale('fil', 'PH'),
+  const Locale('uwu', 'UWU')
 ];
 
 extension Localization on String {

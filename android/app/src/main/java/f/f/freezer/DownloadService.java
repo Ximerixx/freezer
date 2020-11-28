@@ -119,7 +119,9 @@ public class DownloadService extends Service {
         if (intent != null)
             activityMessenger = intent.getParcelableExtra("activityMessenger");
 
-        return super.onStartCommand(intent, flags, startId);
+        //return super.onStartCommand(intent, flags, startId);
+        //Prevent battery savers I guess
+        return START_STICKY;
     }
 
     //Android O+ Notifications
@@ -313,65 +315,25 @@ public class DownloadService extends Service {
                 return;
             }
 
-            //Quality fallback
-            int newQuality;
-            try {
-                newQuality = deezer.qualityFallback(download.trackId, download.md5origin, download.mediaVersion, download.quality);
-            } catch (Exception e) {
-                logger.error("Quality fallback failed: " + e.toString(), download);
-                download.state = Download.DownloadState.ERROR;
-                exit();
-                return;
-            }
+            //Fallback
+            Deezer.QualityInfo qualityInfo = new Deezer.QualityInfo(this.download.quality, this.download.trackId, this.download.md5origin, this.download.mediaVersion, logger);
+            if (!download.isUserUploaded()) {
+                try {
+                    boolean res = qualityInfo.fallback(deezer);
+                    if (!res)
+                        throw new Exception("No more to fallback!");
 
-            //TrackID Fallback
-            try {
-                if (newQuality == -1 && !download.isUserUploaded() && privateJson.has("FALLBACK")) {
-                    logger.warn("TrackID Fallback!", download);
-                    String fallbackId = privateJson.getJSONObject("FALLBACK").getString("SNG_ID");
-                    JSONObject newPrivate = deezer.callGWAPI("song.getListData", "{\"sng_ids\": [" + fallbackId + "]}");
-                    JSONObject trackData = newPrivate.getJSONObject("results").getJSONArray("data").getJSONObject(0);
-                    download.trackId = trackData.getString("SNG_ID");
-                    download.md5origin = trackData.getString("MD5_ORIGIN");
-                    download.mediaVersion = trackData.getString("MEDIA_VERSION");
-                    run();
+                    download.quality = qualityInfo.quality;
+                } catch (Exception e) {
+                    logger.error("Fallback failed " + e.toString());
+                    download.state = Download.DownloadState.DEEZER_ERROR;
+                    exit();
                     return;
                 }
-            } catch (Exception e) {
-                logger.error("ID fallback failed: " + e.toString(), download);
+            } else {
+                //User uploaded MP3
+                qualityInfo.quality = 3;
             }
-
-            //ISRC Fallback
-            try {
-                if (newQuality == -1 && !download.isUserUploaded()) {
-                    logger.warn("ISRC Fallback!", download);
-                    JSONObject newTrackJson = Deezer.callPublicAPI("track", "isrc:" + trackJson.getString("isrc"));
-                    //Same track check
-                    if (newTrackJson.getInt("id") == trackJson.getInt("id")) throw new Exception("No more to fallback!");
-                    //Get private data
-                    JSONObject privateJson = deezer.callGWAPI("song.getListData", "{\"sng_ids\": [" + newTrackJson.getInt("id") + "]}");
-                    JSONObject trackData = privateJson.getJSONObject("results").getJSONArray("data").getJSONObject(0);
-                    download.trackId = trackData.getString("SNG_ID");
-                    download.md5origin = trackData.getString("MD5_ORIGIN");
-                    download.mediaVersion = trackData.getString("MEDIA_VERSION");
-                    run();
-                    return;
-                }
-            } catch (Exception e) {
-                logger.error("ISRC Fallback failed, track unavailable! " + e.toString(), download);
-                download.state = Download.DownloadState.DEEZER_ERROR;
-                exit();
-                return;
-            }
-
-            //No quality available
-            if (newQuality == -1) {
-                logger.error("No available quality!", download);
-                download.state = Download.DownloadState.DEEZER_ERROR;
-                exit();
-                return;
-            }
-            download.quality = newQuality;
 
             if (!download.priv) {
                 //Check file
@@ -379,7 +341,7 @@ public class DownloadService extends Service {
                     if (download.isUserUploaded()) {
                         outFile = new File(Deezer.generateUserUploadedMP3Filename(download.path, privateJson));
                     } else {
-                        outFile = new File(Deezer.generateFilename(download.path, trackJson, albumJson, newQuality));
+                        outFile = new File(Deezer.generateFilename(download.path, trackJson, albumJson, qualityInfo.quality));
                     }
                     parentDir = new File(outFile.getParent());
                 } catch (Exception e) {
@@ -415,7 +377,7 @@ public class DownloadService extends Service {
             }
 
             //Download
-            String sURL = Deezer.getTrackUrl(download.trackId, download.md5origin, download.mediaVersion, newQuality);
+            String sURL = Deezer.getTrackUrl(qualityInfo.trackId, qualityInfo.md5origin, qualityInfo.mediaVersion, qualityInfo.quality);
             try {
                 URL url = new URL(sURL);
                 HttpsURLConnection connection = (HttpsURLConnection) url.openConnection();
@@ -858,7 +820,23 @@ public class DownloadService extends Service {
 
         //Parse settings from bundle sent from UI
         static DownloadSettings fromBundle(Bundle b) {
-            return new DownloadSettings(b.getInt("downloadThreads"), b.getBoolean("overwriteDownload"), b.getBoolean("downloadLyrics"), b.getBoolean("trackCover"), b.getString("arl"), b.getBoolean("albumCover"), b.getBoolean("nomediaFiles"));
+            JSONObject json;
+            try {
+                json = new JSONObject(b.getString("json"));
+                return new DownloadSettings(
+                    json.getInt("downloadThreads"),
+                    json.getBoolean("overwriteDownload"),
+                    json.getBoolean("downloadLyrics"),
+                    json.getBoolean("trackCover"),
+                    json.getString("arl"),
+                    json.getBoolean("albumCover"),
+                    json.getBoolean("nomediaFiles")
+                );
+            } catch (Exception e) {
+                //Shouldn't happen
+                Log.e("ERR", "Error loading settings!");
+                return null;
+            }
         }
     }
 

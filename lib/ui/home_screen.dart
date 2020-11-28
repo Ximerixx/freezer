@@ -291,6 +291,15 @@ class HomePageItemWidget extends StatelessWidget {
             ));
           },
         );
+      case HomePageItemType.SHOW:
+        return ShowCard(
+          item.value,
+          onTap: () {
+            Navigator.of(context).push(MaterialPageRoute(
+              builder: (context) => ShowScreen(item.value)
+            ));
+          },
+        );
     }
     return Container(height: 0, width: 0);
   }
