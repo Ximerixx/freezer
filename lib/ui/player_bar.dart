@@ -20,6 +20,7 @@ class PlayerBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    var focusNode = FocusNode();
     return GestureDetector(
       onHorizontalDragUpdate: (details) async {
         if (_gestureRegistered) return;
@@ -46,9 +47,11 @@ class PlayerBar extends StatelessWidget {
             mainAxisSize: MainAxisSize.min,
             children: <Widget>[
               Container(
-                color: Theme.of(context).bottomAppBarColor,
+                // For Android TV: indicate focus by grey
+                color: focusNode.hasFocus ? Colors.black26 : Theme.of(context).bottomAppBarColor,
                 child: ListTile(
                   dense: true,
+                  focusNode: focusNode,
                   contentPadding: EdgeInsets.symmetric(horizontal: 8.0),
                   onTap: () {
                     Navigator.of(context).push(MaterialPageRoute(

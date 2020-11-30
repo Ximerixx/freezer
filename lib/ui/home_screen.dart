@@ -143,14 +143,11 @@ class _HomePageScreenState extends State<HomePageScreen> {
       ));
     if (_error)
       return ErrorScreen();
-    return ListView.builder(
-      shrinkWrap: true,
-      physics: NeverScrollableScrollPhysics(),
-      itemCount: _homePage.sections.length,
-      itemBuilder: (context, i) {
-        return HomepageSectionWidget(_homePage.sections[i]);
-      },
-    );
+    return Column(
+        children: List.generate(_homePage.sections.length, (i) {
+          return HomepageSectionWidget(_homePage.sections[i]);
+        },
+    ));
   }
 }
 
@@ -161,62 +158,54 @@ class HomepageSectionWidget extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Column(
-      mainAxisSize: MainAxisSize.min,
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Padding(
-            child: Text(
-              section.title,
+        return ListTile(
+            title: Text(
+              section.title??'',
               textAlign: TextAlign.left,
               maxLines: 2,
               overflow: TextOverflow.ellipsis,
               style: TextStyle(
-                fontSize: 20.0,
-                fontWeight: FontWeight.w900
+                  fontSize: 20.0,
+                  fontWeight: FontWeight.w900
               ),
             ),
-            padding: EdgeInsets.symmetric(horizontal: 12.0, vertical: 8.0)
-        ),
-
-        SingleChildScrollView(
-          scrollDirection: Axis.horizontal,
-          child: Row(
-            children: List.generate(section.items.length + 1, (i) {
-              //Has more items
-              if (i == section.items.length) {
-                if (section.hasMore??false) {
-                  return FlatButton(
-                    child: Text(
-                      'Show more'.i18n,
-                      textAlign: TextAlign.center,
-                      style: TextStyle(
-                          fontSize: 20.0
-                      ),
-                    ),
-                    onPressed: () => Navigator.of(context).push(MaterialPageRoute(
-                      builder: (context) => Scaffold(
-                        appBar: FreezerAppBar(section.title),
-                        body: SingleChildScrollView(
-                          child: HomePageScreen(
-                            channel: DeezerChannel(target: section.pagePath)
-                          )
+            subtitle: SingleChildScrollView(
+              scrollDirection: Axis.horizontal,
+              child: Row(
+                children: List.generate(section.items.length + 1, (j) {
+                  //Has more items
+                  if (j == section.items.length) {
+                    if (section.hasMore ?? false) {
+                      return FlatButton(
+                        child: Text(
+                          'Show more'.i18n,
+                          textAlign: TextAlign.center,
+                          style: TextStyle(
+                              fontSize: 20.0
+                          ),
                         ),
-                      ),
-                    )),
-                  );
-                }
-                return Container(height: 0, width: 0);
-              }
-              //Show item
-              HomePageItem item = section.items[i];
-              return HomePageItemWidget(item);
-            }),
-          ),
-        ),
-        Container(height: 8.0),
-      ],
-    );
+                        onPressed: () => Navigator.of(context).push(MaterialPageRoute(
+                          builder: (context) => Scaffold(
+                            appBar: FreezerAppBar(section.title),
+                            body: SingleChildScrollView(
+                                child: HomePageScreen(
+                                  channel: DeezerChannel(target: section.pagePath)
+                                )
+                            ),
+                          ),
+                        )),
+                      );
+                    }
+                    return Container(height: 0, width: 0);
+                  }
+
+                  //Show item
+                  HomePageItem item = section.items[j];
+                  return HomePageItemWidget(item);
+                }),
+              ),
+            )
+        );
   }
 }
 

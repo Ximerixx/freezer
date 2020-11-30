@@ -84,6 +84,10 @@ class _FreezerAppState extends State<FreezerApp> {
   Widget build(BuildContext context) {
     return MaterialApp(
       title: 'Freezer',
+      shortcuts: <LogicalKeySet, Intent>{
+        ...WidgetsApp.defaultShortcuts,
+        LogicalKeySet(LogicalKeyboardKey.select): const ActivateIntent(), // DPAD center key, for remote controls
+      },
       theme: settings.themeData,
       localizationsDelegates: [
         GlobalMaterialLocalizations.delegate,
@@ -159,10 +163,12 @@ class MainScreen extends StatefulWidget {
   _MainScreenState createState() => _MainScreenState();
 }
 
-class _MainScreenState extends State<MainScreen> with SingleTickerProviderStateMixin{
+class _MainScreenState extends State<MainScreen> with SingleTickerProviderStateMixin, WidgetsBindingObserver {
   List<Widget> _screens = [HomeScreen(), SearchScreen(), LibraryScreen()];
   int _selected = 0;
   StreamSubscription _urlLinkStream;
+  int _keyPressed = 0;
+  bool textFieldVisited = false;
 
   @override
   void initState() {
@@ -181,6 +187,7 @@ class _MainScreenState extends State<MainScreen> with SingleTickerProviderStateM
     });
 
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
   }
 
   void _startStreamingServer() async {
@@ -227,7 +234,17 @@ class _MainScreenState extends State<MainScreen> with SingleTickerProviderStateM
   void dispose() {
     if (_urlLinkStream != null)
       _urlLinkStream.cancel();
+    WidgetsBinding.instance.removeObserver(this);
     super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed) {
+      setState(() {
+        textFieldVisited = false;
+      });
+    }
   }
 
   void _setupUniLinks() async {
@@ -243,49 +260,133 @@ class _MainScreenState extends State<MainScreen> with SingleTickerProviderStateM
     } catch (e) {}
   }
 
+  ValueChanged<RawKeyEvent> _handleKey(FocusScopeNode navigationBarFocusNode, FocusNode screenFocusNode){
+    return (event) {
+      FocusNode primaryFocus = FocusManager.instance.primaryFocus;
+      // After visiting text field, something goes wrong and KeyDown events are not sent, only KeyUp-s.
+      // So, set this flag to indicate a transition to other "mode"
+      if (primaryFocus.context.widget.runtimeType.toString() == 'EditableText') {
+        setState(() {
+          textFieldVisited = true;
+        });
+      }
+      // Movement to navigation bar and back
+      if (event.runtimeType.toString() == (textFieldVisited ? 'RawKeyUpEvent' : 'RawKeyDownEvent')) {
+        int keyCode = (event.data as RawKeyEventDataAndroid).keyCode;
+        switch (keyCode) {
+          case 127: // Menu on Android TV
+          case 327: // EPG on Hisense TV
+            focusToNavbar(navigationBarFocusNode);
+            break;
+          case 22: // LEFT + RIGHT
+          case 21:
+            if (_keyPressed == 21 && keyCode == 22 || _keyPressed == 22 && keyCode == 21) {
+              focusToNavbar(navigationBarFocusNode);
+            }
+            _keyPressed = keyCode;
+            Future.delayed(Duration(milliseconds: 100), () =>  {
+              _keyPressed = 0
+            });
+            break;
+          case 20: // DOWN
+            // If it's bottom row, go to navigation bar
+            var row = primaryFocus.parent;
+            if (row != null) {
+              var column = row.parent;   
+              if (column.children.last == row) {
+                focusToNavbar(navigationBarFocusNode);
+              }
+            }
+            break;
+          case 19: // UP
+            if (navigationBarFocusNode.hasFocus) {
+              screenFocusNode.parent.parent.children.last // children.last is used for handling "playlists" screen in library. Under CustomNavigator 2 screens appears.
+                  .nextFocus(); // nextFocus is used instead of requestFocus because it focuses on last, bottom, non-visible tile of main page
+
+            }
+            break;
+        }
+      }
+      // After visiting text field, something goes wrong and KeyDown events are not sent, only KeyUp-s.
+      // Focus moving works only on KeyDown events, so here we simulate keys handling as it's done in Flutter
+      if (textFieldVisited && event.runtimeType.toString() == 'RawKeyUpEvent') {
+        Map<LogicalKeySet, Intent> shortcuts = Shortcuts.of(context).shortcuts;
+        final BuildContext primaryContext = primaryFocus?.context;
+        Intent intent = shortcuts[LogicalKeySet(event.logicalKey)];
+        if (intent != null) {
+          Actions.invoke(primaryContext, intent, nullOk: true);
+        }
+        // WA for "Search field -> navigator -> UP -> DOWN" case. Prevents focus hanging.
+        FocusNode newFocus = FocusManager.instance.primaryFocus;
+        if (newFocus is FocusScopeNode) {
+          navigationBarFocusNode.requestFocus();
+        }
+      }
+    };
+  }
+
+  void focusToNavbar(FocusScopeNode navigatorFocusNode) {
+    navigatorFocusNode.requestFocus();
+    navigatorFocusNode.focusInDirection(TraversalDirection.down); // If player bar is hidden, focus won't be visible, so go down once more
+  }
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      bottomNavigationBar: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: <Widget>[
-          PlayerBar(),
-          BottomNavigationBar(
-            backgroundColor: Theme.of(context).bottomAppBarColor,
-            currentIndex: _selected,
-            onTap: (int s) async {
+    FocusScopeNode navigationBarFocusNode = FocusScopeNode(); // for bottom navigation bar
+    FocusNode screenFocusNode = FocusNode();  // for CustomNavigator
+           
+    return RawKeyboardListener(
+        focusNode: FocusNode(),
+        onKey: _handleKey(navigationBarFocusNode, screenFocusNode),
+        child: Scaffold(
+            bottomNavigationBar:
+                FocusScope(
+                    node: navigationBarFocusNode,
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: <Widget>[
+                        PlayerBar(),
+                        BottomNavigationBar(
+                          backgroundColor: Theme.of(context).bottomAppBarColor,
+                          currentIndex: _selected,
+                          onTap: (int s) async {
+                            //Pop all routes until home screen
+                            while (navigatorKey.currentState.canPop()) {
+                              await navigatorKey.currentState.maybePop();
+                            }
 
-              //Pop all routes until home screen
-              while (navigatorKey.currentState.canPop()) {
-                await navigatorKey.currentState.maybePop();
-              }
-
-              await navigatorKey.currentState.maybePop();
-              setState(() {
-                _selected = s;
-              });
-            },
-            selectedItemColor: Theme.of(context).primaryColor,
-            items: <BottomNavigationBarItem>[
-              BottomNavigationBarItem(
-                  icon: Icon(Icons.home), title: Text('Home'.i18n)),
-              BottomNavigationBarItem(
-                icon: Icon(Icons.search),
-                title: Text('Search'.i18n),
+                            await navigatorKey.currentState.maybePop();
+                            setState(() {
+                              _selected = s;
+                            });
+                          },
+                          selectedItemColor: Theme.of(context).primaryColor,
+                          items: <BottomNavigationBarItem>[
+                            BottomNavigationBarItem(
+                                icon: Icon(Icons.home),
+                                title: Text('Home'.i18n)),
+                            BottomNavigationBarItem(
+                              icon: Icon(Icons.search),
+                              title: Text('Search'.i18n),
+                            ),
+                            BottomNavigationBarItem(
+                                icon: Icon(Icons.library_music),
+                                title: Text('Library'.i18n))
+                          ],
+                        )
+                      ],
+                    )),
+            body: AudioServiceWidget(
+              child: CustomNavigator(
+                navigatorKey: navigatorKey,
+                home: Focus(
+                    focusNode: screenFocusNode,
+                    skipTraversal: true,
+                    canRequestFocus: false,
+                    child: _screens[_selected]
+                ),
+                pageRoute: PageRoutes.materialPageRoute
               ),
-              BottomNavigationBarItem(
-                  icon: Icon(Icons.library_music), title: Text('Library'.i18n))
-            ],
-          )
-        ],
-      ),
-      body: AudioServiceWidget(
-        child: CustomNavigator(
-          navigatorKey: navigatorKey,
-          home: _screens[_selected],
-          pageRoute: PageRoutes.materialPageRoute,
-        ),
-      ));
+            )));
   }
 }

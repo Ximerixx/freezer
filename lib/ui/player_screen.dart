@@ -57,7 +57,7 @@ class _PlayerScreenState extends State<PlayerScreen> {
     setState(() => _bgGradient = LinearGradient(
         begin: Alignment.topCenter,
         end: Alignment.bottomCenter,
-        colors: [palette.dominantColor.color.withOpacity(0.5), Theme.of(context).bottomAppBarColor],
+        colors: [palette.dominantColor.color.withOpacity(0.5), Color.fromARGB(0, 0, 0, 0)],
         stops: [
           0.0,
           0.4
@@ -687,6 +687,7 @@ class _SeekBarState extends State<SeekBar> {
             Container(
               height: 32.0,
               child: Slider(
+                focusNode: FocusNode(canRequestFocus: false, skipTraversal: true), // Don't focus on Slider - it doesn't work (and not needed)
                 value: position,
                 max: duration,
                 onChangeStart: (double d) {

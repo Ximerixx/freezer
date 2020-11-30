@@ -1,5 +1,6 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:freezer/api/deezer.dart';
 import 'package:freezer/api/player.dart';
 import 'package:flutter_inappwebview/flutter_inappwebview.dart';
@@ -111,6 +112,17 @@ class _LoginWidgetState extends State<LoginWidget> {
     _start();
   }
 
+  // ARL auth: called on "Save" click, Enter and DPAD_Center press
+  void goARL(FocusNode node, TextEditingController _controller) {
+    if (node != null) {
+      node.unfocus();
+    }
+    _controller.clear();
+    settings.arl = _arl.trim();
+    Navigator.of(context).pop();
+    _update();
+  }
+
   @override
   Widget build(BuildContext context) {
 
@@ -121,7 +133,14 @@ class _LoginWidgetState extends State<LoginWidget> {
           child: CircularProgressIndicator(),
         ),
       );
-
+    TextEditingController _controller = new TextEditingController();
+    // For "DPAD center" key handling on remote controls
+    FocusNode focusNode = FocusNode(skipTraversal: true,descendantsAreFocusable: false,onKey: (node, event) {
+      if (event.logicalKey == LogicalKeyboardKey.select) {
+         goARL(node, _controller);
+      }
+      return true;
+    });
     if (settings.arl == null)
       return Scaffold(
         body: Padding(
@@ -165,6 +184,7 @@ class _LoginWidgetState extends State<LoginWidget> {
                     showDialog(
                         context: context,
                         builder: (context) {
+                          Future.delayed(Duration(seconds: 1), () => {focusNode.requestFocus()}); // autofocus doesn't work - it's replacement
                           return AlertDialog(
                             title: Text('Enter ARL'.i18n),
                             content: Container(
@@ -173,16 +193,17 @@ class _LoginWidgetState extends State<LoginWidget> {
                                 decoration: InputDecoration(
                                   labelText: 'Token (ARL)'.i18n
                                 ),
+                                focusNode: focusNode,
+                                controller: _controller,
+                                onSubmitted: (String s) {
+                                  goARL(focusNode, _controller);
+                                },
                               ),
                             ),
                             actions: <Widget>[
                               FlatButton(
                                 child: Text('Save'.i18n),
-                                onPressed: () {
-                                  settings.arl = _arl.trim();
-                                  Navigator.of(context).pop();
-                                  _update();
-                                },
+                                onPressed: () => goARL(null, _controller),
                               )
                             ],
                           );
