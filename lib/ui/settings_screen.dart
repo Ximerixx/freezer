@@ -46,6 +46,10 @@ class _SettingsScreenState extends State<SettingsScreen> {
       'name': 'Filipino',
       'isoCode': 'fil'
     });
+    defaultLanguagesList.add({
+      'name': 'Furry',
+      'isoCode': 'uwu'
+    });
     List<Map<String, String>> _l = supportedLocales.map<Map<String, String>>((l) {
       Map _lang = defaultLanguagesList.firstWhere((lang) => lang['isoCode'] == l.languageCode);
       return {
@@ -445,7 +449,7 @@ class _QualityPickerState extends State<QualityPicker> {
         ),
         if (widget.field == 'download')
           ListTile(
-            title: Text('Ask before downloading'),
+            title: Text('Ask before downloading'.i18n),
             leading: Radio(
               groupValue: _quality,
               value: AudioQuality.ASK,
@@ -947,8 +951,8 @@ class _GeneralSettingsState extends State<GeneralSettings> {
                       ),
                       FlatButton(
                         child: Text('(ARL ONLY) Continue'.i18n),
-                        onPressed: () {
-                          logOut();
+                        onPressed: () async {
+                          await logOut();
                           Navigator.of(context).pop();
                         },
                       ),
@@ -1073,6 +1077,11 @@ class _DirectoryPickerState extends State<DirectoryPicker> {
     super.initState();
   }
 
+  Future _resetPath() async {
+    StorageInfo si = (await PathProviderEx.getStorageInfo())[0];
+    setState(() => _path = si.appFilesDir);
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -1147,7 +1156,13 @@ class _DirectoryPickerState extends State<DirectoryPicker> {
         builder: (BuildContext context, AsyncSnapshot snapshot) {
 
           //On error go to last good path
-          if (snapshot.hasError) Future.delayed(Duration(milliseconds: 50), () =>  setState(() => _path = _previous));
+          if (snapshot.hasError) Future.delayed(Duration(milliseconds: 50), () {
+            if (_previous == null) {
+              _resetPath();
+              return;
+            }
+            setState(() => _path = _previous);
+          });
           if (!snapshot.hasData) return Center(child: CircularProgressIndicator(),);
 
           List<FileSystemEntity> data = snapshot.data;
@@ -1267,11 +1282,19 @@ class _CreditsScreenState extends State<CreditsScreen> {
             },
           ),
           ListTile(
+            title: Text('Discord'.i18n),
+            subtitle: Text('Official Discord server'.i18n),
+            leading: Icon(FontAwesome5.discord, color: Color(0xff7289da), size: 36.0),
+            onTap: () {
+              launch('https://discord.gg/7ap654Tp3z');
+            },
+          ),
+          ListTile(
             title: Text('Repository'.i18n),
             subtitle: Text('Source code, report issues there.'.i18n),
             leading: Icon(Icons.code, color: Colors.green, size: 36.0),
             onTap: () {
-              launch('https://notabug.org/exttex/freezer');
+              launch('https://git.rip/freezer/');
             },
           ),
           FreezerDivider(),

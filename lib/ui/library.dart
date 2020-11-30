@@ -1,5 +1,6 @@
 import 'package:connectivity/connectivity.dart';
 import 'package:flutter/material.dart';
+import 'package:fluttericon/font_awesome5_icons.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import 'package:freezer/api/cache.dart';
 import 'package:freezer/api/deezer.dart';
@@ -220,26 +221,44 @@ class _LibraryTracksState extends State<LibraryTracks> {
   List<Track> tracks = [];
   List<Track> allTracks = [];
   int trackCount;
-  SortType _sort = SortType.DEFAULT;
+  Sorting _sort = Sorting(sourceType: SortSourceTypes.TRACKS);
 
   Playlist get _playlist => Playlist(id: deezerAPI.favoritesPlaylistId);
 
   List<Track> get _sorted {
     List<Track> tcopy = List.from(tracks);
-    tcopy.sort((a, b) => a.favoriteDate.compareTo(b.favoriteDate));
-    switch (_sort) {
+    tcopy.sort((a, b) => a.addedDate.compareTo(b.addedDate));
+    switch (_sort.type) {
       case SortType.ALPHABETIC:
         tcopy.sort((a, b) => a.title.compareTo(b.title));
-        return tcopy;
+        break;
       case SortType.ARTIST:
         tcopy.sort((a, b) => a.artists[0].name.toLowerCase().compareTo(b.artists[0].name.toLowerCase()));
-        return tcopy;
-      case SortType.REVERSE:
-        return tcopy.reversed.toList();
+        break;
       case SortType.DEFAULT:
       default:
-        return tcopy;
+        break;
     }
+    //Reverse
+    if (_sort.reverse)
+      return tcopy.reversed.toList();
+    return tcopy;
+  }
+
+  Future _reverse() async {
+    setState(() => _sort.reverse = !_sort.reverse);
+    //Save sorting in cache
+    int index = Sorting.index(SortSourceTypes.TRACKS);
+    if (index != null) {
+      cache.sorts[index] = _sort;
+    } else {
+      cache.sorts.add(_sort);
+    }
+    await cache.save();
+
+    //Preload for sorting
+    if (tracks.length < (trackCount??0))
+      _loadFull();
   }
 
   Future _load() async {
@@ -274,7 +293,8 @@ class _LibraryTracksState extends State<LibraryTracks> {
         //Update
         setState(() {
           trackCount = favPlaylist.trackCount;
-          tracks = favPlaylist.tracks;
+          if (tracks.length == 0)
+            tracks = favPlaylist.tracks;
           _makeFavorite();
           _loading = false;
         });
@@ -306,7 +326,7 @@ class _LibraryTracksState extends State<LibraryTracks> {
 
   //Load all tracks
   Future _loadFull() async {
-    if (tracks.length < (trackCount??0)) {
+    if (tracks.length == 0 || tracks.length < (trackCount??0)) {
       Playlist p;
       try {
         p = await deezerAPI.fullPlaylist(deezerAPI.favoritesPlaylistId);
@@ -315,6 +335,7 @@ class _LibraryTracksState extends State<LibraryTracks> {
         setState(() {
           tracks = p.tracks;
           trackCount = p.trackCount;
+          _sort = _sort;
         });
       }
     }
@@ -348,13 +369,16 @@ class _LibraryTracksState extends State<LibraryTracks> {
       if (_scrollController.position.pixels > off) _load();
     });
 
-    _sort = cache.trackSort??SortType.DEFAULT;
-
     _load();
     //Load all offline tracks
     _loadAllOffline();
 
-    if (_sort != SortType.DEFAULT)
+    //Load sorting
+    int index = Sorting.index(SortSourceTypes.TRACKS);
+    if (index != null)
+      setState(() => _sort = cache.sorts[index]);
+
+    if (_sort.type != SortType.DEFAULT || _sort.reverse)
       _loadFull();
 
     super.initState();
@@ -366,6 +390,12 @@ class _LibraryTracksState extends State<LibraryTracks> {
       appBar: FreezerAppBar(
         'Tracks'.i18n,
         actions: [
+          IconButton(
+            icon: Icon(_sort.reverse ? FontAwesome5.sort_alpha_up : FontAwesome5.sort_alpha_down),
+            onPressed: () async {
+              await _reverse();
+            }
+          ),
           PopupMenuButton(
             child: Icon(Icons.sort, size: 32.0),
             color: Theme.of(context).scaffoldBackgroundColor,
@@ -374,18 +404,20 @@ class _LibraryTracksState extends State<LibraryTracks> {
               if (tracks.length < (trackCount??0))
                 await _loadFull();
 
-              setState(() => _sort = s);
-              cache.trackSort = s;
+              setState(() => _sort.type = s);
+              //Save sorting in cache
+              int index = Sorting.index(SortSourceTypes.TRACKS);
+              if (index != null) {
+                cache.sorts[index] = _sort;
+              } else {
+                cache.sorts.add(_sort);
+              }
               await cache.save();
             },
             itemBuilder: (context) => <PopupMenuEntry<SortType>>[
               PopupMenuItem(
                 value: SortType.DEFAULT,
                 child: Text('Default'.i18n, style: popupMenuTextStyle()),
-              ),
-              PopupMenuItem(
-                value: SortType.REVERSE,
-                child: Text('Reverse'.i18n, style: popupMenuTextStyle()),
               ),
               PopupMenuItem(
                 value: SortType.ALPHABETIC,
@@ -498,14 +530,6 @@ class _LibraryTracksState extends State<LibraryTracks> {
 }
 
 
-enum AlbumSortType {
-  DEFAULT,
-  REVERSE,
-  ALPHABETIC,
-  ARTIST,
-  DATE
-}
-
 class LibraryAlbums extends StatefulWidget {
   @override
   _LibraryAlbumsState createState() => _LibraryAlbumsState();
@@ -514,27 +538,28 @@ class LibraryAlbums extends StatefulWidget {
 class _LibraryAlbumsState extends State<LibraryAlbums> {
 
   List<Album> _albums;
-  AlbumSortType _sort = AlbumSortType.DEFAULT;
+  Sorting _sort = Sorting(sourceType: SortSourceTypes.ALBUMS);
   ScrollController _scrollController = ScrollController();
 
   List<Album> get _sorted {
     List<Album> albums = List.from(_albums);
     albums.sort((a, b) => a.favoriteDate.compareTo(b.favoriteDate));
-    switch (_sort) {
-      case AlbumSortType.DEFAULT:
-        return albums;
-      case AlbumSortType.REVERSE:
-        return albums.reversed.toList();
-      case AlbumSortType.ALPHABETIC:
+    switch (_sort.type) {
+      case SortType.DEFAULT:
+        break;
+      case SortType.ALPHABETIC:
         albums.sort((a, b) => a.title.toLowerCase().compareTo(b.title.toLowerCase()));
-        return albums;
-      case AlbumSortType.ARTIST:
+        break;
+      case SortType.ARTIST:
         albums.sort((a, b) => a.artists[0].name.toLowerCase().compareTo(b.artists[0].name.toLowerCase()));
-        return albums;
-      case AlbumSortType.DATE:
+        break;
+      case SortType.RELEASE_DATE:
         albums.sort((a, b) => DateTime.parse(a.releaseDate).compareTo(DateTime.parse(b.releaseDate)));
-        return albums;
+        break;
     }
+    //Reverse
+    if (_sort.reverse)
+      return albums.reversed.toList();
     return albums;
   }
 
@@ -550,8 +575,24 @@ class _LibraryAlbumsState extends State<LibraryAlbums> {
   @override
   void initState() {
     _load();
-    _sort = cache.albumSort??AlbumSortType.DEFAULT;
+    //Load sorting
+    int index = Sorting.index(SortSourceTypes.ALBUMS);
+    if (index != null)
+      _sort = cache.sorts[index];
+
     super.initState();
+  }
+
+  Future _reverse() async {
+    setState(() => _sort.reverse = !_sort.reverse);
+    //Save sorting in cache
+    int index = Sorting.index(SortSourceTypes.ALBUMS);
+    if (index != null) {
+      cache.sorts[index] = _sort;
+    } else {
+      cache.sorts.add(_sort);
+    }
+    await cache.save();
   }
 
   @override
@@ -560,33 +601,39 @@ class _LibraryAlbumsState extends State<LibraryAlbums> {
       appBar: FreezerAppBar(
         'Albums'.i18n,
         actions: [
+          IconButton(
+            icon: Icon(_sort.reverse ? FontAwesome5.sort_alpha_up : FontAwesome5.sort_alpha_down),
+            onPressed: () => _reverse(),
+          ),
           PopupMenuButton(
             color: Theme.of(context).scaffoldBackgroundColor,
             child: Icon(Icons.sort, size: 32.0),
-            onSelected: (AlbumSortType s) async {
-              setState(() => _sort = s);
-              cache.albumSort = s;
+            onSelected: (SortType s) async {
+              setState(() => _sort.type = s);
+              //Save to cache
+              int index = Sorting.index(SortSourceTypes.ALBUMS);
+              if (index == null) {
+                cache.sorts.add(_sort);
+              } else {
+                cache.sorts[index] = _sort;
+              }
               await cache.save();
             },
-            itemBuilder: (context) => <PopupMenuEntry<AlbumSortType>>[
+            itemBuilder: (context) => <PopupMenuEntry<SortType>>[
               PopupMenuItem(
-                value: AlbumSortType.DEFAULT,
+                value: SortType.DEFAULT,
                 child: Text('Default'.i18n, style: popupMenuTextStyle()),
               ),
               PopupMenuItem(
-                value: AlbumSortType.REVERSE,
-                child: Text('Reverse'.i18n, style: popupMenuTextStyle()),
-              ),
-              PopupMenuItem(
-                value: AlbumSortType.ALPHABETIC,
+                value: SortType.ALPHABETIC,
                 child: Text('Alphabetic'.i18n, style: popupMenuTextStyle()),
               ),
               PopupMenuItem(
-                value: AlbumSortType.ARTIST,
+                value: SortType.ARTIST,
                 child: Text('Artist'.i18n, style: popupMenuTextStyle()),
               ),
               PopupMenuItem(
-                value: AlbumSortType.DATE,
+                value: SortType.RELEASE_DATE,
                 child: Text('Release date'.i18n, style: popupMenuTextStyle()),
               ),
             ],
@@ -675,12 +722,6 @@ class _LibraryAlbumsState extends State<LibraryAlbums> {
   }
 }
 
-enum ArtistSortType {
-  DEFAULT,
-  REVERSE,
-  POPULARITY,
-  ALPHABETIC
-}
 
 class LibraryArtists extends StatefulWidget {
   @override
@@ -690,7 +731,7 @@ class LibraryArtists extends StatefulWidget {
 class _LibraryArtistsState extends State<LibraryArtists> {
 
   List<Artist> _artists;
-  ArtistSortType _sort = ArtistSortType.DEFAULT;
+  Sorting _sort = Sorting(sourceType: SortSourceTypes.ARTISTS);
   bool _loading = true;
   bool _error = false;
   ScrollController _scrollController = ScrollController();
@@ -698,18 +739,19 @@ class _LibraryArtistsState extends State<LibraryArtists> {
   List<Artist> get _sorted {
     List<Artist> artists = List.from(_artists);
     artists.sort((a, b) => a.favoriteDate.compareTo(b.favoriteDate));
-    switch (_sort) {
-      case ArtistSortType.DEFAULT:
-        return artists;
-      case ArtistSortType.REVERSE:
-        return artists.reversed.toList();
-      case ArtistSortType.POPULARITY:
+    switch (_sort.type) {
+      case SortType.DEFAULT:
+        break;
+      case SortType.POPULARITY:
         artists.sort((a, b) => b.fans - a.fans);
-        return artists;
-      case ArtistSortType.ALPHABETIC:
+        break;
+      case SortType.ALPHABETIC:
         artists.sort((a, b) => a.name.toLowerCase().compareTo(b.name.toLowerCase()));
-        return artists;
+        break;
     }
+    //Reverse
+    if (_sort.reverse)
+      return artists.reversed.toList();
     return artists;
   }
 
@@ -732,9 +774,26 @@ class _LibraryArtistsState extends State<LibraryArtists> {
     });
   }
 
+  Future _reverse() async {
+    setState(() => _sort.reverse = !_sort.reverse);
+    //Save sorting in cache
+    int index = Sorting.index(SortSourceTypes.ARTISTS);
+    if (index != null) {
+      cache.sorts[index] = _sort;
+    } else {
+      cache.sorts.add(_sort);
+    }
+    await cache.save();
+  }
+
+
   @override
   void initState() {
-    _sort = cache.artistSort;
+    //Restore sort
+    int index = Sorting.index(SortSourceTypes.ARTISTS);
+    if (index != null)
+      _sort = cache.sorts[index];
+
     _load();
     super.initState();
   }
@@ -745,29 +804,35 @@ class _LibraryArtistsState extends State<LibraryArtists> {
       appBar: FreezerAppBar(
         'Artists'.i18n,
         actions: [
+          IconButton(
+            icon: Icon(_sort.reverse ? FontAwesome5.sort_alpha_up : FontAwesome5.sort_alpha_down),
+            onPressed: () => _reverse(),
+          ),
           PopupMenuButton(
             child: Icon(Icons.sort, size: 32.0),
             color: Theme.of(context).scaffoldBackgroundColor,
-            onSelected: (ArtistSortType s) async {
-              setState(() => _sort = s);
-              cache.artistSort = s;
+            onSelected: (SortType s) async {
+              setState(() => _sort.type = s);
+              //Save
+              int index = Sorting.index(SortSourceTypes.ARTISTS);
+              if (index == null) {
+                cache.sorts.add(_sort);
+              } else {
+                cache.sorts[index] = _sort;
+              }
               await cache.save();
             },
-            itemBuilder: (context) => <PopupMenuEntry<ArtistSortType>>[
+            itemBuilder: (context) => <PopupMenuEntry<SortType>>[
               PopupMenuItem(
-                value: ArtistSortType.DEFAULT,
+                value: SortType.DEFAULT,
                 child: Text('Default'.i18n, style: popupMenuTextStyle()),
               ),
               PopupMenuItem(
-                value: ArtistSortType.REVERSE,
-                child: Text('Reverse'.i18n, style: popupMenuTextStyle()),
-              ),
-              PopupMenuItem(
-                value: ArtistSortType.ALPHABETIC,
+                value: SortType.ALPHABETIC,
                 child: Text('Alphabetic'.i18n, style: popupMenuTextStyle()),
               ),
               PopupMenuItem(
-                value: ArtistSortType.POPULARITY,
+                value: SortType.POPULARITY,
                 child: Text('Popularity'.i18n, style: popupMenuTextStyle()),
               ),
             ],
@@ -819,14 +884,6 @@ class _LibraryArtistsState extends State<LibraryArtists> {
   }
 }
 
-enum PlaylistSortType {
-  DEFAULT,
-  REVERSE,
-  ALPHABETIC,
-  USER,
-  TRACK_COUNT
-}
-
 class LibraryPlaylists extends StatefulWidget {
   @override
   _LibraryPlaylistsState createState() => _LibraryPlaylistsState();
@@ -835,27 +892,27 @@ class LibraryPlaylists extends StatefulWidget {
 class _LibraryPlaylistsState extends State<LibraryPlaylists> {
 
   List<Playlist> _playlists;
-  PlaylistSortType _sort = PlaylistSortType.DEFAULT;
+  Sorting _sort = Sorting(sourceType: SortSourceTypes.PLAYLISTS);
   ScrollController _scrollController = ScrollController();
   String _filter = '';
 
   List<Playlist> get _sorted {
     List<Playlist> playlists = List.from(_playlists.where((p) => p.title.toLowerCase().contains(_filter.toLowerCase())));
-    switch (_sort) {
-      case PlaylistSortType.DEFAULT:
-        return playlists;
-      case PlaylistSortType.REVERSE:
-        return playlists.reversed.toList();
-      case PlaylistSortType.USER:
+    switch (_sort.type) {
+      case SortType.DEFAULT:
+        break;
+      case SortType.USER:
         playlists.sort((a, b) => (a.user.name??deezerAPI.userName).toLowerCase().compareTo((b.user.name??deezerAPI.userName).toLowerCase()));
-        return playlists;
-      case PlaylistSortType.TRACK_COUNT:
+        break;
+      case SortType.TRACK_COUNT:
         playlists.sort((a, b) => b.trackCount - a.trackCount);
-        return playlists;
-      case PlaylistSortType.ALPHABETIC:
+        break;
+      case SortType.ALPHABETIC:
         playlists.sort((a, b) => a.title.toLowerCase().compareTo(b.title.toLowerCase()));
-        return playlists;
+        break;
     }
+    if (_sort.reverse)
+      return playlists.reversed.toList();
     return playlists;
   }
 
@@ -868,9 +925,25 @@ class _LibraryPlaylistsState extends State<LibraryPlaylists> {
     }
   }
 
+  Future _reverse() async {
+    setState(() => _sort.reverse = !_sort.reverse);
+    //Save sorting in cache
+    int index = Sorting.index(SortSourceTypes.PLAYLISTS);
+    if (index != null) {
+      cache.sorts[index] = _sort;
+    } else {
+      cache.sorts.add(_sort);
+    }
+    await cache.save();
+  }
+
   @override
   void initState() {
-    _sort = cache.libraryPlaylistSort;
+    //Restore sort
+    int index = Sorting.index(SortSourceTypes.PLAYLISTS);
+    if (index != null)
+      _sort = cache.sorts[index];
+
     _load();
     super.initState();
   }
@@ -892,33 +965,39 @@ class _LibraryPlaylistsState extends State<LibraryPlaylists> {
       appBar: FreezerAppBar(
         'Playlists'.i18n,
         actions: [
+          IconButton(
+            icon: Icon(_sort.reverse ? FontAwesome5.sort_alpha_up : FontAwesome5.sort_alpha_down),
+            onPressed: () => _reverse(),
+          ),
           PopupMenuButton(
             child: Icon(Icons.sort, size: 32.0),
             color: Theme.of(context).scaffoldBackgroundColor,
-            onSelected: (PlaylistSortType s) async {
-              setState(() => _sort = s);
-              cache.libraryPlaylistSort = s;
+            onSelected: (SortType s) async {
+              setState(() => _sort.type = s);
+              //Save to cache
+              int index = Sorting.index(SortSourceTypes.PLAYLISTS);
+              if (index == null)
+                cache.sorts.add(_sort);
+              else
+                cache.sorts[index] = _sort;
+
               await cache.save();
             },
-            itemBuilder: (context) => <PopupMenuEntry<PlaylistSortType>>[
+            itemBuilder: (context) => <PopupMenuEntry<SortType>>[
               PopupMenuItem(
-                value: PlaylistSortType.DEFAULT,
+                value: SortType.DEFAULT,
                 child: Text('Default'.i18n, style: popupMenuTextStyle()),
               ),
               PopupMenuItem(
-                value: PlaylistSortType.REVERSE,
-                child: Text('Reverse'.i18n, style: popupMenuTextStyle()),
-              ),
-              PopupMenuItem(
-                value: PlaylistSortType.USER,
+                value: SortType.USER,
                 child: Text('User'.i18n, style: popupMenuTextStyle()),
               ),
               PopupMenuItem(
-                value: PlaylistSortType.TRACK_COUNT,
+                value: SortType.TRACK_COUNT,
                 child: Text('Track count'.i18n, style: popupMenuTextStyle()),
               ),
               PopupMenuItem(
-                value: PlaylistSortType.ALPHABETIC,
+                value: SortType.ALPHABETIC,
                 child: Text('Alphabetic'.i18n, style: popupMenuTextStyle()),
               ),
             ],

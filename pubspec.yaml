@@ -15,7 +15,7 @@ publish_to: 'none' # Remove this line if you wish to publish to pub.dev
 # In iOS, build-name is used as CFBundleShortVersionString while build-number used as CFBundleVersion.
 # Read more about iOS versioning at
 # https://developer.apple.com/library/archive/documentation/General/Reference/InfoPlistKeyReference/Articles/CoreFoundationKeys.html
-version: 0.6.3+1
+version: 0.6.5+1
 
 environment:
   sdk: ">=2.8.0 <3.0.0"
@@ -73,12 +73,13 @@ dependencies:
   draggable_scrollbar: ^0.0.4
   scrobblenaut: ^2.0.4
   open_file: ^3.0.3
+  version: ^1.2.0
 
   audio_session: ^0.0.9
   audio_service:
     path: ./audio_service
-  just_audio:
-    path: ./just_audio
+  just_audio: ^0.5.6
+  #  path: ./just_audio
 
   # cupertino_icons: ^0.1.3
 
@@ -110,6 +111,7 @@ flutter:
     - assets/cover_thumb.jpg
     - assets/icon.png
     - assets/favorites_thumb.jpg
+    - assets/browse_icon.png
 
   fonts:
 #    - family: Montserrat

@@ -1,11 +1,15 @@
 import 'package:connectivity/connectivity.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/widgets.dart';
+import 'package:fluttericon/font_awesome5_icons.dart';
+import 'package:fluttericon/typicons_icons.dart';
 import 'package:flutter/src/services/keyboard_key.dart';
 import 'package:freezer/api/cache.dart';
 import 'package:freezer/api/download.dart';
 import 'package:freezer/api/player.dart';
 import 'package:freezer/ui/details_screens.dart';
 import 'package:freezer/ui/elements.dart';
+import 'package:freezer/ui/home_screen.dart';
 import 'package:freezer/ui/menu.dart';
 import 'package:freezer/translations.i18n.dart';
 
@@ -53,6 +57,8 @@ class _SearchScreenState extends State<SearchScreen> {
   TextEditingController _controller = new TextEditingController();
   List _suggestions = [];
   bool _cancel = false;
+  bool _showCards = true;
+  FocusNode _focus = FocusNode();
 
   void _submit(BuildContext context, {String query}) async {
     if (query != null) _query = query;
@@ -152,6 +158,9 @@ class _SearchScreenState extends State<SearchScreen> {
                               setState(() => _query = s);
                               _loadSuggestions();
                             },
+                            onTap: () {
+                              setState(() => _showCards = false);
+                            },
                             focusNode: textFielFocusNode,
                             decoration: InputDecoration(
                               labelText: 'Search or paste URL'.i18n,
@@ -212,8 +221,87 @@ class _SearchScreenState extends State<SearchScreen> {
             LinearProgressIndicator(),
           FreezerDivider(),
 
+          //"Browse" Cards
+          if (_showCards)
+            ...[
+              Padding(
+                padding: EdgeInsets.symmetric(vertical: 8.0, horizontal: 16.0),
+                child: Text(
+                  'Quick access',
+                  style: TextStyle(
+                    fontSize: 20.0,
+                    fontWeight: FontWeight.bold
+                  ),
+                ),
+              ),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                children: [
+                  SearchBrowseCard(
+                    color: Color(0xff11b192),
+                    text: 'Flow'.i18n,
+                    icon: Icon(Typicons.waves),
+                    onTap: () async {
+                      await playerHelper.playFromSmartTrackList(SmartTrackList(id: 'flow'));
+                    },
+                  ),
+                  SearchBrowseCard(
+                    color: Color(0xff7c42bb),
+                    text: 'Shows'.i18n,
+                    icon: Icon(FontAwesome5.podcast),
+                    onTap: () => Navigator.of(context).push(MaterialPageRoute(
+                      builder: (context) => Scaffold(
+                        appBar: FreezerAppBar('Shows'.i18n),
+                        body: SingleChildScrollView(
+                          child: HomePageScreen(
+                            channel: DeezerChannel(target: 'shows')
+                          )
+                        ),
+                      ),
+                    )),
+                  )
+                ],
+              ),
+              Container(height: 4.0),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                children: [
+                  SearchBrowseCard(
+                    color: Color(0xffff555d),
+                    icon: Icon(FontAwesome5.chart_line),
+                    text: 'Charts'.i18n,
+                    onTap: () => Navigator.of(context).push(MaterialPageRoute(
+                      builder: (context) => Scaffold(
+                        appBar: FreezerAppBar('Charts'.i18n),
+                        body: SingleChildScrollView(
+                          child: HomePageScreen(
+                            channel: DeezerChannel(target: 'channels/charts')
+                          )
+                        ),
+                      ),
+                    )),
+                  ),
+                  SearchBrowseCard(
+                    color: Color(0xff2c4ea7),
+                    text: 'Browse'.i18n,
+                    icon: Image.asset('assets/browse_icon.png', width: 26.0),
+                    onTap: () => Navigator.of(context).push(MaterialPageRoute(
+                      builder: (context) => Scaffold(
+                        appBar: FreezerAppBar('Browse'.i18n),
+                        body: SingleChildScrollView(
+                          child: HomePageScreen(
+                            channel: DeezerChannel(target: 'channels/explore')
+                          )
+                        ),
+                      ),
+                    )),
+                  )
+                ],
+              )
+            ],
+
           //History
-          if (cache.searchHistory != null && cache.searchHistory.length > 0 && (_query??'').length < 2)
+          if (!_showCards && cache.searchHistory != null && cache.searchHistory.length > 0 && (_query??'').length < 2)
             ...List.generate(cache.searchHistory.length > 10 ? 10 : cache.searchHistory.length, (int i) {
               dynamic data = cache.searchHistory[i].data;
               switch (cache.searchHistory[i].type) {
@@ -308,6 +396,50 @@ class _SearchScreenState extends State<SearchScreen> {
   }
 }
 
+class SearchBrowseCard extends StatelessWidget {
+
+  final Color color;
+  final Widget icon;
+  final Function onTap;
+  final String text;
+  SearchBrowseCard({@required this.color, @required this.onTap, @required this.text, this.icon});
+
+  @override
+  Widget build(BuildContext context) {
+    return Card(
+      color: color,
+      child: InkWell(
+        onTap: this.onTap,
+        child: Container(
+          width: MediaQuery.of(context).size.width / 2 - 32,
+          height: 75,
+          child: Center(
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                if (icon != null)
+                  icon,
+                if (icon != null)
+                  Container(width: 8.0),
+                Text(
+                  text,
+                  textAlign: TextAlign.center,
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(
+                    fontSize: 18.0,
+                    fontWeight: FontWeight.bold,
+                    color: (color.computeLuminance() > 0.5) ? Colors.black:Colors.white
+                  ),
+                ),
+              ],
+            )
+          ),
+        ),
+      )
+    );
+  }
+}
 
 
 class SearchResultsScreen extends StatelessWidget {

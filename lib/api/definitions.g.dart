@@ -32,7 +32,7 @@ Track _$TrackFromJson(Map<String, dynamic> json) {
     favorite: json['favorite'] as bool,
     diskNumber: json['diskNumber'] as int,
     explicit: json['explicit'] as bool,
-    favoriteDate: json['favoriteDate'] as int,
+    addedDate: json['addedDate'] as int,
   );
 }
 
@@ -49,7 +49,7 @@ Map<String, dynamic> _$TrackToJson(Track instance) => <String, dynamic>{
       'favorite': instance.favorite,
       'diskNumber': instance.diskNumber,
       'explicit': instance.explicit,
-      'favoriteDate': instance.favoriteDate,
+      'addedDate': instance.addedDate,
       'playbackDetails': instance.playbackDetails,
     };
 
@@ -386,4 +386,82 @@ Map<String, dynamic> _$DeezerChannelToJson(DeezerChannel instance) =>
       'target': instance.target,
       'title': instance.title,
       'backgroundColor': DeezerChannel._colorToJson(instance.backgroundColor),
+    };
+
+Sorting _$SortingFromJson(Map<String, dynamic> json) {
+  return Sorting(
+    type: _$enumDecodeNullable(_$SortTypeEnumMap, json['type']),
+    reverse: json['reverse'] as bool,
+    id: json['id'] as String,
+    sourceType:
+        _$enumDecodeNullable(_$SortSourceTypesEnumMap, json['sourceType']),
+  );
+}
+
+Map<String, dynamic> _$SortingToJson(Sorting instance) => <String, dynamic>{
+      'type': _$SortTypeEnumMap[instance.type],
+      'reverse': instance.reverse,
+      'id': instance.id,
+      'sourceType': _$SortSourceTypesEnumMap[instance.sourceType],
+    };
+
+const _$SortTypeEnumMap = {
+  SortType.DEFAULT: 'DEFAULT',
+  SortType.ALPHABETIC: 'ALPHABETIC',
+  SortType.ARTIST: 'ARTIST',
+  SortType.ALBUM: 'ALBUM',
+  SortType.RELEASE_DATE: 'RELEASE_DATE',
+  SortType.POPULARITY: 'POPULARITY',
+  SortType.USER: 'USER',
+  SortType.TRACK_COUNT: 'TRACK_COUNT',
+  SortType.DATE_ADDED: 'DATE_ADDED',
+};
+
+const _$SortSourceTypesEnumMap = {
+  SortSourceTypes.TRACKS: 'TRACKS',
+  SortSourceTypes.PLAYLISTS: 'PLAYLISTS',
+  SortSourceTypes.ALBUMS: 'ALBUMS',
+  SortSourceTypes.ARTISTS: 'ARTISTS',
+  SortSourceTypes.PLAYLIST: 'PLAYLIST',
+};
+
+Show _$ShowFromJson(Map<String, dynamic> json) {
+  return Show(
+    name: json['name'] as String,
+    description: json['description'] as String,
+    art: json['art'] == null
+        ? null
+        : ImageDetails.fromJson(json['art'] as Map<String, dynamic>),
+    id: json['id'] as String,
+  );
+}
+
+Map<String, dynamic> _$ShowToJson(Show instance) => <String, dynamic>{
+      'name': instance.name,
+      'description': instance.description,
+      'art': instance.art,
+      'id': instance.id,
+    };
+
+ShowEpisode _$ShowEpisodeFromJson(Map<String, dynamic> json) {
+  return ShowEpisode(
+    id: json['id'] as String,
+    title: json['title'] as String,
+    description: json['description'] as String,
+    url: json['url'] as String,
+    duration: json['duration'] == null
+        ? null
+        : Duration(microseconds: json['duration'] as int),
+    publishedDate: json['publishedDate'] as String,
+  );
+}
+
+Map<String, dynamic> _$ShowEpisodeToJson(ShowEpisode instance) =>
+    <String, dynamic>{
+      'id': instance.id,
+      'title': instance.title,
+      'description': instance.description,
+      'url': instance.url,
+      'duration': instance.duration?.inMicroseconds,
+      'publishedDate': instance.publishedDate,
     };

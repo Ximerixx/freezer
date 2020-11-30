@@ -2,6 +2,7 @@ import 'dart:convert';
 
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:fluttericon/font_awesome5_icons.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import 'package:freezer/api/cache.dart';
 import 'package:freezer/api/deezer.dart';
@@ -683,13 +684,6 @@ class _DiscographyScreenState extends State<DiscographyScreen> {
   }
 }
 
-enum SortType {
-  DEFAULT,
-  REVERSE,
-  ALPHABETIC,
-  ARTIST
-}
-
 class PlaylistDetails extends StatefulWidget {
 
   Playlist playlist;
@@ -704,25 +698,30 @@ class _PlaylistDetailsState extends State<PlaylistDetails> {
   Playlist playlist;
   bool _loading = false;
   bool _error = false;
-  SortType _sort = SortType.DEFAULT;
+  Sorting _sort;
   ScrollController _scrollController = ScrollController();
 
   //Get sorted playlist
   List<Track> get sorted {
     List<Track> tracks = new List.from(playlist.tracks??[]);
-    switch (_sort) {
+    switch (_sort.type) {
       case SortType.ALPHABETIC:
         tracks.sort((a, b) => a.title.compareTo(b.title));
-        return tracks;
+        break;
       case SortType.ARTIST:
         tracks.sort((a, b) => a.artists[0].name.toLowerCase().compareTo(b.artists[0].name.toLowerCase()));
-        return tracks;
-      case SortType.REVERSE:
-        return tracks.reversed.toList();
+        break;
+      case SortType.DATE_ADDED:
+        tracks.sort((a, b) => (a.addedDate??0) - (b.addedDate??0));
+        break;
       case SortType.DEFAULT:
       default:
-        return tracks;
+        break;
     }
+    //Reverse
+    if (_sort.reverse)
+      return tracks.reversed.toList();
+    return tracks;
   }
 
   //Load tracks from api
@@ -748,23 +747,40 @@ class _PlaylistDetailsState extends State<PlaylistDetails> {
 
   //Load cached playlist sorting
   void _restoreSort() async {
-    if (cache.playlistSort == null) {
-      cache.playlistSort = {};
-      await cache.save();
+    //Find index
+    int index = Sorting.index(SortSourceTypes.PLAYLIST, id: playlist.id);
+    if (index == null)
       return;
+
+    //Preload tracks
+    if (playlist.tracks.length < playlist.trackCount) {
+      playlist = await deezerAPI.fullPlaylist(playlist.id);
     }
-    if (cache.playlistSort[playlist.id] != null) {
-      //Preload tracks
-      if (playlist.tracks.length < playlist.trackCount) {
-        playlist = await deezerAPI.fullPlaylist(playlist.id);
-      }
-      setState(() => _sort = cache.playlistSort[playlist.id]);
+    setState(() => _sort = cache.sorts[index]);
+  }
+
+
+  Future _reverse() async {
+    setState(() => _sort.reverse = !_sort.reverse);
+    //Save sorting in cache
+    int index = Sorting.index(SortSourceTypes.TRACKS);
+    if (index != null) {
+      cache.sorts[index] = _sort;
+    } else {
+      cache.sorts.add(_sort);
+    }
+    await cache.save();
+
+    //Preload for sorting
+    if (playlist.tracks.length < playlist.trackCount) {
+      playlist = await deezerAPI.fullPlaylist(playlist.id);
     }
   }
 
   @override
   void initState() {
     playlist = widget.playlist;
+    _sort = Sorting(sourceType: SortSourceTypes.PLAYLIST, id: playlist.id);
     //If scrolled past 90% load next tracks
     _scrollController.addListener(() {
       double off = _scrollController.position.maxScrollExtent * 0.90;
@@ -918,20 +934,21 @@ class _PlaylistDetailsState extends State<PlaylistDetails> {
                       //Preload whole playlist
                       playlist = await deezerAPI.fullPlaylist(playlist.id);
                     }
-                    setState(() => _sort = s);
+                    setState(() => _sort.type = s);
 
                     //Save sort type to cache
-                    cache.playlistSort[playlist.id] = s;
-                    cache.save();
+                    int index = Sorting.index(SortSourceTypes.PLAYLIST, id: playlist.id);
+                    if (index == null) {
+                      cache.sorts.add(_sort);
+                    } else {
+                      cache.sorts[index] = _sort;
+                    }
+                    await cache.save();
                   },
                   itemBuilder: (context) => <PopupMenuEntry<SortType>>[
                     PopupMenuItem(
                       value: SortType.DEFAULT,
                       child: Text('Default'.i18n, style: popupMenuTextStyle()),
-                    ),
-                    PopupMenuItem(
-                      value: SortType.REVERSE,
-                      child: Text('Reverse'.i18n, style: popupMenuTextStyle()),
                     ),
                     PopupMenuItem(
                       value: SortType.ALPHABETIC,
@@ -941,7 +958,15 @@ class _PlaylistDetailsState extends State<PlaylistDetails> {
                       value: SortType.ARTIST,
                       child: Text('Artist'.i18n, style: popupMenuTextStyle()),
                     ),
+                    PopupMenuItem(
+                      value: SortType.DATE_ADDED,
+                      child: Text('Date added'.i18n, style: popupMenuTextStyle()),
+                    ),
                   ],
+                ),
+                IconButton(
+                  icon: Icon(_sort.reverse ? FontAwesome5.sort_alpha_up : FontAwesome5.sort_alpha_down),
+                  onPressed: () => _reverse(),
                 ),
                 Container(width: 4.0)
               ],
@@ -1036,6 +1061,139 @@ class _MakePlaylistOfflineState extends State<MakePlaylistOffline> {
           style: TextStyle(fontSize: 16),
         )
       ],
+    );
+  }
+}
+
+class ShowScreen extends StatefulWidget {
+
+  Show show;
+  ShowScreen(this.show, {Key key}): super(key: key);
+
+  @override
+  _ShowScreenState createState() => _ShowScreenState();
+}
+
+class _ShowScreenState extends State<ShowScreen> {
+
+  Show _show;
+  bool _loading = true;
+  bool _error = false;
+  List<ShowEpisode> _episodes;
+
+  Future _load() async {
+    //Fetch
+    List<ShowEpisode> e;
+    try {
+      e = await deezerAPI.allShowEpisodes(_show.id);
+    } catch (e) {
+      setState(() {
+        _loading = false;
+        _error = true;
+      });
+      return;
+    }
+    setState(() {
+      _episodes = e;
+      _loading = false;
+    });
+  }
+
+  @override
+  void initState() {
+    _show = widget.show;
+    _load();
+    super.initState();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: FreezerAppBar(_show.name),
+      body: ListView(
+        children: [
+          Padding(
+            padding: EdgeInsets.symmetric(horizontal: 8.0),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              mainAxisSize: MainAxisSize.max,
+              children: [
+                CachedImage(
+                  url: _show.art.full,
+                  rounded: true,
+                  width: MediaQuery.of(context).size.width / 2 - 16,
+                ),
+                Container(
+                  width: MediaQuery.of(context).size.width / 2 - 16,
+                  child: Column(
+                    mainAxisSize: MainAxisSize.max,
+                    children: [
+                      Text(
+                        _show.name,
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                        textAlign: TextAlign.center,
+                        style: TextStyle(
+                          fontSize: 20.0,
+                          fontWeight: FontWeight.bold
+                        )
+                      ),
+                      Container(height: 8.0),
+                      Text(
+                        _show.description,
+                        maxLines: 6,
+                        overflow: TextOverflow.ellipsis,
+                        textAlign: TextAlign.center,
+                        style: TextStyle(
+                          fontSize: 16.0
+                        ),
+                      )
+                    ],
+                  ),
+                )
+              ],
+            ),
+          ),
+          Container(height: 4.0),
+          FreezerDivider(),
+          
+          //Error
+          if (_error)
+            ErrorScreen(),
+          
+          //Loading
+          if (_loading)
+            Padding(
+              padding: EdgeInsets.all(8.0),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  CircularProgressIndicator()
+                ],
+              ),
+            ),
+
+          //Data
+          if (!_loading && !_error)
+            ...List.generate(_episodes.length, (i) {
+              ShowEpisode e = _episodes[i];
+              return ShowEpisodeTile(
+                e,
+                trailing: IconButton(
+                  icon: Icon(Icons.more_vert),
+                  onPressed: () {
+                    MenuSheet m = MenuSheet(context);
+                    m.defaultShowEpisodeMenu(_show, e);
+                  },
+                ),
+                onTap: () async {
+                  await playerHelper.playShowEpisode(_show, _episodes, index: i);
+                },
+              );
+            })
+          
+        ],
+      ),
     );
   }
 }

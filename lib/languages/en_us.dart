@@ -281,6 +281,17 @@ const language_en_us = {
     "Unsupported platform!": "Unsupported platform!",
     "Freezer Updates": "Freezer Updates",
     "Update to latest version in the settings.": "Update to latest version in the settings.",
-    "Release date": "Release date"
+    "Release date": "Release date",
+
+    //0.6.4 Strings:
+    "Shows": "Shows",
+    "Charts": "Charts",
+    "Browse": "Browse",
+    "Quick access": "Quick access",
+    "Play mix": "Play mix",
+    "Share show": "Share show",
+    "Date added": "Date added",
+    "Discord": "Discord",
+    "Official Discord server": "Official Discord server"
   }
 };

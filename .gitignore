@@ -2,6 +2,8 @@
 freezerkey.jsk
 android/key.properties
 
+just_audio/
+
 # Miscellaneous
 *.class
 *.log

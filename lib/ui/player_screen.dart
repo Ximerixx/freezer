@@ -1,10 +1,15 @@
+import 'dart:convert';
+import 'dart:isolate';
+
 import 'package:cached_network_image/cached_network_image.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:audio_service/audio_service.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_screenutil/screenutil.dart';
 import 'package:freezer/api/cache.dart';
 import 'package:freezer/api/deezer.dart';
+import 'package:freezer/api/download.dart';
 import 'package:freezer/api/player.dart';
 import 'package:freezer/settings.dart';
 import 'package:freezer/translations.i18n.dart';
@@ -25,6 +30,7 @@ import 'player_bar.dart';
 import 'dart:ui';
 import 'dart:async';
 
+
 class PlayerScreen extends StatefulWidget {
   @override
   _PlayerScreenState createState() => _PlayerScreenState();
@@ -36,26 +42,34 @@ class _PlayerScreenState extends State<PlayerScreen> {
   StreamSubscription _mediaItemSub;
 
   //Calculate background color
-  Future _calculateColor() async {
+  Future _updateColor() async {
     if (!settings.colorGradientBackground)
       return;
+
+    //Run in isolate
     PaletteGenerator palette = await PaletteGenerator.fromImageProvider(CachedNetworkImageProvider(AudioService.currentMediaItem.extras['thumb'] ?? AudioService.currentMediaItem.artUri));
+
+    //Update notification
+    SystemChrome.setSystemUIOverlayStyle(SystemUiOverlayStyle(
+        statusBarColor: palette.dominantColor.color.withOpacity(0.5)
+    ));
+
     setState(() => _bgGradient = LinearGradient(
-      begin: Alignment.topCenter,
-      end: Alignment.bottomCenter,
-      colors: [palette.dominantColor.color.withOpacity(0.5), Color.fromARGB(0, 0, 0, 0)],
-      stops: [
-        0.0,
-        0.4
-      ]
+        begin: Alignment.topCenter,
+        end: Alignment.bottomCenter,
+        colors: [palette.dominantColor.color.withOpacity(0.5), Color.fromARGB(0, 0, 0, 0)],
+        stops: [
+          0.0,
+          0.4
+        ]
     ));
   }
 
   @override
   void initState() {
-    _calculateColor();
+    Future.delayed(Duration(milliseconds: 1000), _updateColor);
     _mediaItemSub = AudioService.currentMediaItemStream.listen((event) {
-      _calculateColor();
+      _updateColor();
     });
     super.initState();
   }
@@ -67,6 +81,7 @@ class _PlayerScreenState extends State<PlayerScreen> {
     //Fix bottom buttons
     SystemChrome.setSystemUIOverlayStyle(SystemUiOverlayStyle(
       systemNavigationBarColor: settings.themeData.bottomAppBarColor,
+      statusBarColor: Colors.transparent
     ));
     super.dispose();
   }
@@ -214,26 +229,9 @@ class _PlayerScreenHorizontalState extends State<PlayerScreenHorizontal> {
                             ));
                           },
                         ),
-                        if (AudioService.currentMediaItem.extras['qualityString'] != null)
-                          FlatButton(
-                            onPressed: () => Navigator.push(
-                              context,
-                              MaterialPageRoute(builder: (context) => QualitySettings())
-                            ),
-                            child: Text(
-                              AudioService.currentMediaItem.extras['qualityString'] ?? '',
-                              style: TextStyle(fontSize: ScreenUtil().setSp(24)),
-                            ),
-                          ),
+                        QualityInfoWidget(),
                         RepeatButton(ScreenUtil().setWidth(32)),
-                        IconButton(
-                          icon: Icon(Icons.more_vert, size: ScreenUtil().setWidth(32)),
-                          onPressed: () {
-                            Track t = Track.fromMediaItem(AudioService.currentMediaItem);
-                            MenuSheet m = MenuSheet(context);
-                            m.defaultTrackMenu(t, options: [m.sleepTimer()]);
-                          },
-                        )
+                        PlayerMenuButton()
                       ],
                     ),
                   )
@@ -333,32 +331,93 @@ class _PlayerScreenVerticalState extends State<PlayerScreenVertical> {
                   ));
                 },
               ),
-              if (AudioService.currentMediaItem.extras['qualityString'] != null)
-                FlatButton(
-                  onPressed: () => Navigator.push(
-                    context,
-                    MaterialPageRoute(builder: (context) => QualitySettings())
-                  ),
-                  child: Text(
-                    AudioService.currentMediaItem.extras['qualityString'] ?? '',
-                    style: TextStyle(
-                      fontSize: ScreenUtil().setSp(32),
-                    ),
-                  ),
-                ),
+              QualityInfoWidget(),
               RepeatButton(ScreenUtil().setWidth(46)),
-              IconButton(
-                icon: Icon(Icons.more_vert, size: ScreenUtil().setWidth(46)),
-                onPressed: () {
-                  Track t = Track.fromMediaItem(AudioService.currentMediaItem);
-                  MenuSheet m = MenuSheet(context);
-                  m.defaultTrackMenu(t, options: [m.sleepTimer()]);
-                },
-              )
+              PlayerMenuButton()
             ],
           ),
         )
       ],
+    );
+  }
+}
+
+class QualityInfoWidget extends StatefulWidget {
+  @override
+  _QualityInfoWidgetState createState() => _QualityInfoWidgetState();
+}
+
+class _QualityInfoWidgetState extends State<QualityInfoWidget> {
+
+  String value = '';
+  StreamSubscription streamSubscription;
+
+  //Load data from native
+  void _load() async {
+    if (AudioService.currentMediaItem == null) return;
+    Map data = await DownloadManager.platform.invokeMethod("getStreamInfo", {"id": AudioService.currentMediaItem.id});
+    //N/A
+    if (data == null) {
+      setState(() => value = '');
+      //If not show, try again later
+      if (AudioService.currentMediaItem.extras['show'] == null)
+        Future.delayed(Duration(milliseconds: 200), _load);
+
+      return;
+    }
+    //Update
+    StreamQualityInfo info = StreamQualityInfo.fromJson(data);
+    setState(() {
+      value = '${info.format} ${info.bitrate(AudioService.currentMediaItem.duration)}kbps';
+    });
+  }
+
+  @override
+  void initState() {
+    _load();
+    if (streamSubscription == null)
+      streamSubscription = AudioService.currentMediaItemStream.listen((event) async {
+        await _load();
+      });
+    super.initState();
+  }
+
+  @override
+  void dispose() {
+    if (streamSubscription != null)
+      streamSubscription.cancel();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return FlatButton(
+      child: Text(value),
+      onPressed: () {
+        Navigator.of(context).push(MaterialPageRoute(builder: (context) => QualitySettings()));
+      },
+    );
+  }
+}
+
+
+class PlayerMenuButton extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    return IconButton(
+      icon: Icon(Icons.more_vert, size: ScreenUtil().setWidth(46)),
+      onPressed: () {
+        Track t = Track.fromMediaItem(AudioService.currentMediaItem);
+        MenuSheet m = MenuSheet(context);
+        if (AudioService.currentMediaItem.extras['show'] == null)
+          m.defaultTrackMenu(t, options: [m.sleepTimer()]);
+        else
+          m.defaultShowEpisodeMenu(
+            Show.fromJson(jsonDecode(AudioService.currentMediaItem.extras['show'])),
+            ShowEpisode.fromMediaItem(AudioService.currentMediaItem),
+            options: [m.sleepTimer()]
+          );
+      },
     );
   }
 }

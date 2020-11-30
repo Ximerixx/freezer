@@ -15,6 +15,8 @@ import 'package:path_provider/path_provider.dart';
 import 'package:path/path.dart' as p;
 import 'dart:convert';
 
+import 'package:version/version.dart';
+
 
 class UpdaterScreen extends StatefulWidget {
   @override
@@ -109,12 +111,13 @@ class _UpdaterScreenState extends State<UpdaterScreen> {
               ),
             ),
 
-          if (!_error && !_loading && _versions.latest == _current)
+          if (!_error && !_loading && Version.parse(_versions.latest) <= Version.parse(_current))
             Center(
               child: Padding(
                 padding: EdgeInsets.all(8.0),
                 child: Text(
                   'You are running latest version!'.i18n,
+                  textAlign: TextAlign.center,
                   style: TextStyle(
                     fontSize: 26.0
                   )
@@ -122,17 +125,20 @@ class _UpdaterScreenState extends State<UpdaterScreen> {
               )
             ),
 
-          if (!_error && !_loading && _versions.latest != _current)
+          if (!_error && !_loading && Version.parse(_versions.latest) > Version.parse(_current))
             Column(
               children: [
-                Text(
-                  'New update available!'.i18n + ' ' + _versions.latest,
-                  style: TextStyle(
-                    fontSize: 20.0,
-                    fontWeight: FontWeight.bold
+                Padding(
+                  padding: EdgeInsets.all(8.0),
+                  child: Text(
+                    'New update available!'.i18n + ' ' + _versions.latest,
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                        fontSize: 20.0,
+                        fontWeight: FontWeight.bold
+                    ),
                   ),
                 ),
-                Container(height: 8.0),
                 Text(
                   'Current version: ' + _current,
                   style: TextStyle(
@@ -204,6 +210,7 @@ class FreezerVersions {
   //Fetch from website API
   static Future<FreezerVersions> fetch() async {
     http.Response response = await http.get('https://freezer.life/api/versions');
+//    http.Response response = await http.get('https://cum.freezerapp.workers.dev/api/versions');
     return FreezerVersions.fromJson(jsonDecode(response.body));
   }
 
@@ -218,7 +225,7 @@ class FreezerVersions {
 
     //Load current version
     PackageInfo info = await PackageInfo.fromPlatform();
-    if (info.version == versions.latest) return;
+    if (Version.parse(versions.latest) <= Version.parse(info.version)) return;
 
     //Get architecture
     String _arch = await DownloadManager.platform.invokeMethod("arch");

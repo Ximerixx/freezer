@@ -459,12 +459,24 @@ class DeezerAPI {
     return data['results']['data'].map<Track>((t) => Track.fromPrivateJson(t)).toList();
   }
 
-  // Get similar tracks for track with id [trackId]
+  //Get similar tracks for track with id [trackId]
   Future<List<Track>> playMix(String trackId) async {
     Map data = await callApi('song.getContextualTrackMix', params: {
       'sng_ids': [trackId]
     });
     return data['results']['data'].map<Track>((t) => Track.fromPrivateJson(t)).toList();
+  }
+
+  Future<List<ShowEpisode>> allShowEpisodes(String showId) async {
+    Map data = await callApi('deezer.pageShow', params: {
+      'country': settings.deezerCountry,
+      'lang': settings.deezerLanguage,
+      'nb': 1000,
+      'show_id': showId,
+      'start': 0,
+      'user_id': int.parse(deezerAPI.userId)
+    });
+    return data['results']['EPISODES']['data'].map<ShowEpisode>((e) => ShowEpisode.fromPrivateJson(e)).toList();
   }
 }
 
