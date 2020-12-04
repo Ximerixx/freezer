@@ -31,6 +31,20 @@ class SpotifyAPI {
   //Get spotify embed url from uri
   String getEmbedUrl(String uri) => 'https://embed.spotify.com/?uri=$uri';
 
+  //https://link.tospotify.com/ or https://spotify.app.link/
+  Future resolveLinkUrl(String url) async {
+    http.Response response = await http.get(Uri.parse(url));
+    Match match = RegExp(r'window\.top\.location = validate\("(.+)"\);').firstMatch(response.body);
+    return match.group(1);
+  }
+  
+  Future resolveUrl(String url) async {
+    if (url.contains("link.tospotify") || url.contains("spotify.app.link")) {
+      return parseUrl(await resolveLinkUrl(url));
+    }
+    return parseUrl(url);
+  }
+
   //Extract JSON data form spotify embed page
   Future<Map> getEmbedData(String url) async {
     //Fetch

@@ -292,6 +292,11 @@ const language_en_us = {
     "Share show": "Share show",
     "Date added": "Date added",
     "Discord": "Discord",
-    "Official Discord server": "Official Discord server"
+    "Official Discord server": "Official Discord server",
+
+    //0.6.6
+    "Restart of app is required to properly log out!": "Restart of app is required to properly log out!",
+    "Artist separator": "Artist separator",
+    "Singleton naming": "Standalone tracks filename"
   }
 };

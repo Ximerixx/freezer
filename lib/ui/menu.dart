@@ -133,6 +133,7 @@ class MenuSheet {
       (cache.checkTrackFavorite(track))?removeFavoriteTrack(track, onUpdate: onRemove):addTrackFavorite(track),
       addToPlaylist(track),
       downloadTrack(track),
+      offlineTrack(track),
       shareTile('track', track.id),
       playMix(track),
       showAlbum(track.album),
@@ -191,7 +192,7 @@ class MenuSheet {
     title: Text('Download'.i18n),
     leading: Icon(Icons.file_download),
     onTap: () async {
-      if (await downloadManager.addOfflineTrack(t, private: false, context: context) != false)
+      if (await downloadManager.addOfflineTrack(t, private: false, context: context, isSingleton: true) != false)
         showDownloadStartedToast();
       _close();
     },
@@ -297,6 +298,15 @@ class MenuSheet {
     leading: Icon(Icons.online_prediction),
     onTap: () async {
       playerHelper.playMix(track.id, track.title);
+      _close();
+    },
+  );
+
+  Widget offlineTrack(Track track) => ListTile(
+    title: Text('Offline'.i18n),
+    leading: Icon(Icons.offline_pin),
+    onTap: () async {
+      await downloadManager.addOfflineTrack(track, private: true, context: context);
       _close();
     },
   );

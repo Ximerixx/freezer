@@ -7,6 +7,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_material_color_picker/flutter_material_color_picker.dart';
 import 'package:fluttericon/font_awesome5_icons.dart';
+import 'package:fluttericon/web_symbols_icons.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import 'package:freezer/api/cache.dart';
 import 'package:freezer/api/deezer.dart';
@@ -580,6 +581,79 @@ class _DeezerSettingsState extends State<DeezerSettings> {
   }
 }
 
+class FilenameTemplateDialog extends StatefulWidget {
+
+  String initial;
+  Function onSave;
+  FilenameTemplateDialog(this.initial, this.onSave, {Key key}): super(key: key);
+
+  @override
+  _FilenameTemplateDialogState createState() => _FilenameTemplateDialogState();
+}
+
+class _FilenameTemplateDialogState extends State<FilenameTemplateDialog> {
+
+  TextEditingController _controller;
+  String _new;
+
+  @override
+  void initState() {
+    _controller = TextEditingController(text: widget.initial);
+    _new = _controller.value.text;
+    super.initState();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    //Dialog with filename format
+    return AlertDialog(
+      title: Text('Downloaded tracks filename'.i18n),
+      content: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          TextField(
+            controller: _controller,
+            onChanged: (String s) => _new = s,
+          ),
+          Container(height: 8.0),
+          Text(
+            'Valid variables are'.i18n + ': %artists%, %artist%, %title%, %album%, %trackNumber%, %0trackNumber%, %feats%, %playlistTrackNumber%, %0playlistTrackNumber%, %year%, %date%\n\n' +
+                "If you want to use custom directory naming - use '/' as directory separator.".i18n,
+            style: TextStyle(
+              fontSize: 12.0,
+            ),
+          )
+        ],
+      ),
+      actions: [
+        FlatButton(
+          child: Text('Cancel'.i18n),
+          onPressed: () => Navigator.of(context).pop(),
+        ),
+        FlatButton(
+          child: Text('Reset'.i18n),
+          onPressed: () {
+            _controller.value = _controller.value.copyWith(text: '%artist% - %title%');
+            _new = '%artist% - %title%';
+          },
+        ),
+        FlatButton(
+          child: Text('Clear'.i18n),
+          onPressed: () => _controller.clear(),
+        ),
+        FlatButton(
+          child: Text('Save'.i18n),
+          onPressed: () async {
+            widget.onSave(_new);
+            Navigator.of(context).pop();
+          },
+        )
+      ],
+    );
+  }
+}
+
+
 class DownloadsSettings extends StatefulWidget {
   @override
   _DownloadsSettingsState createState() => _DownloadsSettingsState();
@@ -588,6 +662,7 @@ class DownloadsSettings extends StatefulWidget {
 class _DownloadsSettingsState extends State<DownloadsSettings> {
 
   double _downloadThreads = settings.downloadThreads.toDouble();
+  TextEditingController _artistSeparatorController = TextEditingController(text: settings.artistSeparator);
 
   @override
   Widget build(BuildContext context) {
@@ -619,62 +694,26 @@ class _DownloadsSettingsState extends State<DownloadsSettings> {
               showDialog(
                   context: context,
                   builder: (context) {
-
-                    TextEditingController _controller = TextEditingController();
-                    String filename = settings.downloadFilename;
-                    _controller.value = _controller.value.copyWith(text: filename);
-                    String _new = _controller.value.text;
-
-                    //Dialog with filename format
-                    return AlertDialog(
-                      title: Text('Downloaded tracks filename'.i18n),
-                      content: Column(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          TextField(
-                            controller: _controller,
-                            onChanged: (String s) => _new = s,
-                          ),
-                          Container(height: 8.0),
-                          Text(
-                            'Valid variables are'.i18n + ': %artists%, %artist%, %title%, %album%, %trackNumber%, %0trackNumber%, %feats%, %playlistTrackNumber%, %0playlistTrackNumber%, %year%, %date%\n\n' +
-                            "If you want to use custom directory naming - use '/' as directory separator.".i18n,
-                            style: TextStyle(
-                              fontSize: 12.0,
-                            ),
-                          )
-                        ],
-                      ),
-                      actions: [
-                        FlatButton(
-                          child: Text('Cancel'.i18n),
-                          onPressed: () => Navigator.of(context).pop(),
-                        ),
-                        FlatButton(
-                          child: Text('Reset'.i18n),
-                          onPressed: () {
-                            _controller.value = _controller.value.copyWith(
-                                text: '%artists% - %title%'
-                            );
-                            _new = '%artists% - %title%';
-                          },
-                        ),
-                        FlatButton(
-                          child: Text('Clear'.i18n),
-                          onPressed: () => _controller.clear(),
-                        ),
-                        FlatButton(
-                          child: Text('Save'.i18n),
-                          onPressed: () async {
-                            setState(() {
-                              settings.downloadFilename = _new;
-                            });
-                            await settings.save();
-                            Navigator.of(context).pop();
-                          },
-                        )
-                      ],
-                    );
+                    return FilenameTemplateDialog(settings.downloadFilename, (f) async {
+                      setState(() => settings.downloadFilename = f);
+                      await settings.save();
+                    });
+                  }
+              );
+            },
+          ),
+          ListTile(
+            title: Text('Singleton naming'.i18n),
+            subtitle: Text('Currently'.i18n + ': ${settings.singletonFilename}'),
+            leading: Icon(Icons.text_format),
+            onTap: () {
+              showDialog(
+                  context: context,
+                  builder: (context) {
+                    return FilenameTemplateDialog(settings.singletonFilename, (f) async {
+                      setState(() => settings.singletonFilename = f);
+                      await settings.save();
+                    });
                   }
               );
             },
@@ -829,6 +868,20 @@ class _DownloadsSettingsState extends State<DownloadsSettings> {
             ),
             leading: Icon(Icons.insert_drive_file)
           ),
+          ListTile(
+            title: Text('Artist separator'.i18n),
+            leading: Icon(WebSymbols.tag),
+            trailing: Container(
+              width: 100.0,
+              child: TextField(
+                controller: _artistSeparatorController,
+                onChanged: (s) async {
+                  settings.artistSeparator = s;
+                  await settings.save();
+                },
+              ),
+            ),
+          ),
           FreezerDivider(),
           ListTile(
             title: Text('Download Log'.i18n),
@@ -943,24 +996,26 @@ class _GeneralSettingsState extends State<GeneralSettings> {
                 builder: (context) {
                   return AlertDialog(
                     title: Text('Log out'.i18n),
-                    content: Text('Due to plugin incompatibility, login using browser is unavailable without restart.'.i18n),
+//                    content: Text('Due to plugin incompatibility, login using browser is unavailable without restart.'.i18n),
+                    content: Text('Restart of app is required to properly log out!'.i18n),
                     actions: <Widget>[
                       FlatButton(
                         child: Text('Cancel'.i18n),
                         onPressed: () => Navigator.of(context).pop(),
                       ),
-                      FlatButton(
-                        child: Text('(ARL ONLY) Continue'.i18n),
-                        onPressed: () async {
-                          await logOut();
-                          Navigator.of(context).pop();
-                        },
-                      ),
+//                      FlatButton(
+//                        child: Text('(ARL ONLY) Continue'.i18n),
+//                        onPressed: () async {
+//                          await logOut();
+//                          Navigator.of(context).pop();
+//                        },
+//                      ),
                       FlatButton(
                         child: Text('Log out & Exit'.i18n),
                         onPressed: () async {
                           try {AudioService.stop();} catch (e) {}
                           await logOut();
+                          await DownloadManager.platform.invokeMethod("kill");
                           SystemNavigator.pop();
                         },
                       )

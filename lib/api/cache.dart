@@ -82,6 +82,10 @@ class Cache {
     return p.join((await getApplicationDocumentsDirectory()).path, 'metacache.json');
   }
 
+  static Future wipe() async {
+    await File(await getPath()).delete();
+  }
+
   static Future<Cache> load() async {
     File file = File(await Cache.getPath());
     //Doesn't exist, create new

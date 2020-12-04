@@ -4,7 +4,6 @@ import 'package:freezer/api/deezer.dart';
 import 'package:freezer/api/definitions.dart';
 import 'package:freezer/api/download.dart';
 import 'package:freezer/api/spotify.dart';
-import 'package:freezer/main.dart';
 import 'package:freezer/settings.dart';
 import 'package:freezer/ui/elements.dart';
 import 'package:freezer/ui/menu.dart';
@@ -28,7 +27,7 @@ class _ImporterScreenState extends State<ImporterScreen> {
       _loading = true;
     });
     try {
-      String uri = spotify.parseUrl(_url);
+      String uri = await spotify.resolveUrl(_url);
 
       //Error/NonPlaylist
       if (uri == null || uri.split(':')[1] != 'playlist') {

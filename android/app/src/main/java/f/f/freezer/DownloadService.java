@@ -534,7 +534,7 @@ public class DownloadService extends Service {
 
                 //Tag
                 try {
-                    deezer.tagTrack(outFile.getPath(), trackJson, albumJson, coverFile.getPath(), lyricsData, privateJson);
+                    deezer.tagTrack(outFile.getPath(), trackJson, albumJson, coverFile.getPath(), lyricsData, privateJson, settings);
                 } catch (Exception e) {
                     Log.e("ERR", "Tagging error!");
                     e.printStackTrace();
@@ -807,8 +807,9 @@ public class DownloadService extends Service {
         String arl;
         boolean albumCover;
         boolean nomediaFiles;
+        String artistSeparator;
 
-        private DownloadSettings(int downloadThreads, boolean overwriteDownload, boolean downloadLyrics, boolean trackCover, String arl, boolean albumCover, boolean nomediaFiles) {
+        private DownloadSettings(int downloadThreads, boolean overwriteDownload, boolean downloadLyrics, boolean trackCover, String arl, boolean albumCover, boolean nomediaFiles, String artistSeparator) {
             this.downloadThreads = downloadThreads;
             this.overwriteDownload = overwriteDownload;
             this.downloadLyrics = downloadLyrics;
@@ -816,6 +817,7 @@ public class DownloadService extends Service {
             this.arl = arl;
             this.albumCover = albumCover;
             this.nomediaFiles = nomediaFiles;
+            this.artistSeparator = artistSeparator;
         }
 
         //Parse settings from bundle sent from UI
@@ -830,7 +832,8 @@ public class DownloadService extends Service {
                     json.getBoolean("trackCover"),
                     json.getString("arl"),
                     json.getBoolean("albumCover"),
-                    json.getBoolean("nomediaFiles")
+                    json.getBoolean("nomediaFiles"),
+                    json.getString("artistSeparator")
                 );
             } catch (Exception e) {
                 //Shouldn't happen

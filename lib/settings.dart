@@ -45,7 +45,7 @@ class Settings {
   //Download options
   String downloadPath;
 
-  @JsonKey(defaultValue: "%artists% - %title%")
+  @JsonKey(defaultValue: "%artist% - %title%")
   String downloadFilename;
   @JsonKey(defaultValue: true)
   bool albumFolder;
@@ -67,6 +67,10 @@ class Settings {
   bool albumCover;
   @JsonKey(defaultValue: false)
   bool nomediaFiles;
+  @JsonKey(defaultValue: ", ")
+  String artistSeparator;
+  @JsonKey(defaultValue: "%artist% - %title%")
+  String singletonFilename;
 
   //Appearance
   @JsonKey(defaultValue: Themes.Dark)

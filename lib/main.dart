@@ -142,10 +142,11 @@ class _LoginMainWrapperState extends State<LoginMainWrapper> {
   Future _logOut() async {
     setState(() {
       settings.arl = null;
-      settings.offlineMode = true;
+      settings.offlineMode = false;
       deezerAPI = new DeezerAPI();
     });
     await settings.save();
+    await Cache.wipe();
   }
 
   @override

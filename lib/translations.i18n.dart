@@ -27,6 +27,7 @@ const supportedLocales = [
   const Locale('hi', 'IN'),
   const Locale('sk', 'SK'),
   const Locale('cs', 'CZ'),
+  const Locale('vi', 'VI'),
   const Locale('fil', 'PH'),
   const Locale('uwu', 'UWU')
 ];

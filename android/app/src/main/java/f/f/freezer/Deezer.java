@@ -262,7 +262,7 @@ public class Deezer {
     }
 
     //Tag track with data from API
-    public void tagTrack(String path, JSONObject publicTrack, JSONObject publicAlbum, String cover, JSONObject lyricsData, JSONObject privateJson) throws Exception {
+    public void tagTrack(String path, JSONObject publicTrack, JSONObject publicAlbum, String cover, JSONObject lyricsData, JSONObject privateJson, DownloadService.DownloadSettings settings) throws Exception {
         TagOptionSingleton.getInstance().setAndroid(true);
         //Load file
         AudioFile f = AudioFileIO.read(new File(path));
@@ -280,9 +280,9 @@ public class Deezer {
         for (int i=0; i<publicTrack.getJSONArray("contributors").length(); i++) {
             String artist = publicTrack.getJSONArray("contributors").getJSONObject(i).getString("name");
             if (!artists.contains(artist))
-                artists += ", " + artist;
+                artists += settings.artistSeparator + artist;
         }
-        tag.addField(FieldKey.ARTIST, artists.substring(2));
+        tag.addField(FieldKey.ARTIST, artists.substring(settings.artistSeparator.length()));
         tag.setField(FieldKey.TRACK, String.format("%02d", publicTrack.getInt("track_position")));
         tag.setField(FieldKey.DISC_NO, Integer.toString(publicTrack.getInt("disk_number")));
         tag.setField(FieldKey.ALBUM_ARTIST, publicAlbum.getJSONObject("artist").getString("name"));
@@ -326,36 +326,36 @@ public class Deezer {
                     JSONArray composers = contrib.getJSONArray("composer");
                     String composer = "";
                     for (int i = 0; i < composers.length(); i++)
-                        composer += ", " + composers.getString(i);
+                        composer += settings.artistSeparator + composers.getString(i);
                     if (composer.length() > 2)
-                        tag.setField(FieldKey.COMPOSER, composer.substring(2));
+                        tag.setField(FieldKey.COMPOSER, composer.substring(settings.artistSeparator.length()));
                 }
                 //Engineer
                 if (contrib.has("engineer")) {
                     JSONArray engineers = contrib.getJSONArray("engineer");
                     String engineer = "";
                     for (int i = 0; i < engineers.length(); i++)
-                        engineer += ", " + engineers.getString(i);
+                        engineer += settings.artistSeparator + engineers.getString(i);
                     if (engineer.length() > 2)
-                        tag.setField(FieldKey.ENGINEER, engineer.substring(2));
+                        tag.setField(FieldKey.ENGINEER, engineer.substring(settings.artistSeparator.length()));
                 }
                 //Mixer
                 if (contrib.has("mixer")) {
                     JSONArray mixers = contrib.getJSONArray("mixer");
                     String mixer = "";
                     for (int i = 0; i < mixers.length(); i++)
-                        mixer += ", " + mixers.getString(i);
+                        mixer += settings.artistSeparator + mixers.getString(i);
                     if (mixer.length() > 2)
-                        tag.setField(FieldKey.MIXER, mixer.substring(2));
+                        tag.setField(FieldKey.MIXER, mixer.substring(settings.artistSeparator.length()));
                 }
                 //Producer
                 if (contrib.has("producer")) {
                     JSONArray producers = contrib.getJSONArray("producer");
                     String producer = "";
                     for (int i = 0; i < producers.length(); i++)
-                        producer += ", " + producers.getString(i);
+                        producer += settings.artistSeparator + producers.getString(i);
                     if (producer.length() > 2)
-                        tag.setField(FieldKey.MIXER, producer.substring(2));
+                        tag.setField(FieldKey.MIXER, producer.substring(settings.artistSeparator.length()));
                 }
 
                 //FLAC Only
@@ -365,18 +365,18 @@ public class Deezer {
                         JSONArray authors = contrib.getJSONArray("author");
                         String author = "";
                         for (int i = 0; i < authors.length(); i++)
-                            author += ", " + authors.getString(i);
+                            author += settings.artistSeparator + authors.getString(i);
                         if (author.length() > 2)
-                            ((FlacTag) tag).setField("AUTHOR", author.substring(2));
+                            ((FlacTag) tag).setField("AUTHOR", author.substring(settings.artistSeparator.length()));
                     }
                     //Writer
                     if (contrib.has("writer")) {
                         JSONArray writers = contrib.getJSONArray("writer");
                         String writer = "";
                         for (int i = 0; i < writers.length(); i++)
-                            writer += ", " + writers.getString(i);
+                            writer += settings.artistSeparator + writers.getString(i);
                         if (writer.length() > 2)
-                            ((FlacTag) tag).setField("WRITER", writer.substring(2));
+                            ((FlacTag) tag).setField("WRITER", writer.substring(settings.artistSeparator.length()));
                     }
                 }
             }

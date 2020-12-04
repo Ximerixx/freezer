@@ -157,7 +157,7 @@ class DownloadManager {
     return quality;
   }
 
-  Future<bool> addOfflineTrack(Track track, {private = true, BuildContext context}) async {
+  Future<bool> addOfflineTrack(Track track, {private = true, BuildContext context, isSingleton = false}) async {
     //Permission
     if (!private && !(await checkPermission())) return false;
 
@@ -167,6 +167,10 @@ class DownloadManager {
        quality = await qualitySelect(context);
       if (quality == null) return false;
     }
+
+    //Fetch track if missing meta
+    if (track.artists == null || track.artists.length == 0 || track.album == null)
+      track = await deezerAPI.track(track.id);
 
     //Add to DB
     if (private) {
@@ -180,9 +184,10 @@ class DownloadManager {
     }
 
     //Get path
-    String path = _generatePath(track, private);
+    String path = _generatePath(track, private, isSingleton: isSingleton);
     await platform.invokeMethod('addDownloads', [await Download.jsonFromTrack(track, path, private: private, quality: quality)]);
     await start();
+    return true;
   }
 
   Future addOfflineAlbum(Album album, {private = true, BuildContext context}) async {
@@ -478,7 +483,7 @@ class DownloadManager {
   }
 
   //Generate track download path
-  String _generatePath(Track track, bool private, {String playlistName, int playlistTrackNumber}) {
+  String _generatePath(Track track, bool private, {String playlistName, int playlistTrackNumber, bool isSingleton = false}) {
     String path;
     if (private) {
       path = p.join(offlinePath, track.id);
@@ -501,7 +506,7 @@ class DownloadManager {
         }
       }
       //Final path
-      path = p.join(path, settings.downloadFilename);
+      path = p.join(path, isSingleton ? settings.singletonFilename : settings.downloadFilename);
       //Playlist track number variable (not accessible in service)
       if (playlistTrackNumber != null) {
         path = path.replaceAll('%playlistTrackNumber%', playlistTrackNumber.toString());

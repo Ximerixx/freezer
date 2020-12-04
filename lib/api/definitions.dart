@@ -156,9 +156,9 @@ class Track {
     'trackNumber': trackNumber,
     'offline': off?1:0,
     'lyrics': jsonEncode(lyrics.toJson()),
-    'favorite': (favorite??0)?1:0,
+    'favorite': (favorite??false) ? 1 : 0,
     'diskNumber': diskNumber,
-    'explicit': explicit?1:0,
+    'explicit': (explicit??false) ? 1 : 0,
     //'favoriteDate': favoriteDate
   };
   factory Track.fromSQL(Map<String, dynamic> data) => Track(
@@ -232,9 +232,9 @@ class Album {
   Map<String, dynamic> toSQL({off = false}) => {
     'id': id,
     'title': title,
-    'artists': artists.map<String>((dynamic a) => a.id).join(','),
-    'tracks': tracks.map<String>((dynamic t) => t.id).join(','),
-    'art': art.full,
+    'artists': (artists??[]).map<String>((dynamic a) => a.id).join(','),
+    'tracks': (tracks??[]).map<String>((dynamic t) => t.id).join(','),
+    'art': art?.full??'',
     'fans': fans,
     'offline': off?1:0,
     'library': (library??false)?1:0,
@@ -255,7 +255,7 @@ class Album {
     fans: data['fans'],
     offline: (data['offline'] == 1) ? true:false,
     library: (data['library'] == 1) ? true:false,
-    type: AlbumType.values[data['type']],
+    type: AlbumType.values[(data['type'] == -1) ? 0 : data['type']],
     releaseDate: data['releaseDate'],
     //favoriteDate: data['favoriteDate']
   );
@@ -618,6 +618,9 @@ class HomePage {
     String path = await _getPath();
     Map data = jsonDecode(await File(path).readAsString());
     return HomePage.fromJson(data);
+  }
+  Future wipe() async {
+    await File(await _getPath()).delete();
   }
 
   //JSON

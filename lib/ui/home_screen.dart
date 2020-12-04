@@ -158,54 +158,58 @@ class HomepageSectionWidget extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-        return ListTile(
-            title: Text(
-              section.title??'',
-              textAlign: TextAlign.left,
-              maxLines: 2,
-              overflow: TextOverflow.ellipsis,
-              style: TextStyle(
-                  fontSize: 20.0,
-                  fontWeight: FontWeight.w900
-              ),
-            ),
-            subtitle: SingleChildScrollView(
-              scrollDirection: Axis.horizontal,
-              child: Row(
-                children: List.generate(section.items.length + 1, (j) {
-                  //Has more items
-                  if (j == section.items.length) {
-                    if (section.hasMore ?? false) {
-                      return FlatButton(
-                        child: Text(
-                          'Show more'.i18n,
-                          textAlign: TextAlign.center,
-                          style: TextStyle(
-                              fontSize: 20.0
-                          ),
-                        ),
-                        onPressed: () => Navigator.of(context).push(MaterialPageRoute(
-                          builder: (context) => Scaffold(
-                            appBar: FreezerAppBar(section.title),
-                            body: SingleChildScrollView(
-                                child: HomePageScreen(
-                                  channel: DeezerChannel(target: section.pagePath)
-                                )
-                            ),
-                          ),
-                        )),
-                      );
-                    }
-                    return Container(height: 0, width: 0);
-                  }
+    return ListTile(
+      contentPadding: EdgeInsets.symmetric(horizontal: 4.0, vertical: 2.0),
+      title: Padding(
+        padding: EdgeInsets.symmetric(vertical: 4.0, horizontal: 6.0),
+        child: Text(
+          section.title??'',
+          textAlign: TextAlign.left,
+          maxLines: 2,
+          overflow: TextOverflow.ellipsis,
+          style: TextStyle(
+            fontSize: 20.0,
+            fontWeight: FontWeight.w900
+          ),
+        ),
+      ),
+      subtitle: SingleChildScrollView(
+        scrollDirection: Axis.horizontal,
+        child: Row(
+          children: List.generate(section.items.length + 1, (j) {
+            //Has more items
+            if (j == section.items.length) {
+              if (section.hasMore ?? false) {
+                return FlatButton(
+                  child: Text(
+                    'Show more'.i18n,
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                        fontSize: 20.0
+                    ),
+                  ),
+                  onPressed: () => Navigator.of(context).push(MaterialPageRoute(
+                    builder: (context) => Scaffold(
+                      appBar: FreezerAppBar(section.title),
+                      body: SingleChildScrollView(
+                          child: HomePageScreen(
+                            channel: DeezerChannel(target: section.pagePath)
+                          )
+                      ),
+                    ),
+                  )),
+                );
+              }
+              return Container(height: 0, width: 0);
+            }
 
-                  //Show item
-                  HomePageItem item = section.items[j];
-                  return HomePageItemWidget(item);
-                }),
-              ),
-            )
-        );
+            //Show item
+            HomePageItem item = section.items[j];
+            return HomePageItemWidget(item);
+          }),
+        ),
+      )
+    );
   }
 }
 

@@ -212,6 +212,14 @@ public class MainActivity extends FlutterActivity {
                     result.success(null);
                 return;
             }
+            //Stop services
+            if (call.method.equals("kill")) {
+                Intent intent = new Intent(this, DownloadService.class);
+                stopService(intent);
+                if (streamServer != null)
+                    streamServer.stop();
+                System.exit(0);
+            }
 
             result.error("0", "Not implemented!", "Not implemented!");
         })));

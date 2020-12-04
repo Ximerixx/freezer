@@ -26,7 +26,7 @@ Settings _$SettingsFromJson(Map<String, dynamic> json) {
         _$enumDecodeNullable(_$AudioQualityEnumMap, json['downloadQuality']) ??
             AudioQuality.FLAC
     ..downloadFilename =
-        json['downloadFilename'] as String ?? '%artists% - %title%'
+        json['downloadFilename'] as String ?? '%artist% - %title%'
     ..albumFolder = json['albumFolder'] as bool ?? true
     ..artistFolder = json['artistFolder'] as bool ?? true
     ..albumDiscFolder = json['albumDiscFolder'] as bool ?? false
@@ -37,6 +37,9 @@ Settings _$SettingsFromJson(Map<String, dynamic> json) {
     ..trackCover = json['trackCover'] as bool ?? false
     ..albumCover = json['albumCover'] as bool ?? true
     ..nomediaFiles = json['nomediaFiles'] as bool ?? false
+    ..artistSeparator = json['artistSeparator'] as String ?? ', '
+    ..singletonFilename =
+        json['singletonFilename'] as String ?? '%artist% - %title%'
     ..theme =
         _$enumDecodeNullable(_$ThemesEnumMap, json['theme']) ?? Themes.Dark
     ..useSystemTheme = json['useSystemTheme'] as bool ?? false
@@ -71,6 +74,8 @@ Map<String, dynamic> _$SettingsToJson(Settings instance) => <String, dynamic>{
       'trackCover': instance.trackCover,
       'albumCover': instance.albumCover,
       'nomediaFiles': instance.nomediaFiles,
+      'artistSeparator': instance.artistSeparator,
+      'singletonFilename': instance.singletonFilename,
       'theme': _$ThemesEnumMap[instance.theme],
       'useSystemTheme': instance.useSystemTheme,
       'colorGradientBackground': instance.colorGradientBackground,

@@ -75,8 +75,8 @@ android {
 dependencies {
     //implementation group: 'org', name: 'jaudiotagger', version: '2.0.3'
     implementation files('libs/jaudiotagger-2.2.3.jar')
+    implementation files('libs/extension-flac.aar')
     implementation group: 'org.nanohttpd', name: 'nanohttpd', version: '2.3.1'
-    compile files('libs/extension-flac.aar')
 }
 
 flutter {
