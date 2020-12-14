@@ -392,7 +392,7 @@ class Playlist {
     id: json['PLAYLIST_ID'].toString(),
     title: json['TITLE'],
     trackCount: json['NB_SONG']??songsJson['total'],
-    image: ImageDetails.fromPrivateString(json['PLAYLIST_PICTURE'], type: 'playlist'),
+    image: ImageDetails.fromPrivateString(json['PLAYLIST_PICTURE'], type: json['PICTURE_TYPE']),
     fans: json['NB_FAN'],
     duration: Duration(seconds: json['DURATION']??0),
     description: json['DESCRIPTION'],
@@ -464,7 +464,7 @@ class ImageDetails {
 
   //JSON
   factory ImageDetails.fromPrivateString(String art, {String type='cover'}) => ImageDetails(
-    fullUrl: 'https://e-cdns-images.dzcdn.net/images/$type/$art/1400x1400-000000-80-0-0.jpg',
+    fullUrl: 'https://e-cdns-images.dzcdn.net/images/$type/$art/1000x1000-000000-80-0-0.jpg',
     thumbUrl: 'https://e-cdns-images.dzcdn.net/images/$type/$art/140x140-000000-80-0-0.jpg'
   );
   factory ImageDetails.fromPrivateJson(Map<dynamic, dynamic> json) => ImageDetails.fromPrivateString(
@@ -481,22 +481,28 @@ class SearchResults {
   List<Album> albums;
   List<Artist> artists;
   List<Playlist> playlists;
+  List<Show> shows;
+  List<ShowEpisode> episodes;
 
-  SearchResults({this.tracks, this.albums, this.artists, this.playlists});
+  SearchResults({this.tracks, this.albums, this.artists, this.playlists, this.shows, this.episodes});
 
   //Check if no search results
   bool get empty {
     return ((tracks == null || tracks.length == 0) &&
         (albums == null || albums.length == 0) &&
         (artists == null || artists.length == 0) &&
-        (playlists == null || playlists.length == 0));
+        (playlists == null || playlists.length == 0) &&
+        (shows == null || shows.length == 0) &&
+        (episodes == null || episodes.length == 0));
   }
 
   factory SearchResults.fromPrivateJson(Map<dynamic, dynamic> json) => SearchResults(
     tracks: json['TRACK']['data'].map<Track>((dynamic data) => Track.fromPrivateJson(data)).toList(),
     albums: json['ALBUM']['data'].map<Album>((dynamic data) => Album.fromPrivateJson(data)).toList(),
     artists: json['ARTIST']['data'].map<Artist>((dynamic data) => Artist.fromPrivateJson(data)).toList(),
-    playlists: json['PLAYLIST']['data'].map<Playlist>((dynamic data) => Playlist.fromPrivateJson(data)).toList()
+    playlists: json['PLAYLIST']['data'].map<Playlist>((dynamic data) => Playlist.fromPrivateJson(data)).toList(),
+    shows: json['SHOW']['data'].map<Show>((dynamic data) => Show.fromPrivateJson(data)).toList(),
+    episodes: json['EPISODE']['data'].map<ShowEpisode>((dynamic data) => ShowEpisode.fromPrivateJson(data)).toList()
   );
 }
 
@@ -897,8 +903,10 @@ class ShowEpisode {
   String url;
   Duration duration;
   String publishedDate;
+  //Might not be fully available
+  Show show;
 
-  ShowEpisode({this.id, this.title, this.description, this.url, this.duration, this.publishedDate});
+  ShowEpisode({this.id, this.title, this.description, this.url, this.duration, this.publishedDate, this.show});
 
   String get durationString => "${duration.inMinutes}:${duration.inSeconds.remainder(60).toString().padLeft(2, '0')}";
 
@@ -917,7 +925,7 @@ class ShowEpisode {
       },
       displayDescription: description,
       duration: duration,
-      artUri: show.art.full
+      artUri: show.art.full,
     );
   }
   factory ShowEpisode.fromMediaItem(MediaItem mi) {
@@ -927,6 +935,7 @@ class ShowEpisode {
       description: mi.displayDescription,
       url: mi.extras['showUrl'],
       duration: mi.duration,
+      show: Show.fromPrivateJson(mi.extras['show'])
     );
   }
 
@@ -937,7 +946,8 @@ class ShowEpisode {
     description: json['EPISODE_DESCRIPTION'],
     url: json['EPISODE_DIRECT_STREAM_URL'],
     duration: Duration(seconds: int.parse(json['DURATION'].toString())),
-    publishedDate: json['EPISODE_PUBLISHED_TIMESTAMP']
+    publishedDate: json['EPISODE_PUBLISHED_TIMESTAMP'],
+    show: Show.fromPrivateJson(json)
   );
 
   factory ShowEpisode.fromJson(Map<String, dynamic> json) => _$ShowEpisodeFromJson(json);

@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:flutter/cupertino.dart';
+import 'package:wakelock/wakelock.dart';
 import 'package:flutter/material.dart';
 import 'package:audio_service/audio_service.dart';
 import 'package:fluttertoast/fluttertoast.dart';
@@ -582,6 +583,33 @@ class MenuSheet {
           return SleepTimerDialog();
         }
       );
+    },
+  );
+
+  Widget wakelock() => ListTile(
+    title: Text('Keep the screen on'.i18n),
+    leading: Icon(Icons.screen_lock_portrait),
+    onTap: () async {
+      _close();
+      if (cache.wakelock == null)
+        cache.wakelock = false;
+      //Enable
+      if (!cache.wakelock) {
+        Wakelock.enable();
+        Fluttertoast.showToast(
+            msg: 'Wakelock enabled!'.i18n,
+            gravity: ToastGravity.BOTTOM
+        );
+        cache.wakelock = true;
+        return;
+      }
+      //Disable
+      Wakelock.disable();
+      Fluttertoast.showToast(
+          msg: 'Wakelock disabled!'.i18n,
+          gravity: ToastGravity.BOTTOM
+      );
+      cache.wakelock = false;
     },
   );
 

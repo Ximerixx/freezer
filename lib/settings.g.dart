@@ -40,6 +40,7 @@ Settings _$SettingsFromJson(Map<String, dynamic> json) {
     ..artistSeparator = json['artistSeparator'] as String ?? ', '
     ..singletonFilename =
         json['singletonFilename'] as String ?? '%artist% - %title%'
+    ..albumArtResolution = json['albumArtResolution'] as int ?? 1400
     ..theme =
         _$enumDecodeNullable(_$ThemesEnumMap, json['theme']) ?? Themes.Dark
     ..useSystemTheme = json['useSystemTheme'] as bool ?? false
@@ -76,6 +77,7 @@ Map<String, dynamic> _$SettingsToJson(Settings instance) => <String, dynamic>{
       'nomediaFiles': instance.nomediaFiles,
       'artistSeparator': instance.artistSeparator,
       'singletonFilename': instance.singletonFilename,
+      'albumArtResolution': instance.albumArtResolution,
       'theme': _$ThemesEnumMap[instance.theme],
       'useSystemTheme': instance.useSystemTheme,
       'colorGradientBackground': instance.colorGradientBackground,

@@ -280,7 +280,7 @@ class _PlayerScreenVerticalState extends State<PlayerScreenVertical> {
           children: <Widget>[
             Container(
               height: ScreenUtil().setSp(64),
-              child: AudioService.currentMediaItem.displayTitle.length >= 24 ?
+              child: AudioService.currentMediaItem.displayTitle.length >= 26 ?
               Marquee(
                 text: AudioService.currentMediaItem.displayTitle,
                 style: TextStyle(
@@ -410,12 +410,12 @@ class PlayerMenuButton extends StatelessWidget {
         Track t = Track.fromMediaItem(AudioService.currentMediaItem);
         MenuSheet m = MenuSheet(context);
         if (AudioService.currentMediaItem.extras['show'] == null)
-          m.defaultTrackMenu(t, options: [m.sleepTimer()]);
+          m.defaultTrackMenu(t, options: [m.sleepTimer(), m.wakelock()]);
         else
           m.defaultShowEpisodeMenu(
             Show.fromJson(jsonDecode(AudioService.currentMediaItem.extras['show'])),
             ShowEpisode.fromMediaItem(AudioService.currentMediaItem),
-            options: [m.sleepTimer()]
+            options: [m.sleepTimer(), m.wakelock()]
           );
       },
     );
@@ -771,6 +771,13 @@ class _QueueScreenState extends State<QueueScreen> {
                 Navigator.of(context).pop();
               },
               key: Key(t.id),
+              trailing: IconButton(
+                icon: Icon(Icons.close),
+                onPressed: () async {
+                  await AudioService.removeQueueItem(t.toMediaItem());
+                  setState(() {});
+                },
+              ),
             );
           }),
         )

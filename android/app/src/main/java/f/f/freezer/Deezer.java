@@ -400,8 +400,8 @@ public class Deezer {
                     PictureTypes.DEFAULT_ID,
                     ImageFormats.MIME_TYPE_JPEG,
                     "cover",
-                    1400,
-                    1400,
+                    settings.albumArtResolution,
+                    settings.albumArtResolution,
                     24,
                     0
                 ));

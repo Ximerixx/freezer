@@ -297,6 +297,16 @@ const language_en_us = {
     //0.6.6
     "Restart of app is required to properly log out!": "Restart of app is required to properly log out!",
     "Artist separator": "Artist separator",
-    "Singleton naming": "Standalone tracks filename"
+    "Singleton naming": "Standalone tracks filename",
+
+    //0.6.7
+    "Keep the screen on": "Keep the screen on",
+    "Wakelock enabled!": "Wakelock enabled!",
+    "Wakelock disabled!": "Wakelock disabled!",
+    "Show all shows": "Show all shows",
+    "Episodes": "Episodes",
+    "Show all episodes": "Show all episodes",
+    "Album cover resolution": "Album cover resolution",
+    "WARNING: Resolutions above 1200 aren't officially supported": "WARNING: Resolutions above 1200 aren't officially supported"
   }
 };

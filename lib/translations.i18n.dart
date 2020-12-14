@@ -28,6 +28,8 @@ const supportedLocales = [
   const Locale('sk', 'SK'),
   const Locale('cs', 'CZ'),
   const Locale('vi', 'VI'),
+  const Locale('nl', 'NL'),
+  const Locale('sl', 'SL'),
   const Locale('fil', 'PH'),
   const Locale('uwu', 'UWU')
 ];

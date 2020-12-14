@@ -453,6 +453,9 @@ ShowEpisode _$ShowEpisodeFromJson(Map<String, dynamic> json) {
         ? null
         : Duration(microseconds: json['duration'] as int),
     publishedDate: json['publishedDate'] as String,
+    show: json['show'] == null
+        ? null
+        : Show.fromJson(json['show'] as Map<String, dynamic>),
   );
 }
 
@@ -464,4 +467,5 @@ Map<String, dynamic> _$ShowEpisodeToJson(ShowEpisode instance) =>
       'url': instance.url,
       'duration': instance.duration?.inMicroseconds,
       'publishedDate': instance.publishedDate,
+      'show': instance.show,
     };

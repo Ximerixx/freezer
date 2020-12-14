@@ -1,6 +1,8 @@
 import 'package:audio_service/audio_service.dart';
 import 'package:flutter/material.dart';
+import 'package:fluttericon/octicons_icons.dart';
 import 'package:freezer/api/deezer.dart';
+import 'package:freezer/api/download.dart';
 import 'package:freezer/translations.i18n.dart';
 
 import '../api/definitions.dart';
@@ -25,6 +27,7 @@ class TrackTile extends StatefulWidget {
 class _TrackTileState extends State<TrackTile> {
 
   StreamSubscription _subscription;
+  bool _isOffline = false;
 
   bool get nowPlaying {
     if (AudioService.currentMediaItem == null) return false;
@@ -37,6 +40,9 @@ class _TrackTileState extends State<TrackTile> {
     _subscription = AudioService.currentMediaItemStream.listen((event) {
       setState(() {});
     });
+    //Check if offline
+    downloadManager.checkOffline(track: widget.track).then((b) => setState(() => _isOffline = b));
+
     super.initState();
   }
 
@@ -70,9 +76,18 @@ class _TrackTileState extends State<TrackTile> {
       trailing: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
+          if ((_isOffline??false))
+            Padding(
+              padding: EdgeInsets.symmetric(horizontal: 2.0),
+              child: Icon(
+                Octicons.primitive_dot,
+                color: Colors.green,
+                size: 12.0,
+              ),
+            ),
           if (widget.track.explicit??false)
             Padding(
-              padding: EdgeInsets.symmetric(horizontal: 4.0),
+              padding: EdgeInsets.symmetric(horizontal: 2.0),
               child: Text(
                 'E',
                 style: TextStyle(
@@ -80,9 +95,12 @@ class _TrackTileState extends State<TrackTile> {
                 ),
               ),
             ),
-          Padding(
-            padding: EdgeInsets.symmetric(horizontal: 2.0),
-            child: Text(widget.track.durationString),
+          Container(
+            width: 42.0,
+            child: Text(
+              widget.track.durationString,
+              textAlign: TextAlign.center,
+            ),
           ),
           widget.trailing??Container(width: 0, height: 0)
         ],
@@ -496,6 +514,38 @@ class ShowCard extends StatelessWidget {
     );
   }
 }
+
+class ShowTile extends StatelessWidget {
+
+  final Show show;
+  final Function onTap;
+  final Function onHold;
+
+  ShowTile(this.show, {this.onTap, this.onHold});
+
+  @override
+  Widget build(BuildContext context) {
+    return ListTile(
+      title: Text(
+        show.name,
+        maxLines: 1,
+        overflow: TextOverflow.ellipsis,
+      ),
+      subtitle: Text(
+        show.description,
+        maxLines: 1,
+        overflow: TextOverflow.ellipsis,
+      ),
+      onTap: onTap,
+      onLongPress: onHold,
+      leading: CachedImage(
+        url: show.art.thumb,
+        width: 48,
+      ),
+    );
+  }
+}
+
 
 class ShowEpisodeTile extends StatelessWidget {
 

@@ -7,6 +7,7 @@ import 'package:flutter/src/services/keyboard_key.dart';
 import 'package:freezer/api/cache.dart';
 import 'package:freezer/api/download.dart';
 import 'package:freezer/api/player.dart';
+import 'package:freezer/main.dart';
 import 'package:freezer/ui/details_screens.dart';
 import 'package:freezer/ui/elements.dart';
 import 'package:freezer/ui/home_screen.dart';
@@ -657,6 +658,91 @@ class SearchResultsScreen extends StatelessWidget {
                     MaterialPageRoute(builder: (context) => SearchResultPlaylists(results.playlists))
                   );
                 },
+              ),
+              FreezerDivider()
+            ];
+          }
+
+          //Shows
+          List<Widget> shows = [];
+          if (results.shows != null && results.shows.length != 0) {
+            shows = [
+              Padding(
+                padding: EdgeInsets.symmetric(vertical: 4.0, horizontal: 16.0),
+                child: Text(
+                  'Shows'.i18n,
+                  textAlign: TextAlign.left,
+                  style: TextStyle(
+                      fontSize: 20.0,
+                      fontWeight: FontWeight.bold
+                  ),
+                ),
+              ),
+              ...List.generate(3, (i) {
+                if (results.shows.length <= i) return Container(height: 0, width: 0,);
+                Show s = results.shows[i];
+                return ShowTile(
+                  s,
+                  onTap: () async {
+                    Navigator.of(context).push(MaterialPageRoute(
+                      builder: (context) => ShowScreen(s)
+                    ));
+                  },
+                );
+              }),
+              ListTile(
+                title: Text('Show all shows'.i18n),
+                onTap: () {
+                  Navigator.of(context).push(
+                    MaterialPageRoute(builder: (context) => ShowListScreen(results.shows))
+                  );
+                },
+              ),
+              FreezerDivider()
+            ];
+          }
+
+          //Episodes
+          List<Widget> episodes = [];
+          if (results.episodes != null && results.episodes.length != 0) {
+            episodes = [
+              Padding(
+                padding: EdgeInsets.symmetric(vertical: 4.0, horizontal: 16.0),
+                child: Text(
+                  'Episodes'.i18n,
+                  textAlign: TextAlign.left,
+                  style: TextStyle(
+                      fontSize: 20.0,
+                      fontWeight: FontWeight.bold
+                  ),
+                ),
+              ),
+              ...List.generate(3, (i) {
+                if (results.episodes.length <= i) return Container(height: 0, width: 0,);
+                ShowEpisode e = results.episodes[i];
+                return ShowEpisodeTile(
+                  e,
+                  trailing: IconButton(
+                    icon: Icon(Icons.more_vert),
+                    onPressed: () {
+                      MenuSheet m = MenuSheet(context);
+                      m.defaultShowEpisodeMenu(e.show, e);
+                    },
+                  ),
+                  onTap: () async {
+                    //Load entire show, then play
+                    List<ShowEpisode> episodes = await deezerAPI.allShowEpisodes(e.show.id);
+                    await playerHelper.playShowEpisode(e.show, episodes, index: episodes.indexWhere((ep) => e.id == ep.id));
+                  },
+                );
+              }),
+              ListTile(
+                title: Text('Show all episodes'.i18n),
+                onTap: () {
+                  Navigator.of(context).push(
+                    MaterialPageRoute(builder: (context) => EpisodeListScreen(results.episodes))
+                  );
+                }
               )
             ];
           }
@@ -670,7 +756,11 @@ class SearchResultsScreen extends StatelessWidget {
               Container(height: 8.0,),
               ...artists,
               Container(height: 8.0,),
-              ...playlists
+              ...playlists,
+              Container(height: 8.0,),
+              ...shows,
+              Container(height: 8.0,),
+              ...episodes
             ],
           );
         },
@@ -770,6 +860,67 @@ class SearchResultPlaylists extends StatelessWidget {
           );
         },
       ),
+    );
+  }
+}
+
+class ShowListScreen extends StatelessWidget {
+
+  final List<Show> shows;
+  ShowListScreen(this.shows);
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: FreezerAppBar('Shows'.i18n),
+      body: ListView.builder(
+        itemCount: shows.length,
+        itemBuilder: (context, i) {
+          Show s = shows[i];
+          return ShowTile(
+            s,
+            onTap: () {
+              Navigator.of(context).push(MaterialPageRoute(
+                builder: (context) => ShowScreen(s)
+              ));
+            },
+          );
+        },
+      ),
+    );
+  }
+}
+
+class EpisodeListScreen extends StatelessWidget {
+
+  final List<ShowEpisode> episodes;
+  EpisodeListScreen(this.episodes);
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: FreezerAppBar('Episodes'.i18n),
+      body: ListView.builder(
+        itemCount: episodes.length,
+        itemBuilder: (context, i) {
+          ShowEpisode e = episodes[i];
+          return ShowEpisodeTile(
+            e,
+            trailing: IconButton(
+              icon: Icon(Icons.more_vert),
+              onPressed: () {
+                MenuSheet m = MenuSheet(context);
+                m.defaultShowEpisodeMenu(e.show, e);
+              },
+            ),
+            onTap: () async {
+              //Load entire show, then play
+              List<ShowEpisode> episodes = await deezerAPI.allShowEpisodes(e.show.id);
+              await playerHelper.playShowEpisode(e.show, episodes, index: episodes.indexWhere((ep) => e.id == ep.id));
+            },
+          );
+        },
+      )
     );
   }
 }

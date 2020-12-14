@@ -51,6 +51,9 @@ class Cache {
   @JsonKey(defaultValue: 0)
   int lastUpdateCheck;
 
+  @JsonKey(ignore: true)
+  bool wakelock = false;
+
   Cache({this.libraryTracks});
 
   //Wrapper to test if track is favorite against cache

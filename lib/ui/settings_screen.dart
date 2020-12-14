@@ -857,6 +857,27 @@ class _DownloadsSettingsState extends State<DownloadsSettings> {
             leading: Icon(Icons.image)
           ),
           ListTile(
+            title: Text('Album cover resolution'.i18n),
+            subtitle: Text("WARNING: Resolutions above 1200 aren't officially supported".i18n),
+            leading: Icon(Icons.image),
+            trailing: Container(
+              width: 75.0,
+              child: DropdownButton<int>(
+                value: settings.albumArtResolution,
+                items: [400, 800, 1000, 1200, 1400, 1600, 1800].map<DropdownMenuItem<int>>((int i) => DropdownMenuItem<int>(
+                  value: i,
+                  child: Text(i.toString()),
+                )).toList(),
+                onChanged: (int n) async {
+                  setState(() {
+                    settings.albumArtResolution = n;
+                  });
+                  await settings.save();
+                },
+              )
+            )
+          ),
+          ListTile(
             title: Text('Create .nomedia files'.i18n),
             subtitle: Text('To prevent gallery being filled with album art'.i18n),
             trailing: Switch(
@@ -872,7 +893,7 @@ class _DownloadsSettingsState extends State<DownloadsSettings> {
             title: Text('Artist separator'.i18n),
             leading: Icon(WebSymbols.tag),
             trailing: Container(
-              width: 100.0,
+              width: 75.0,
               child: TextField(
                 controller: _artistSeparatorController,
                 onChanged: (s) async {

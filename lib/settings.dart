@@ -71,6 +71,8 @@ class Settings {
   String artistSeparator;
   @JsonKey(defaultValue: "%artist% - %title%")
   String singletonFilename;
+  @JsonKey(defaultValue: 1400)
+  int albumArtResolution;
 
   //Appearance
   @JsonKey(defaultValue: Themes.Dark)

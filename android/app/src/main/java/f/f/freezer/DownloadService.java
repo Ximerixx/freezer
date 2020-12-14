@@ -489,7 +489,7 @@ public class DownloadService extends Service {
                 File coverFile = new File(outFile.getPath().substring(0, outFile.getPath().lastIndexOf('.')) + ".jpg");
 
                 try {
-                    URL url = new URL("http://e-cdn-images.deezer.com/images/cover/" + trackJson.getString("md5_image") + "/1400x1400-000000-80-0-0.jpg");
+                    URL url = new URL("http://e-cdn-images.deezer.com/images/cover/" + albumJson.getString("md5_image") + "/" + Integer.toString(settings.albumArtResolution) + "x" + Integer.toString(settings.albumArtResolution) + "-000000-80-0-0.jpg");
                     HttpURLConnection connection = (HttpURLConnection) url.openConnection();
                     //Set headers
                     connection.setRequestMethod("GET");
@@ -568,7 +568,7 @@ public class DownloadService extends Service {
                 //Create to lock
                 coverFile.createNewFile();
 
-                URL url = new URL("http://e-cdn-images.deezer.com/images/cover/" + albumJson.getString("md5_image") + "/1400x1400-000000-80-0-0.jpg");
+                URL url = new URL("http://e-cdn-images.deezer.com/images/cover/" + albumJson.getString("md5_image") + "/" + Integer.toString(settings.albumArtResolution) + "x" + Integer.toString(settings.albumArtResolution) + "-000000-80-0-0.jpg");
                 HttpURLConnection connection = (HttpURLConnection) url.openConnection();
                 //Set headers
                 connection.setRequestMethod("GET");
@@ -808,8 +808,9 @@ public class DownloadService extends Service {
         boolean albumCover;
         boolean nomediaFiles;
         String artistSeparator;
+        int albumArtResolution;
 
-        private DownloadSettings(int downloadThreads, boolean overwriteDownload, boolean downloadLyrics, boolean trackCover, String arl, boolean albumCover, boolean nomediaFiles, String artistSeparator) {
+        private DownloadSettings(int downloadThreads, boolean overwriteDownload, boolean downloadLyrics, boolean trackCover, String arl, boolean albumCover, boolean nomediaFiles, String artistSeparator, int albumArtResolution) {
             this.downloadThreads = downloadThreads;
             this.overwriteDownload = overwriteDownload;
             this.downloadLyrics = downloadLyrics;
@@ -818,6 +819,7 @@ public class DownloadService extends Service {
             this.albumCover = albumCover;
             this.nomediaFiles = nomediaFiles;
             this.artistSeparator = artistSeparator;
+            this.albumArtResolution = albumArtResolution;
         }
 
         //Parse settings from bundle sent from UI
@@ -833,7 +835,8 @@ public class DownloadService extends Service {
                     json.getString("arl"),
                     json.getBoolean("albumCover"),
                     json.getBoolean("nomediaFiles"),
-                    json.getString("artistSeparator")
+                    json.getString("artistSeparator"),
+                    json.getInt("albumArtResolution")
                 );
             } catch (Exception e) {
                 //Shouldn't happen

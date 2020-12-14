@@ -45,6 +45,7 @@ class PlayerHelper {
       if (event['action'] == 'onRestore') {
         //Load queueSource from isolate
         this.queueSource = QueueSource.fromJson(event['queueSource']);
+        repeatType = LoopMode.values[event['loopMode']];
       }
       if (event['action'] == 'queueEnd') {
         //If last song is played, load more queue
@@ -332,6 +333,7 @@ class AudioPlayerTask extends BackgroundAudioTask {
   int wifiQuality;
   QueueSource queueSource;
   Duration _lastPosition;
+  LoopMode _loopMode = LoopMode.off;
 
   Completer _androidAutoCallback;
 
@@ -438,6 +440,19 @@ class AudioPlayerTask extends BackgroundAudioTask {
 
   @override
   Future<void> onSeekBackward(bool begin) async => _seekContinuously(begin, -1);
+
+  //Remove item from queue
+  @override
+  Future<void> onRemoveQueueItem(MediaItem mediaItem) async {
+    int index = _queue.indexWhere((m) => m.id == mediaItem.id);
+    _queue.removeAt(index);
+    if (index <= _queueIndex) {
+      _queueIndex--;
+    }
+    _audioSource.removeAt(index);
+
+    AudioServiceBackground.setQueue(_queue);
+  }
 
   @override
   Future<void> onSkipToNext() async {
@@ -630,7 +645,8 @@ class AudioPlayerTask extends BackgroundAudioTask {
     }
     //Looping
     if (name == 'repeatType') {
-      _player.setLoopMode(LoopMode.values[args]);
+      _loopMode = LoopMode.values[args];
+      _player.setLoopMode(_loopMode);
     }
     if (name == 'saveQueue')
       await this._saveQueue();
@@ -708,6 +724,7 @@ class AudioPlayerTask extends BackgroundAudioTask {
       'queue': _queue.map<Map<String, dynamic>>((mi) => mi.toJson()).toList(),
       'position': _player.position.inMilliseconds,
       'queueSource': (queueSource??QueueSource()).toJson(),
+      'loopMode': LoopMode.values.indexOf(_loopMode??LoopMode.off)
     };
     await f.writeAsString(jsonEncode(data));
   }
@@ -721,6 +738,7 @@ class AudioPlayerTask extends BackgroundAudioTask {
       this._queueIndex = json['index'] ?? 0;
       this._lastPosition = Duration(milliseconds: json['position']??0);
       this.queueSource = QueueSource.fromJson(json['queueSource']??{});
+      this._loopMode = LoopMode.values[(json['loopMode']??0)];
       //Restore queue
       if (_queue != null) {
         await AudioServiceBackground.setQueue(_queue);
@@ -731,7 +749,8 @@ class AudioPlayerTask extends BackgroundAudioTask {
     //Send restored queue source to ui
     AudioServiceBackground.sendCustomEvent({
       'action': 'onRestore',
-      'queueSource': (queueSource??QueueSource()).toJson()
+      'queueSource': (queueSource??QueueSource()).toJson(),
+      'loopMode': LoopMode.values.indexOf(_loopMode)
     });
     return true;
   }
