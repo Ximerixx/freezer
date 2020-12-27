@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:flutter/cupertino.dart';
+import 'package:freezer/main.dart';
 import 'package:wakelock/wakelock.dart';
 import 'package:flutter/material.dart';
 import 'package:audio_service/audio_service.dart';
@@ -12,18 +13,19 @@ import 'package:freezer/api/player.dart';
 import 'package:freezer/ui/details_screens.dart';
 import 'package:freezer/ui/error.dart';
 import 'package:freezer/translations.i18n.dart';
+import 'package:freezer/api/definitions.dart';
+import 'package:freezer/ui/cached_image.dart';
 import 'package:numberpicker/numberpicker.dart';
 import 'package:share/share.dart';
 import 'package:url_launcher/url_launcher.dart';
 
-import '../api/definitions.dart';
-import 'cached_image.dart';
 
 class MenuSheet {
 
   BuildContext context;
+  Function navigateCallback;
 
-  MenuSheet(this.context);
+  MenuSheet(this.context, {this.navigateCallback});
 
   //===================
   // DEFAULT
@@ -273,9 +275,13 @@ class MenuSheet {
     leading: Icon(Icons.recent_actors),
     onTap: () {
       _close();
-      Navigator.of(context).push(
+      navigatorKey.currentState.push(
           MaterialPageRoute(builder: (context) => ArtistDetails(a))
       );
+
+      if (this.navigateCallback != null) {
+        this.navigateCallback();
+      }
     },
   );
 
@@ -288,9 +294,13 @@ class MenuSheet {
     leading: Icon(Icons.album),
     onTap: () {
       _close();
-      Navigator.of(context).push(
+      navigatorKey.currentState.push(
           MaterialPageRoute(builder: (context) => AlbumDetails(a))
       );
+
+      if (this.navigateCallback != null) {
+        this.navigateCallback();
+      }
     },
   );
 
@@ -303,12 +313,22 @@ class MenuSheet {
     },
   );
 
-  Widget offlineTrack(Track track) => ListTile(
-    title: Text('Offline'.i18n),
-    leading: Icon(Icons.offline_pin),
-    onTap: () async {
-      await downloadManager.addOfflineTrack(track, private: true, context: context);
-      _close();
+  Widget offlineTrack(Track track) => FutureBuilder(
+    future: downloadManager.checkOffline(track: track),
+    builder: (context, snapshot) {
+      bool isOffline = snapshot.data??(track.offline??false);
+      return ListTile(
+        title: Text(isOffline ? 'Remove offline'.i18n : 'Offline'.i18n),
+        leading: Icon(Icons.offline_pin),
+        onTap: () async {
+          if (isOffline) {
+            await downloadManager.removeOfflineTracks([track]);
+          } else {
+            await downloadManager.addOfflineTrack(track, private: true, context: context);
+          }
+          _close();
+        },
+      );
     },
   );
 

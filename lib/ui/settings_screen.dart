@@ -1362,7 +1362,7 @@ class _CreditsScreenState extends State<CreditsScreen> {
             subtitle: Text('Official Discord server'.i18n),
             leading: Icon(FontAwesome5.discord, color: Color(0xff7289da), size: 36.0),
             onTap: () {
-              launch('https://discord.gg/7ap654Tp3z');
+              launch('https://discord.gg/qwJpa3r4dQ');
             },
           ),
           ListTile(
@@ -1371,6 +1371,14 @@ class _CreditsScreenState extends State<CreditsScreen> {
             leading: Icon(Icons.code, color: Colors.green, size: 36.0),
             onTap: () {
               launch('https://git.rip/freezer/');
+            },
+          ),
+          ListTile(
+            title: Text('Donate'),
+            subtitle: Text('You should rather support your favorite artists, instead of this app!'),
+            leading: Icon(FontAwesome5.paypal, color: Colors.blue, size: 36.0),
+            onTap: () {
+              launch('https://paypal.me/exttex');
             },
           ),
           FreezerDivider(),

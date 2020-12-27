@@ -319,6 +319,8 @@ class AudioPlayerTask extends BackgroundAudioTask {
 
   //Queue
   List<MediaItem> _queue = <MediaItem>[];
+  List<MediaItem> _originalQueue;
+  bool _shuffle = false;
   int _queueIndex = 0;
   ConcatenatingAudioSource _audioSource;
 
@@ -471,6 +473,7 @@ class AudioPlayerTask extends BackgroundAudioTask {
     //Update buffering state
     _skipState = AudioProcessingState.skippingToPrevious;
 
+
     //Normal skip to previous
     _queueIndex--;
     await _player.seekToPrevious();
@@ -542,7 +545,7 @@ class AudioPlayerTask extends BackgroundAudioTask {
     if (_skipState != null) return _skipState;
     //SRC: audio_service example
     switch (_player.processingState) {
-      case ProcessingState.none:
+      case ProcessingState.idle:
         return AudioProcessingState.stopped;
       case ProcessingState.loading:
         return AudioProcessingState.connecting;
@@ -586,8 +589,7 @@ class AudioPlayerTask extends BackgroundAudioTask {
     _audioSource = ConcatenatingAudioSource(children: sources);
     //Load in just_audio
     try {
-      await _player.load(_audioSource, initialPosition: Duration.zero, initialIndex: qi);
-//      await _player.seek(Duration.zero, index: qi);
+      await _player.setAudioSource(_audioSource, initialIndex: qi, initialPosition: Duration.zero);
     } catch (e) {
       //Error loading tracks
     }
@@ -599,7 +601,7 @@ class AudioPlayerTask extends BackgroundAudioTask {
     String url = await _getTrackUrl(mi);
     if (url == null) return null;
     if (url.startsWith('http')) return ProgressiveAudioSource(Uri.parse(url));
-    return AudioSource.uri(Uri.parse(url));
+    return AudioSource.uri(Uri.parse(url), tag: mi.id);
   }
 
   Future _getTrackUrl(MediaItem mediaItem, {int quality}) async {
@@ -655,10 +657,26 @@ class AudioPlayerTask extends BackgroundAudioTask {
       await this._loadQueueFile();
     //Shuffle
     if (name == 'shuffle') {
-      _queue.shuffle();
-      AudioServiceBackground.setQueue(_queue);
+      String originalId = mediaItem.id;
+      if (!_shuffle) {
+        _shuffle = true;
+        _originalQueue = List.from(_queue);
+        _queue.shuffle();
+
+      } else {
+        _shuffle = false;
+        _queue = _originalQueue;
+        _originalQueue = null;
+      }
+
+      //Broken
+//      _queueIndex = _queue.indexWhere((mi) => mi.id == originalId);
       _queueIndex = 0;
+      AudioServiceBackground.setQueue(_queue);
+      AudioServiceBackground.setMediaItem(mediaItem);
+      await _player.stop();
       await _loadQueue();
+      await _player.play();
     }
     //Android auto callback
     if (name == 'screenAndroidAuto' && _androidAutoCallback != null) {

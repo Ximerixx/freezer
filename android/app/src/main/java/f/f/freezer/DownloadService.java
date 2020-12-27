@@ -96,10 +96,8 @@ public class DownloadService extends Service {
     public void onDestroy() {
         //Cancel notifications
         notificationManager.cancelAll();
-
         //Logger
         logger.close();
-
         super.onDestroy();
     }
 
@@ -116,8 +114,10 @@ public class DownloadService extends Service {
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
         //Get messenger
-        if (intent != null)
+        if (intent != null) {
             activityMessenger = intent.getParcelableExtra("activityMessenger");
+        }
+
 
         //return super.onStartCommand(intent, flags, startId);
         //Prevent battery savers I guess
@@ -295,24 +295,24 @@ public class DownloadService extends Service {
             while (deezer.authorizing)
                 try {Thread.sleep(50);} catch (Exception ignored) {}
 
-            //Fetch metadata
-            try {
-                JSONObject privateRaw = deezer.callGWAPI("deezer.pageTrack", "{\"sng_id\": \"" + download.trackId + "\"}");
-                privateJson = privateRaw.getJSONObject("results").getJSONObject("DATA");
-                if (privateRaw.getJSONObject("results").has("LYRICS")) {
-                    lyricsData = privateRaw.getJSONObject("results").getJSONObject("LYRICS");
-                }
-                //Don't fetch meta if user uploaded mp3
-                if (!download.isUserUploaded()) {
+            //Don't fetch meta if user uploaded mp3
+            if (!download.isUserUploaded()) {
+                try {
+                    JSONObject privateRaw = deezer.callGWAPI("deezer.pageTrack", "{\"sng_id\": \"" + download.trackId + "\"}");
+                    privateJson = privateRaw.getJSONObject("results").getJSONObject("DATA");
+                    if (privateRaw.getJSONObject("results").has("LYRICS")) {
+                        lyricsData = privateRaw.getJSONObject("results").getJSONObject("LYRICS");
+                    }
                     trackJson = Deezer.callPublicAPI("track", download.trackId);
                     albumJson = Deezer.callPublicAPI("album", Integer.toString(trackJson.getJSONObject("album").getInt("id")));
+
+                } catch (Exception e) {
+                    logger.error("Unable to fetch track and album metadata! " + e.toString(), download);
+                    e.printStackTrace();
+                    download.state = Download.DownloadState.ERROR;
+                    exit();
+                    return;
                 }
-            } catch (Exception e) {
-                logger.error("Unable to fetch track and album metadata! " + e.toString(), download);
-                e.printStackTrace();
-                download.state = Download.DownloadState.ERROR;
-                exit();
-                return;
             }
 
             //Fallback
@@ -339,7 +339,7 @@ public class DownloadService extends Service {
                 //Check file
                 try {
                     if (download.isUserUploaded()) {
-                        outFile = new File(Deezer.generateUserUploadedMP3Filename(download.path, privateJson));
+                        outFile = new File(Deezer.generateUserUploadedMP3Filename(download.path, download.title));
                     } else {
                         outFile = new File(Deezer.generateFilename(download.path, trackJson, albumJson, qualityInfo.quality));
                     }
@@ -700,6 +700,8 @@ public class DownloadService extends Service {
                 //Start/Resume
                 case SERVICE_START_DOWNLOAD:
                     running = true;
+                    if (downloads.size() == 0)
+                        loadDownloads();
                     updateQueue();
                     updateState();
                     break;

@@ -36,6 +36,7 @@ class DownloadManager {
 
   //Start/Resume downloads
   Future start() async {
+    //Returns whether service is bound or not, the delay is really shitty/hacky way, until i find a real solution
     await updateServiceSettings();
     await platform.invokeMethod('start');
   }

@@ -247,17 +247,28 @@ public class Deezer {
         return original + ".mp3";
     }
 
-    public static String generateUserUploadedMP3Filename(String original, JSONObject privateJson) throws Exception {
-        //Remove unavailable tags
-        String[] ignored = {"%feats%", "%trackNumber%", "%0trackNumber%", "%year%", "%date%"};
+//    public static String generateUserUploadedMP3Filename(String original, JSONObject privateJson) throws Exception {
+//        //Remove unavailable tags
+//        String[] ignored = {"%feats%", "%trackNumber%", "%0trackNumber%", "%year%", "%date%"};
+//        for (String i : ignored) {
+//            original = original.replaceAll(i, "");
+//        }
+//        //Basic tags
+//        original = original.replaceAll("%title%", privateJson.getString("SNG_TITLE"));
+//        original = original.replaceAll("%album%", privateJson.getString("ALB_TITLE"));
+//        original = original.replaceAll("%artist%", privateJson.getString("ART_NAME"));
+//        original = original.replaceAll("%artists%", privateJson.getString("ART_NAME"));
+//        return original;
+//    }
+
+    //Deezer patched something so getting metadata of user uploaded MP3s is not working anymore
+    public static String generateUserUploadedMP3Filename(String original, String title) throws Exception {
+        String[] ignored = {"%feats%", "%trackNumber%", "%0trackNumber%", "%year%", "%date%", "%album%", "%artist%", "%artists%"};
         for (String i : ignored) {
             original = original.replaceAll(i, "");
         }
-        //Basic tags
-        original = original.replaceAll("%title%", privateJson.getString("SNG_TITLE"));
-        original = original.replaceAll("%album%", privateJson.getString("ALB_TITLE"));
-        original = original.replaceAll("%artist%", privateJson.getString("ART_NAME"));
-        original = original.replaceAll("%artists%", privateJson.getString("ART_NAME"));
+
+        original = original.replace("%title%", sanitize(title));
         return original;
     }
 

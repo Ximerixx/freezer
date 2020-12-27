@@ -51,16 +51,16 @@ class _PlayerScreenState extends State<PlayerScreen> {
 
     //Update notification
     SystemChrome.setSystemUIOverlayStyle(SystemUiOverlayStyle(
-        statusBarColor: palette.dominantColor.color.withOpacity(0.5)
+        statusBarColor: palette.dominantColor.color.withOpacity(0.7)
     ));
 
     setState(() => _bgGradient = LinearGradient(
         begin: Alignment.topCenter,
         end: Alignment.bottomCenter,
-        colors: [palette.dominantColor.color.withOpacity(0.5), Color.fromARGB(0, 0, 0, 0)],
+        colors: [palette.dominantColor.color.withOpacity(0.7), Color.fromARGB(0, 0, 0, 0)],
         stops: [
           0.0,
-          0.4
+          0.6
         ]
     ));
   }
@@ -408,7 +408,9 @@ class PlayerMenuButton extends StatelessWidget {
       icon: Icon(Icons.more_vert, size: ScreenUtil().setWidth(46)),
       onPressed: () {
         Track t = Track.fromMediaItem(AudioService.currentMediaItem);
-        MenuSheet m = MenuSheet(context);
+        MenuSheet m = MenuSheet(context, navigateCallback: () {
+          Navigator.of(context).pop();
+        });
         if (AudioService.currentMediaItem.extras['show'] == null)
           m.defaultTrackMenu(t, options: [m.sleepTimer(), m.wakelock()]);
         else

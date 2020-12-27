@@ -307,6 +307,11 @@ const language_en_us = {
     "Episodes": "Episodes",
     "Show all episodes": "Show all episodes",
     "Album cover resolution": "Album cover resolution",
-    "WARNING: Resolutions above 1200 aren't officially supported": "WARNING: Resolutions above 1200 aren't officially supported"
+    "WARNING: Resolutions above 1200 aren't officially supported": "WARNING: Resolutions above 1200 aren't officially supported",
+
+    //0.6.8:
+    "Album removed from library!": "Album removed from library!",
+    "Remove offline": "Remove offline",
+    "Playlist removed from library!": "Playlist removed from library!"
   }
 };

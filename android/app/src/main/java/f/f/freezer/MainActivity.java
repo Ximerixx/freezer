@@ -144,8 +144,9 @@ public class MainActivity extends FlutterActivity {
             }
             //Start/Resume downloading
             if (call.method.equals("start")) {
+                //Connected
                 sendMessage(DownloadService.SERVICE_START_DOWNLOAD, null);
-                result.success(null);
+                result.success(serviceBound);
                 return;
             }
             //Stop downloading
@@ -239,17 +240,24 @@ public class MainActivity extends FlutterActivity {
         }));
     }
 
+    //Start/Bind/Reconnect to download service
+    private void connectService() {
+        if (serviceBound)
+            return;
+        //Create messenger
+        activityMessenger = new Messenger(new IncomingHandler(this));
+        //Start
+        Intent intent = new Intent(this, DownloadService.class);
+        intent.putExtra("activityMessenger", activityMessenger);
+        startService(intent);
+        bindService(intent, connection, BIND_AUTO_CREATE);
+    }
 
     @Override
     protected void onStart() {
         super.onStart();
 
-        //Bind downloader service
-        activityMessenger = new Messenger(new IncomingHandler(this));
-        Intent intent = new Intent(this, DownloadService.class);
-        intent.putExtra("activityMessenger", activityMessenger);
-        startService(intent);
-        bindService(intent, connection, 0);
+        connectService();
         //Get DB
         DownloadsDatabase dbHelper = new DownloadsDatabase(getApplicationContext());
         db = dbHelper.getWritableDatabase();
@@ -274,17 +282,18 @@ public class MainActivity extends FlutterActivity {
         } catch (NoSuchAlgorithmException | KeyManagementException e) {
             Log.e(this.getLocalClassName(), e.getMessage());
         }
+    }
 
+    @Override
+    protected void onResume() {
+        super.onResume();
+        //Try reconnect
+        connectService();
     }
 
     @Override
     protected void onStop() {
         super.onStop();
-        //Unbind service on exit
-        if (serviceBound) {
-            unbindService(connection);
-            serviceBound = false;
-        }
         db.close();
     }
 
@@ -294,6 +303,12 @@ public class MainActivity extends FlutterActivity {
         //Stop server
         if (streamServer != null)
             streamServer.stop();
+
+        //Unbind service on exit
+        if (serviceBound) {
+            unbindService(connection);
+            serviceBound = false;
+        }
     }
 
     //Connection to download service
@@ -302,12 +317,14 @@ public class MainActivity extends FlutterActivity {
         public void onServiceConnected(ComponentName componentName, IBinder iBinder) {
             serviceMessenger = new Messenger(iBinder);
             serviceBound = true;
+            Log.d("DD", "Service Bound!");
         }
 
         @Override
         public void onServiceDisconnected(ComponentName componentName) {
             serviceMessenger = null;
             serviceBound = false;
+            Log.d("DD", "Service UnBound!");
         }
     };
 
