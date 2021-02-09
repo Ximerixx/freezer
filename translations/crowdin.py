@@ -3,6 +3,7 @@ import json
 
 lang_crowdin = {
     'ar': 'ar_ar',
+    'ast': 'ast_es',
     'de': 'de_de',
     'el': 'el_gr',
     'es-ES': 'es_es',
@@ -22,7 +23,14 @@ lang_crowdin = {
     'uk': 'uk_ua',
     'hu': 'hu_hu',
     'ur-PK': 'ur_pk',
-    'hi': 'hi_in'
+    'hi': 'hi_in',
+    'sk': 'sk_sk',
+    'cs': 'cs_cz',
+    'vi': 'vi_vi',
+    'uwu': 'uwu_uwu',
+    'nl': 'nl_NL',
+    'sl': 'sl_SL',
+    'zh-CN': 'zh-CN'
 }
 
 def generate_dart():

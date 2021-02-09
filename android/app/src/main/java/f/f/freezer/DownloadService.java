@@ -21,6 +21,7 @@ import android.util.Log;
 import androidx.core.app.NotificationCompat;
 import androidx.core.app.NotificationManagerCompat;
 
+import org.json.JSONArray;
 import org.json.JSONObject;
 
 import java.io.BufferedInputStream;
@@ -434,18 +435,6 @@ public class DownloadService extends Service {
 
             //Post processing
 
-            //Decrypt
-            try {
-                File decFile = new File(tmpFile.getPath() + ".DEC");
-                deezer.decryptFile(download.trackId, tmpFile.getPath(), decFile.getPath());
-                tmpFile.delete();
-                tmpFile = decFile;
-            } catch (Exception e) {
-                logger.error("Decryption error: " + e.toString(), download);
-                e.printStackTrace();
-                //Shouldn't ever fail
-            }
-
             //If exists (duplicate download in DB), don't overwrite.
             if (outFile.exists()) {
                 download.state = Download.DownloadState.DONE;
@@ -811,8 +800,9 @@ public class DownloadService extends Service {
         boolean nomediaFiles;
         String artistSeparator;
         int albumArtResolution;
+        SelectedTags tags;
 
-        private DownloadSettings(int downloadThreads, boolean overwriteDownload, boolean downloadLyrics, boolean trackCover, String arl, boolean albumCover, boolean nomediaFiles, String artistSeparator, int albumArtResolution) {
+        private DownloadSettings(int downloadThreads, boolean overwriteDownload, boolean downloadLyrics, boolean trackCover, String arl, boolean albumCover, boolean nomediaFiles, String artistSeparator, int albumArtResolution, SelectedTags tags) {
             this.downloadThreads = downloadThreads;
             this.overwriteDownload = overwriteDownload;
             this.downloadLyrics = downloadLyrics;
@@ -822,6 +812,7 @@ public class DownloadService extends Service {
             this.nomediaFiles = nomediaFiles;
             this.artistSeparator = artistSeparator;
             this.albumArtResolution = albumArtResolution;
+            this.tags = tags;
         }
 
         //Parse settings from bundle sent from UI
@@ -838,13 +829,75 @@ public class DownloadService extends Service {
                     json.getBoolean("albumCover"),
                     json.getBoolean("nomediaFiles"),
                     json.getString("artistSeparator"),
-                    json.getInt("albumArtResolution")
+                    json.getInt("albumArtResolution"),
+                    new SelectedTags(json.getJSONArray("tags"))
                 );
             } catch (Exception e) {
                 //Shouldn't happen
                 Log.e("ERR", "Error loading settings!");
                 return null;
             }
+        }
+    }
+
+    static class SelectedTags {
+        boolean title = false;
+        boolean album = false;
+        boolean artist = false;
+        boolean track = false;
+        boolean disc = false;
+        boolean albumArtist = false;
+        boolean date = false;
+        boolean label = false;
+        boolean isrc = false;
+        boolean upc = false;
+        boolean trackTotal = false;
+        boolean bpm = false;
+        boolean lyrics = false;
+        boolean genre = false;
+        boolean contributors = false;
+        boolean albumArt = false;
+
+        SelectedTags(JSONArray json) {
+            //Array of tags, check if exist
+            try {
+                for (int i=0; i<json.length(); i++) {
+                    switch (json.getString(i)) {
+                        case "title":
+                            title = true; break;
+                        case "album":
+                            album = true; break;
+                        case "artist":
+                            artist = true; break;
+                        case "track":
+                            track = true; break;
+                        case "disc":
+                            disc = true; break;
+                        case "albumArtist":
+                            albumArtist = true; break;
+                        case "date":
+                            date = true; break;
+                        case "label":
+                            label = true; break;
+                        case "isrc":
+                            isrc = true; break;
+                        case "upc":
+                            upc = true; break;
+                        case "trackTotal":
+                            trackTotal = true; break;
+                        case "bpm":
+                            bpm = true; break;
+                        case "lyrics":
+                            lyrics = true; break;
+                        case "genre":
+                            genre = true; break;
+                        case "contributors":
+                            contributors = true; break;
+                        case "art":
+                            albumArt = true; break;
+                    }
+                }
+            } catch (Exception e) {}
         }
     }
 

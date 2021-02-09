@@ -13,6 +13,7 @@ Settings _$SettingsFromJson(Map<String, dynamic> json) {
   )
     ..language = json['language'] as String
     ..ignoreInterruptions = json['ignoreInterruptions'] as bool ?? false
+    ..enableEqualizer = json['enableEqualizer'] as bool ?? false
     ..wifiQuality =
         _$enumDecodeNullable(_$AudioQualityEnumMap, json['wifiQuality']) ??
             AudioQuality.MP3_320
@@ -41,10 +42,32 @@ Settings _$SettingsFromJson(Map<String, dynamic> json) {
     ..singletonFilename =
         json['singletonFilename'] as String ?? '%artist% - %title%'
     ..albumArtResolution = json['albumArtResolution'] as int ?? 1400
+    ..tags = (json['tags'] as List)?.map((e) => e as String)?.toList() ??
+        [
+          'title',
+          'album',
+          'artist',
+          'track',
+          'disc',
+          'albumArtist',
+          'date',
+          'label',
+          'isrc',
+          'upc',
+          'trackTotal',
+          'bpm',
+          'lyrics',
+          'genre',
+          'contributors',
+          'art'
+        ]
     ..theme =
         _$enumDecodeNullable(_$ThemesEnumMap, json['theme']) ?? Themes.Dark
     ..useSystemTheme = json['useSystemTheme'] as bool ?? false
     ..colorGradientBackground = json['colorGradientBackground'] as bool ?? true
+    ..blurPlayerBackground = json['blurPlayerBackground'] as bool ?? false
+    ..font = json['font'] as String ?? 'Deezer'
+    ..lyricsVisualizer = json['lyricsVisualizer'] as bool ?? false
     ..primaryColor = Settings._colorFromJson(json['primaryColor'] as int)
     ..useArtColor = json['useArtColor'] as bool ?? false
     ..deezerLanguage = json['deezerLanguage'] as String ?? 'en'
@@ -58,6 +81,7 @@ Settings _$SettingsFromJson(Map<String, dynamic> json) {
 Map<String, dynamic> _$SettingsToJson(Settings instance) => <String, dynamic>{
       'language': instance.language,
       'ignoreInterruptions': instance.ignoreInterruptions,
+      'enableEqualizer': instance.enableEqualizer,
       'arl': instance.arl,
       'wifiQuality': _$AudioQualityEnumMap[instance.wifiQuality],
       'mobileQuality': _$AudioQualityEnumMap[instance.mobileQuality],
@@ -78,9 +102,13 @@ Map<String, dynamic> _$SettingsToJson(Settings instance) => <String, dynamic>{
       'artistSeparator': instance.artistSeparator,
       'singletonFilename': instance.singletonFilename,
       'albumArtResolution': instance.albumArtResolution,
+      'tags': instance.tags,
       'theme': _$ThemesEnumMap[instance.theme],
       'useSystemTheme': instance.useSystemTheme,
       'colorGradientBackground': instance.colorGradientBackground,
+      'blurPlayerBackground': instance.blurPlayerBackground,
+      'font': instance.font,
+      'lyricsVisualizer': instance.lyricsVisualizer,
       'primaryColor': Settings._colorToJson(instance.primaryColor),
       'useArtColor': instance.useArtColor,
       'deezerLanguage': instance.deezerLanguage,

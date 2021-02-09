@@ -496,7 +496,7 @@ class DownloadManager {
         path = p.join(path, sanitize(playlistName));
 
       if (settings.artistFolder)
-        path = p.join(path, '%artist%');
+        path = p.join(path, '%albumArtist%');
 
       //Album folder / with disk number
       if (settings.albumFolder) {

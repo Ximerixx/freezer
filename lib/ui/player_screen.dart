@@ -1,6 +1,3 @@
-import 'dart:convert';
-import 'dart:isolate';
-
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
@@ -28,8 +25,11 @@ import '../api/definitions.dart';
 import 'player_bar.dart';
 
 import 'dart:ui';
+import 'dart:convert';
 import 'dart:async';
 
+//Changing item in queue view and pressing back causes the pageView to skip song
+bool pageViewLock = false;
 
 class PlayerScreen extends StatefulWidget {
   @override
@@ -40,37 +40,53 @@ class _PlayerScreenState extends State<PlayerScreen> {
 
   LinearGradient _bgGradient;
   StreamSubscription _mediaItemSub;
+  ImageProvider _blurImage;
 
   //Calculate background color
   Future _updateColor() async {
-    if (!settings.colorGradientBackground)
+    if (!settings.colorGradientBackground && !settings.blurPlayerBackground)
       return;
+
+    //BG Image
+    if (settings.blurPlayerBackground)
+      setState(() {
+        _blurImage = NetworkImage(AudioService.currentMediaItem.extras['thumb'] ?? AudioService.currentMediaItem.artUri);
+      });
 
     //Run in isolate
     PaletteGenerator palette = await PaletteGenerator.fromImageProvider(CachedNetworkImageProvider(AudioService.currentMediaItem.extras['thumb'] ?? AudioService.currentMediaItem.artUri));
 
     //Update notification
-    SystemChrome.setSystemUIOverlayStyle(SystemUiOverlayStyle(
-        statusBarColor: palette.dominantColor.color.withOpacity(0.7)
-    ));
+    if (settings.blurPlayerBackground)
+      SystemChrome.setSystemUIOverlayStyle(SystemUiOverlayStyle(
+          statusBarColor: palette.dominantColor.color.withOpacity(0.25),
+          systemNavigationBarColor: Color.alphaBlend(palette.dominantColor.color.withOpacity(0.25), Theme.of(context).scaffoldBackgroundColor)
+      ));
 
-    setState(() => _bgGradient = LinearGradient(
-        begin: Alignment.topCenter,
-        end: Alignment.bottomCenter,
-        colors: [palette.dominantColor.color.withOpacity(0.7), Color.fromARGB(0, 0, 0, 0)],
-        stops: [
-          0.0,
-          0.6
-        ]
-    ));
+    //Color gradient
+    if (!settings.blurPlayerBackground) {
+      SystemChrome.setSystemUIOverlayStyle(SystemUiOverlayStyle(
+          statusBarColor: palette.dominantColor.color.withOpacity(0.7),
+      ));
+      setState(() => _bgGradient = LinearGradient(
+          begin: Alignment.topCenter,
+          end: Alignment.bottomCenter,
+          colors: [palette.dominantColor.color.withOpacity(0.7), Color.fromARGB(0, 0, 0, 0)],
+          stops: [
+            0.0,
+            0.6
+          ]
+      ));
+    }
   }
 
   @override
   void initState() {
-    Future.delayed(Duration(milliseconds: 1000), _updateColor);
+    Future.delayed(Duration(milliseconds: 600), _updateColor);
     _mediaItemSub = AudioService.currentMediaItemStream.listen((event) {
       _updateColor();
     });
+    
     super.initState();
   }
 
@@ -95,31 +111,51 @@ class _PlayerScreenState extends State<PlayerScreen> {
       body: SafeArea(
         child: Container(
           decoration: BoxDecoration(
-            gradient: _bgGradient
+            gradient: settings.blurPlayerBackground ? null : _bgGradient
           ),
-          child: StreamBuilder(
-            stream: StreamZip([AudioService.playbackStateStream, AudioService.currentMediaItemStream]),
-            builder: (BuildContext context, AsyncSnapshot snapshot) {
+          child: Stack(
+            children: [
+              if (settings.blurPlayerBackground && _blurImage != null)
+                ClipRect(
+                  child: Container(
+                    decoration: BoxDecoration(
+                      image: DecorationImage(
+                        image: _blurImage,
+                        fit: BoxFit.fill,
+                        colorFilter: ColorFilter.mode(Colors.black.withOpacity(0.25), BlendMode.dstATop)
+                      )
+                    ),
+                    child: BackdropFilter(
+                      filter: ImageFilter.blur(sigmaX: 20, sigmaY: 20),
+                      child: Container(color: Colors.transparent),
+                    ),
+                  ),
+                ),
+              StreamBuilder(
+                stream: StreamZip([AudioService.playbackStateStream, AudioService.currentMediaItemStream]),
+                builder: (BuildContext context, AsyncSnapshot snapshot) {
 
-              //When disconnected
-              if (AudioService.currentMediaItem == null) {
-                playerHelper.startService();
-                return Center(child: CircularProgressIndicator(),);
-              }
-
-              return OrientationBuilder(
-                builder: (context, orientation) {
-                  //Landscape
-                  if (orientation == Orientation.landscape) {
-                    return PlayerScreenHorizontal();
+                  //When disconnected
+                  if (AudioService.currentMediaItem == null) {
+                    playerHelper.startService();
+                    return Center(child: CircularProgressIndicator(),);
                   }
-                  //Portrait
-                  return PlayerScreenVertical();
-                },
-              );
 
-            },
-          ),
+                  return OrientationBuilder(
+                    builder: (context, orientation) {
+                      //Landscape
+                      if (orientation == Orientation.landscape) {
+                        return PlayerScreenHorizontal();
+                      }
+                      //Portrait
+                      return PlayerScreenVertical();
+                    },
+                  );
+
+                },
+              ),
+            ],
+          )
         )
       )
     );
@@ -172,28 +208,28 @@ class _PlayerScreenHorizontalState extends State<PlayerScreenHorizontal> {
                 mainAxisSize: MainAxisSize.min,
                 children: <Widget>[
                   Container(
-                    height: ScreenUtil().setSp(40),
+                    height: ScreenUtil().setSp(50),
                     child: AudioService.currentMediaItem.displayTitle.length >= 22 ?
-                    Marquee(
-                      text: AudioService.currentMediaItem.displayTitle,
-                      style: TextStyle(
-                          fontSize: ScreenUtil().setSp(40),
-                          fontWeight: FontWeight.bold
-                      ),
-                      blankSpace: 32.0,
-                      startPadding: 10.0,
-                      accelerationDuration: Duration(seconds: 1),
-                      pauseAfterRound: Duration(seconds: 2),
-                    ):
-                    Text(
-                      AudioService.currentMediaItem.displayTitle,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: TextStyle(
-                          fontSize: ScreenUtil().setSp(40),
-                          fontWeight: FontWeight.bold
-                      ),
-                    )
+                      Marquee(
+                        text: AudioService.currentMediaItem.displayTitle,
+                        style: TextStyle(
+                            fontSize: ScreenUtil().setSp(40),
+                            fontWeight: FontWeight.bold
+                        ),
+                        blankSpace: 32.0,
+                        startPadding: 10.0,
+                        accelerationDuration: Duration(seconds: 1),
+                        pauseAfterRound: Duration(seconds: 2),
+                      ):
+                      Text(
+                        AudioService.currentMediaItem.displayTitle,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: TextStyle(
+                            fontSize: ScreenUtil().setSp(40),
+                            fontWeight: FontWeight.bold
+                        ),
+                      )
                   ),
                   Container(height: 4,),
                   Text(
@@ -279,28 +315,28 @@ class _PlayerScreenVerticalState extends State<PlayerScreenVertical> {
           mainAxisSize: MainAxisSize.min,
           children: <Widget>[
             Container(
-              height: ScreenUtil().setSp(64),
+              height: ScreenUtil().setSp(80),
               child: AudioService.currentMediaItem.displayTitle.length >= 26 ?
-              Marquee(
-                text: AudioService.currentMediaItem.displayTitle,
-                style: TextStyle(
-                  fontSize: ScreenUtil().setSp(64),
-                  fontWeight: FontWeight.bold
-                ),
-                blankSpace: 32.0,
-                startPadding: 10.0,
-                accelerationDuration: Duration(seconds: 1),
-                pauseAfterRound: Duration(seconds: 2),
-              ):
-              Text(
-                AudioService.currentMediaItem.displayTitle,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                style: TextStyle(
-                  fontSize: ScreenUtil().setSp(64),
-                  fontWeight: FontWeight.bold
-                ),
-              )
+                Marquee(
+                  text: AudioService.currentMediaItem.displayTitle,
+                  style: TextStyle(
+                    fontSize: ScreenUtil().setSp(64),
+                    fontWeight: FontWeight.bold
+                  ),
+                  blankSpace: 32.0,
+                  startPadding: 10.0,
+                  accelerationDuration: Duration(seconds: 1),
+                  pauseAfterRound: Duration(seconds: 2),
+                ):
+                Text(
+                  AudioService.currentMediaItem.displayTitle,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(
+                    fontSize: ScreenUtil().setSp(64),
+                    fontWeight: FontWeight.bold
+                  ),
+                )
             ),
             Container(height: 4,),
             Text(
@@ -577,6 +613,10 @@ class _BigAlbumArtState extends State<BigAlbumArt> {
       child: PageView(
         controller: _pageController,
         onPageChanged: (int index) {
+          if (pageViewLock) {
+            pageViewLock = false;
+            return;
+          }
           if (_animationLock) return;
           AudioService.skipToQueueItem(AudioService.queue[index].id);
         },
@@ -769,10 +809,11 @@ class _QueueScreenState extends State<QueueScreen> {
             return TrackTile(
               t,
               onTap: () async {
-                await AudioService.playFromMediaId(t.id);
+                pageViewLock = true;
+                await AudioService.skipToQueueItem(t.id);
                 Navigator.of(context).pop();
               },
-              key: Key(t.id),
+              key: Key(i.toString()),
               trailing: IconButton(
                 icon: Icon(Icons.close),
                 onPressed: () async {

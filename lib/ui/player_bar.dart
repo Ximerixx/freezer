@@ -102,9 +102,7 @@ class PlayerBar extends StatelessWidget {
   }
 }
 
-
 class PrevNextButton extends StatelessWidget {
-
   final double size;
   final bool prev;
   final bool hidePrev;
@@ -113,38 +111,43 @@ class PrevNextButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    if (!prev) {
-      if (playerHelper.queueIndex == (AudioService.queue??[]).length - 1) {
-        return IconButton(
-          icon: Icon(Icons.skip_next),
-          iconSize: size,
-          onPressed: null,
-        );
-      }
-      return IconButton(
-        icon: Icon(Icons.skip_next),
-        iconSize: size,
-        onPressed: () => AudioService.skipToNext(),
-      );
-    }
-    if (prev) {
-      if (i == 0) {
-        if (hidePrev) {
-          return Container(height: 0, width: 0,);
+    return StreamBuilder(
+      stream: AudioService.queueStream,
+      builder: (context, _snapshot) {
+        if (!prev) {
+          if (playerHelper.queueIndex == (AudioService.queue??[]).length - 1) {
+            return IconButton(
+              icon: Icon(Icons.skip_next),
+              iconSize: size,
+              onPressed: null,
+            );
+          }
+          return IconButton(
+            icon: Icon(Icons.skip_next),
+            iconSize: size,
+            onPressed: () => AudioService.skipToNext(),
+          );
         }
-        return IconButton(
-          icon: Icon(Icons.skip_previous),
-          iconSize: size,
-          onPressed: null,
-        );
-      }
-      return IconButton(
-        icon: Icon(Icons.skip_previous),
-        iconSize: size,
-        onPressed: () => AudioService.skipToPrevious(),
-      );
-    }
-    return Container();
+        if (prev) {
+          if (i == 0) {
+            if (hidePrev) {
+              return Container(height: 0, width: 0,);
+            }
+            return IconButton(
+              icon: Icon(Icons.skip_previous),
+              iconSize: size,
+              onPressed: null,
+            );
+          }
+          return IconButton(
+            icon: Icon(Icons.skip_previous),
+            iconSize: size,
+            onPressed: () => AudioService.skipToPrevious(),
+          );
+        }
+        return Container();
+      },
+    );
   }
 }
 

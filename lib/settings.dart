@@ -3,6 +3,7 @@ import 'package:flutter/scheduler.dart';
 import 'package:freezer/api/download.dart';
 import 'package:freezer/main.dart';
 import 'package:freezer/ui/cached_image.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:json_annotation/json_annotation.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:ext_storage/ext_storage.dart';
@@ -24,8 +25,11 @@ class Settings {
   @JsonKey(defaultValue: null)
   String language;
 
+  //Main
   @JsonKey(defaultValue: false)
   bool ignoreInterruptions;
+  @JsonKey(defaultValue: false)
+  bool enableEqualizer;
 
   //Account
   String arl;
@@ -41,6 +45,7 @@ class Settings {
   AudioQuality offlineQuality;
   @JsonKey(defaultValue: AudioQuality.FLAC)
   AudioQuality downloadQuality;
+
 
   //Download options
   String downloadPath;
@@ -73,6 +78,11 @@ class Settings {
   String singletonFilename;
   @JsonKey(defaultValue: 1400)
   int albumArtResolution;
+  @JsonKey(defaultValue: ["title", "album", "artist", "track", "disc",
+    "albumArtist", "date", "label", "isrc", "upc", "trackTotal", "bpm",
+    "lyrics", "genre", "contributors", "art"])
+  List<String> tags;
+
 
   //Appearance
   @JsonKey(defaultValue: Themes.Dark)
@@ -81,6 +91,12 @@ class Settings {
   bool useSystemTheme;
   @JsonKey(defaultValue: true)
   bool colorGradientBackground;
+  @JsonKey(defaultValue: false)
+  bool blurPlayerBackground;
+  @JsonKey(defaultValue: "Deezer")
+  String font;
+  @JsonKey(defaultValue: false)
+  bool lyricsVisualizer;
 
   //Colors
   @JsonKey(toJson: _colorToJson, fromJson: _colorFromJson)
@@ -124,6 +140,11 @@ class Settings {
     }
     //Theme
     return _themeData[theme]??ThemeData();
+  }
+
+  //Get all available fonts
+  List<String> get fonts {
+    return ['Deezer', ...GoogleFonts.asMap().keys];
   }
 
   //JSON to forward into download service
@@ -206,10 +227,13 @@ class Settings {
 
   static const deezerBg = Color(0xFF1F1A16);
   static const deezerBottom = Color(0xFF1b1714);
-  static const font = 'MabryPro';
+  TextTheme get _textTheme => (font == 'Deezer') ? null : GoogleFonts.getTextTheme(font);
+  String get _fontFamily => (font == 'Deezer') ? 'MabryPro' : null;
+
   Map<Themes, ThemeData> get _themeData => {
     Themes.Light: ThemeData(
-      fontFamily: font,
+      textTheme: _textTheme,
+      fontFamily: _fontFamily,
       brightness: Brightness.light,
       primaryColor: primaryColor,
       accentColor: primaryColor,
@@ -218,7 +242,8 @@ class Settings {
       bottomAppBarColor: Color(0xfff5f5f5),
     ),
     Themes.Dark: ThemeData(
-      fontFamily: font,
+      textTheme: _textTheme,
+      fontFamily: _fontFamily,
       brightness: Brightness.dark,
       primaryColor: primaryColor,
       accentColor: primaryColor,
@@ -226,7 +251,8 @@ class Settings {
       toggleableActiveColor: primaryColor,
     ),
     Themes.Deezer: ThemeData(
-      fontFamily: font,
+      textTheme: _textTheme,
+      fontFamily: _fontFamily,
       brightness: Brightness.dark,
       primaryColor: primaryColor,
       accentColor: primaryColor,
@@ -242,7 +268,8 @@ class Settings {
       cardColor: deezerBg
     ),
     Themes.Black: ThemeData(
-      fontFamily: font,
+      textTheme: _textTheme,
+      fontFamily: _fontFamily,
       brightness: Brightness.dark,
       primaryColor: primaryColor,
       accentColor: primaryColor,

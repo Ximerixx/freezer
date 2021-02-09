@@ -308,7 +308,7 @@ class SmartTrackListTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      height: 200.0,
+      height: 210.0,
       child: InkWell(
         onTap: onTap,
         onLongPress: onHold,

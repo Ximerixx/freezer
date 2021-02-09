@@ -312,6 +312,32 @@ const language_en_us = {
     //0.6.8:
     "Album removed from library!": "Album removed from library!",
     "Remove offline": "Remove offline",
-    "Playlist removed from library!": "Playlist removed from library!"
+    "Playlist removed from library!": "Playlist removed from library!",
+
+    //0.6.9:
+    "Blur player background": "Blur player background",
+    "Might have impact on performance": "Might have impact on performance",
+    "Font": "Font",
+    "Select font": "Select font",
+    "This app isn't made for supporting many fonts, it can break layouts and overflow. Use at your own risk!": "This app isn't made for supporting many fonts, it can break layouts and overflow. Use at your own risk!",
+    "Enable equalizer": "Enable equalizer",
+    "Might enable some equalizer apps to work. Requires restart of Freezer": "Might enable some equalizer apps to work. Requires restart of Freezer",
+    "Visualizer": "Visualizer",
+    "Show visualizers on lyrics page. WARNING: Requires microphone permission!": "Show visualizers on lyrics page. WARNING: Requires microphone permission!",
+    "Tags": "Tags",
+    "Album": "Album",
+    "Track number": "Track number",
+    "Disc number": "Disc number",
+    "Album artist": "Album artist",
+    "Date/Year": "Date/Year",
+    "Label": "Label",
+    "ISRC": "ISRC",
+    "UPC": "UPC",
+    "Track total": "Track total",
+    "BPM": "BPM",
+    "Unsynchronized lyrics": "Unsynchronized lyrics",
+    "Genre": "Genre",
+    "Contributors": "Contributors",
+    "Album art": "Album art"
   }
 };

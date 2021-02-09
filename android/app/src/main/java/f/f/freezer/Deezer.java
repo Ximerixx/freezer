@@ -45,9 +45,6 @@ public class Deezer {
     void init(DownloadLog logger, String arl) {
         this.logger = logger;
         this.arl = arl;
-
-        //Load native
-        System.loadLibrary("decryptor-jni");
     }
 
     //Authorize GWLight API
@@ -63,8 +60,6 @@ public class Deezer {
         }
         authorizing = false;
     }
-
-    public native void decryptFile(String trackId, String inputFilename, String outputFilename);
 
     public JSONObject callGWAPI(String method, String params) throws Exception {
         //Get token
@@ -192,7 +187,7 @@ public class Deezer {
                 step3.append(bytesToHex(cipher.doFinal(b)).toLowerCase());
             }
             //Join to URL
-            return "https://e-cdns-proxy-" + md5origin.charAt(0) + ".dzcdn.net/mobile/1/" + step3.toString();
+            return "https://e-cdns-proxy-" + md5origin.charAt(0) + ".dzcdn.net/api/1/" + step3.toString();
 
         } catch (Exception e) {
             e.printStackTrace();
@@ -219,6 +214,7 @@ public class Deezer {
         original = original.replaceAll("%title%", sanitize(publicTrack.getString("title")));
         original = original.replaceAll("%album%", sanitize(publicTrack.getJSONObject("album").getString("title")));
         original = original.replaceAll("%artist%", sanitize(publicTrack.getJSONObject("artist").getString("name")));
+        original = original.replaceAll("%albumArtist%", sanitize(publicAlbum.getJSONObject("artist").getString("name")));
         //Artists
         String artists = "";
         String feats = "";
@@ -247,23 +243,9 @@ public class Deezer {
         return original + ".mp3";
     }
 
-//    public static String generateUserUploadedMP3Filename(String original, JSONObject privateJson) throws Exception {
-//        //Remove unavailable tags
-//        String[] ignored = {"%feats%", "%trackNumber%", "%0trackNumber%", "%year%", "%date%"};
-//        for (String i : ignored) {
-//            original = original.replaceAll(i, "");
-//        }
-//        //Basic tags
-//        original = original.replaceAll("%title%", privateJson.getString("SNG_TITLE"));
-//        original = original.replaceAll("%album%", privateJson.getString("ALB_TITLE"));
-//        original = original.replaceAll("%artist%", privateJson.getString("ART_NAME"));
-//        original = original.replaceAll("%artists%", privateJson.getString("ART_NAME"));
-//        return original;
-//    }
-
     //Deezer patched something so getting metadata of user uploaded MP3s is not working anymore
     public static String generateUserUploadedMP3Filename(String original, String title) throws Exception {
-        String[] ignored = {"%feats%", "%trackNumber%", "%0trackNumber%", "%year%", "%date%", "%album%", "%artist%", "%artists%"};
+        String[] ignored = {"%feats%", "%trackNumber%", "%0trackNumber%", "%year%", "%date%", "%album%", "%artist%", "%artists%", "%albumArtist%"};
         for (String i : ignored) {
             original = original.replaceAll(i, "");
         }
@@ -284,8 +266,8 @@ public class Deezer {
         }
         Tag tag = f.getTag();
 
-        tag.setField(FieldKey.TITLE, publicTrack.getString("title"));
-        tag.setField(FieldKey.ALBUM, publicTrack.getJSONObject("album").getString("title"));
+        if (settings.tags.title) tag.setField(FieldKey.TITLE, publicTrack.getString("title"));
+        if (settings.tags.album) tag.setField(FieldKey.ALBUM, publicTrack.getJSONObject("album").getString("title"));
         //Artist
         String artists = "";
         for (int i=0; i<publicTrack.getJSONArray("contributors").length(); i++) {
@@ -293,22 +275,22 @@ public class Deezer {
             if (!artists.contains(artist))
                 artists += settings.artistSeparator + artist;
         }
-        tag.addField(FieldKey.ARTIST, artists.substring(settings.artistSeparator.length()));
-        tag.setField(FieldKey.TRACK, String.format("%02d", publicTrack.getInt("track_position")));
-        tag.setField(FieldKey.DISC_NO, Integer.toString(publicTrack.getInt("disk_number")));
-        tag.setField(FieldKey.ALBUM_ARTIST, publicAlbum.getJSONObject("artist").getString("name"));
-        tag.setField(FieldKey.YEAR, publicTrack.getString("release_date").substring(0, 4));
-        tag.setField(FieldKey.RECORD_LABEL, publicAlbum.getString("label"));
-        tag.setField(FieldKey.ISRC, publicTrack.getString("isrc"));
-        tag.setField(FieldKey.BARCODE, publicAlbum.getString("upc"));
-        tag.setField(FieldKey.TRACK_TOTAL, Integer.toString(publicAlbum.getInt("nb_tracks")));
+        if (settings.tags.artist) tag.addField(FieldKey.ARTIST, artists.substring(settings.artistSeparator.length()));
+        if (settings.tags.track) tag.setField(FieldKey.TRACK, String.format("%02d", publicTrack.getInt("track_position")));
+        if (settings.tags.disc) tag.setField(FieldKey.DISC_NO, Integer.toString(publicTrack.getInt("disk_number")));
+        if (settings.tags.albumArtist) tag.setField(FieldKey.ALBUM_ARTIST, publicAlbum.getJSONObject("artist").getString("name"));
+        if (settings.tags.date) tag.setField(FieldKey.YEAR, publicTrack.getString("release_date").substring(0, 4));
+        if (settings.tags.label) tag.setField(FieldKey.RECORD_LABEL, publicAlbum.getString("label"));
+        if (settings.tags.isrc) tag.setField(FieldKey.ISRC, publicTrack.getString("isrc"));
+        if (settings.tags.upc) tag.setField(FieldKey.BARCODE, publicAlbum.getString("upc"));
+        if (settings.tags.trackTotal) tag.setField(FieldKey.TRACK_TOTAL, Integer.toString(publicAlbum.getInt("nb_tracks")));
 
         //BPM
         if (publicTrack.has("bpm") && (int)publicTrack.getDouble("bpm") > 0)
-            tag.setField(FieldKey.BPM, Integer.toString((int)publicTrack.getDouble("bpm")));
+            if (settings.tags.bpm) tag.setField(FieldKey.BPM, Integer.toString((int)publicTrack.getDouble("bpm")));
 
         //Unsynced lyrics
-        if (lyricsData != null) {
+        if (lyricsData != null && settings.tags.lyrics) {
             try {
                 String lyrics = lyricsData.getString("LYRICS_TEXT");
                 tag.setField(FieldKey.LYRICS, lyrics);
@@ -325,10 +307,11 @@ public class Deezer {
                 genres += ", " + genre;
             }
         }
-        if (genres.length() > 2)
+        if (genres.length() > 2 && settings.tags.genre)
             tag.setField(FieldKey.GENRE, genres.substring(2));
 
         //Additional tags from private api
+        if (settings.tags.contributors)
         try {
             if (privateJson != null && privateJson.has("SNG_CONTRIBUTORS")) {
                 JSONObject contrib = privateJson.getJSONObject("SNG_CONTRIBUTORS");
@@ -400,9 +383,9 @@ public class Deezer {
 
         if (isFlac) {
             //FLAC Specific tags
-            ((FlacTag)tag).setField("DATE", publicTrack.getString("release_date"));
+            if (settings.tags.date) ((FlacTag)tag).setField("DATE", publicTrack.getString("release_date"));
             //Cover
-            if (addCover) {
+            if (addCover && settings.tags.albumArt) {
                 RandomAccessFile cf = new RandomAccessFile(coverFile, "r");
                 byte[] coverData = new byte[(int) cf.length()];
                 cf.read(coverData);
@@ -418,7 +401,7 @@ public class Deezer {
                 ));
             }
         } else {
-            if (addCover) {
+            if (addCover && settings.tags.albumArt) {
                 Artwork art = ArtworkFactory.createArtworkFromFile(coverFile);
                 //Artwork art = Artwork.createArtworkFromFile(coverFile);
                 tag.addField(art);
@@ -456,42 +439,6 @@ public class Deezer {
 
         if (counter == 0) throw new Exception("Empty Lyrics!");
         return output;
-    }
-
-    //Track decryption key
-    static byte[] getKey(String id) {
-        String secret = "g4el58wc0zvf9na1";
-        try {
-            MessageDigest md5 = MessageDigest.getInstance("MD5");
-            md5.update(id.getBytes());
-            byte[] md5id = md5.digest();
-            String idmd5 = bytesToHex(md5id).toLowerCase();
-            String key = "";
-            for(int i=0; i<16; i++) {
-                int s0 = idmd5.charAt(i);
-                int s1 = idmd5.charAt(i+16);
-                int s2 = secret.charAt(i);
-                key += (char)(s0^s1^s2);
-            }
-            return key.getBytes();
-        } catch (Exception e) {
-            Log.e("E", e.toString());
-            return new byte[0];
-        }
-    }
-
-    //Decrypt 2048b of data
-    static byte[] decryptChunk(byte[] key, byte[] data) {
-        try {
-            byte[] IV = {00, 01, 02, 03, 04, 05, 06, 07};
-            SecretKeySpec Skey = new SecretKeySpec(key, "Blowfish");
-            Cipher cipher = Cipher.getInstance("Blowfish/CBC/NoPadding");
-            cipher.init(Cipher.DECRYPT_MODE, Skey, new javax.crypto.spec.IvParameterSpec(IV));
-            return cipher.doFinal(data);
-        }catch (Exception e) {
-            Log.e("D", e.toString());
-            return new byte[0];
-        }
     }
 
     static class QualityInfo {

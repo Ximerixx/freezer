@@ -45,34 +45,6 @@ class Track {
   String get artistString => artists.map<String>((art) => art.name).join(', ');
   String get durationString => "${duration.inMinutes}:${duration.inSeconds.remainder(60).toString().padLeft(2, '0')}";
 
-  String getUrl(int quality) {
-    var md5 = crypto.md5;
-    int magic = 164;
-    List<int> _s1 = [
-      ...utf8.encode(playbackDetails[0]),
-      magic,
-      ...utf8.encode(quality.toString()),
-      magic,
-      ...utf8.encode(id),
-      magic,
-      ...utf8.encode(playbackDetails[1])
-    ];
-    List<int> _s2 = [
-      ...utf8.encode(HEX.encode(md5.convert(_s1).bytes)),
-      magic,
-      ..._s1,
-      magic
-    ];
-    while(_s2.length%16 > 0) _s2.add(46);
-    String _s3 = '';
-    BlockCipher cipher = ECBBlockCipher(AESFastEngine());
-    cipher.init(true, KeyParameter(Uint8List.fromList('jo6aey6haid2Teih'.codeUnits)));
-    for (int i=0; i<_s2.length/16; i++) {
-      _s3 += HEX.encode(cipher.process(Uint8List.fromList(_s2.sublist(i*16, i*16+16))));
-    }
-    return 'https://e-cdns-proxy-${playbackDetails[0][0]}.dzcdn.net/mobile/1/$_s3';
-  }
-
   //MediaItem
   MediaItem toMediaItem() => MediaItem(
       title: this.title,

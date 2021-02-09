@@ -1,5 +1,8 @@
+import 'dart:math';
+
 import 'package:audio_service/audio_service.dart';
 import 'package:audio_session/audio_session.dart';
+import 'package:equalizer/equalizer.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import 'package:freezer/api/cache.dart';
 import 'package:freezer/api/deezer.dart';
@@ -10,6 +13,7 @@ import 'package:path/path.dart' as p;
 import 'package:path_provider/path_provider.dart';
 import 'package:freezer/translations.i18n.dart';
 import 'package:scrobblenaut/scrobblenaut.dart';
+import 'package:extended_math/extended_math.dart';
 
 import 'definitions.dart';
 import '../settings.dart';
@@ -29,6 +33,14 @@ class PlayerHelper {
   LoopMode repeatType = LoopMode.off;
   Timer _timer;
   Scrobblenaut scrobblenaut;
+  int audioSession;
+  int _prevAudioSession;
+  bool equalizerOpen = false;
+
+  //Visualizer
+  StreamController _visualizerController = StreamController.broadcast();
+  Stream get visualizerStream => _visualizerController.stream;
+
   //Find queue index by id
   int get queueIndex => AudioService.queue == null ? 0 : AudioService.queue.indexWhere((mi) => mi.id == AudioService.currentMediaItem?.id??'Random string so it returns -1');
 
@@ -36,37 +48,63 @@ class PlayerHelper {
      //Subscribe to custom events
     _customEventSubscription = AudioService.customEventStream.listen((event) async {
       if (!(event is Map)) return;
-      if (event['action'] == 'onLoad') {
-        //After audio_service is loaded, load queue, set quality
-        await settings.updateAudioServiceQuality();
-        await AudioService.customAction('load');
-        return;
+      switch (event['action']) {
+        case 'onLoad':
+          //After audio_service is loaded, load queue, set quality
+          await settings.updateAudioServiceQuality();
+          await AudioService.customAction('load');
+          break;
+        case 'onRestore':
+          //Load queueSource from isolate
+          this.queueSource = QueueSource.fromJson(event['queueSource']);
+          repeatType = LoopMode.values[event['loopMode']];
+          break;
+        case 'queueEnd':
+          //If last song is played, load more queue
+          this.queueSource = QueueSource.fromJson(event['queueSource']);
+//          onQueueEnd();
+          break;
+        case 'screenAndroidAuto':
+          AndroidAuto androidAuto = AndroidAuto();
+          List<MediaItem> data = await androidAuto.getScreen(event['id']);
+          await AudioService.customAction('screenAndroidAuto', jsonEncode(data));
+          break;
+        case 'tracksAndroidAuto':
+          AndroidAuto androidAuto = AndroidAuto();
+          await androidAuto.playItem(event['id']);
+          break;
+        case 'audioSession':
+          if (!settings.enableEqualizer) break;
+          //Save
+          _prevAudioSession = audioSession;
+          audioSession = event['id'];
+          if (audioSession == null)
+            break;
+          //Open EQ
+          if (!equalizerOpen) {
+            Equalizer.open(event['id']);
+            equalizerOpen = true;
+            break;
+          }
+          //Change session id
+          if (_prevAudioSession != audioSession) {
+            if (_prevAudioSession != null) Equalizer.removeAudioSessionId(_prevAudioSession);
+            Equalizer.setAudioSessionId(audioSession);
+          }
+          break;
+        //Visualizer data
+        case 'visualizer':
+          _visualizerController.add(event['data']);
+          break;
       }
-      if (event['action'] == 'onRestore') {
-        //Load queueSource from isolate
-        this.queueSource = QueueSource.fromJson(event['queueSource']);
-        repeatType = LoopMode.values[event['loopMode']];
-      }
-      if (event['action'] == 'queueEnd') {
-        //If last song is played, load more queue
-        this.queueSource = QueueSource.fromJson(event['queueSource']);
-        onQueueEnd();
-        return;
-      }
-      //Android auto get screen
-      if (event['action'] == 'screenAndroidAuto') {
-        AndroidAuto androidAuto = AndroidAuto();
-        List<MediaItem> data = await androidAuto.getScreen(event['id']);
-        await AudioService.customAction('screenAndroidAuto', jsonEncode(data));
-      }
-      //Android auto play list
-      if (event['action'] == 'tracksAndroidAuto') {
-        AndroidAuto androidAuto = AndroidAuto();
-        await androidAuto.playItem(event['id']);
-      }
+
     });
     _mediaItemSubscription = AudioService.currentMediaItemStream.listen((event) {
       if (event == null) return;
+      //Load more flow if index-1 song
+      if (queueIndex == AudioService.queue.length-1)
+        onQueueEnd();
+
       //Save queue
       AudioService.customAction('saveQueue');
       //Add to history
@@ -184,10 +222,12 @@ class PlayerHelper {
       case 'flow':
         tracks = await deezerAPI.flow();
         break;
-      case 'smartradio':      //SmartRadio/Artist radio
+      //SmartRadio/Artist radio
+      case 'smartradio':
         tracks = await deezerAPI.smartRadio(queueSource.id);
         break;
-      case 'libraryshuffle':  //Library shuffle
+      //Library shuffle
+      case 'libraryshuffle':
         tracks = await deezerAPI.libraryShuffle(start: AudioService.queue.length);
         break;
       case 'mix':
@@ -197,12 +237,13 @@ class PlayerHelper {
         tracks.removeWhere((track) => queueIds.contains(track.id));
         break;
       default:
-        print(queueSource.toJson());
+        // print(queueSource.toJson());
+        break;
     }
 
     List<MediaItem> mi = tracks.map<MediaItem>((t) => t.toMediaItem()).toList();
     await AudioService.addQueueItems(mi);
-    AudioService.skipToNext();
+//    AudioService.skipToNext();
   }
 
   //Play track from album
@@ -308,6 +349,15 @@ class PlayerHelper {
     await AudioService.customAction('reorder', [oldIndex, newIndex]);
   }
 
+  //Start visualizer
+  Future startVisualizer() async {
+    await AudioService.customAction('startVisualizer');
+  }
+  //Stop visualizer
+  Future stopVisualizer() async {
+    await AudioService.customAction('stopVisualizer');
+  }
+
 }
 
 void backgroundTaskEntrypoint() async {
@@ -329,6 +379,8 @@ class AudioPlayerTask extends BackgroundAudioTask {
 
   //Stream subscriptions
   StreamSubscription _eventSub;
+  StreamSubscription _audioSessionSub;
+  StreamSubscription _visualizerSubscription;
 
   //Loaded from file/frontend
   int mobileQuality;
@@ -389,6 +441,11 @@ class AudioPlayerTask extends BackgroundAudioTask {
           default:
             break;
         }
+    });
+
+    //Audio session
+    _audioSessionSub = _player.androidAudioSessionIdStream.listen((event) {
+      AudioServiceBackground.sendCustomEvent({"action": 'audioSession', "id": event});
     });
 
     //Load queue
@@ -472,8 +529,6 @@ class AudioPlayerTask extends BackgroundAudioTask {
     if (_queueIndex == 0) return;
     //Update buffering state
     _skipState = AudioProcessingState.skippingToPrevious;
-
-
     //Normal skip to previous
     _queueIndex--;
     await _player.seekToPrevious();
@@ -566,9 +621,14 @@ class AudioPlayerTask extends BackgroundAudioTask {
     //just_audio
     _player.stop();
     if (_audioSource != null) _audioSource.clear();
-    //audio_service
-    this._queue = q;
-    AudioServiceBackground.setQueue(_queue);
+    //Filter duplicate IDs
+    List<MediaItem> queue = [];
+    for (MediaItem mi in q) {
+      if (queue.indexWhere((m) => mi.id == m.id) == -1)
+        queue.add(mi);
+    }
+    this._queue = queue;
+    AudioServiceBackground.setQueue(queue);
     //Load
     await _loadQueue();
     //await _player.seek(Duration.zero, index: 0);
@@ -635,68 +695,102 @@ class AudioPlayerTask extends BackgroundAudioTask {
   //Custom actions
   @override
   Future onCustomAction(String name, dynamic args) async {
-    if (name == 'updateQuality') {
-      //Pass wifi & mobile quality by custom action
-      //Isolate can't access globals
-      this.wifiQuality = args['wifiQuality'];
-      this.mobileQuality = args['mobileQuality'];
-    }
-    //Change queue source
-    if (name == 'queueSource') {
-      this.queueSource = QueueSource.fromJson(Map<String, dynamic>.from(args));
-    }
-    //Looping
-    if (name == 'repeatType') {
-      _loopMode = LoopMode.values[args];
-      _player.setLoopMode(_loopMode);
-    }
-    if (name == 'saveQueue')
-      await this._saveQueue();
-    //Load queue after some initialization in frontend
-    if (name == 'load')
-      await this._loadQueueFile();
-    //Shuffle
-    if (name == 'shuffle') {
-      String originalId = mediaItem.id;
-      if (!_shuffle) {
-        _shuffle = true;
-        _originalQueue = List.from(_queue);
-        _queue.shuffle();
+    switch (name) {
+      case 'updateQuality':
+        //Pass wifi & mobile quality by custom action
+        //Isolate can't access globals
+        this.wifiQuality = args['wifiQuality'];
+        this.mobileQuality = args['mobileQuality'];
+        break;
+      //Update queue source
+      case 'queueSource':
+        this.queueSource = QueueSource.fromJson(Map<String, dynamic>.from(args));
+        break;
+      //Looping
+      case 'repeatType':
+        _loopMode = LoopMode.values[args];
+        _player.setLoopMode(_loopMode);
+        break;
+      //Save queue
+      case 'saveQueue':
+        await this._saveQueue();
+        break;
+      //Load queue after some initialization in frontend
+      case 'load':
+        await this._loadQueueFile();
+        break;
+      case 'shuffle':
+        String originalId = mediaItem.id;
+        if (!_shuffle) {
+          _shuffle = true;
+          _originalQueue = List.from(_queue);
+          _queue.shuffle();
 
-      } else {
-        _shuffle = false;
-        _queue = _originalQueue;
-        _originalQueue = null;
-      }
+        } else {
+          _shuffle = false;
+          _queue = _originalQueue;
+          _originalQueue = null;
+        }
 
-      //Broken
+        //Broken
 //      _queueIndex = _queue.indexWhere((mi) => mi.id == originalId);
-      _queueIndex = 0;
-      AudioServiceBackground.setQueue(_queue);
-      AudioServiceBackground.setMediaItem(mediaItem);
-      await _player.stop();
-      await _loadQueue();
-      await _player.play();
-    }
-    //Android auto callback
-    if (name == 'screenAndroidAuto' && _androidAutoCallback != null) {
-      _androidAutoCallback.complete(jsonDecode(args).map<MediaItem>((m) => MediaItem.fromJson(m)).toList());
-    }
-    //Reorder tracks, args = [old, new]
-    if (name == 'reorder') {
-      await _audioSource.move(args[0], args[1]);
-      //Switch in queue
-      List<MediaItem> newQueue = List.from(_queue);
-      newQueue.removeAt(args[0]);
-      newQueue.insert(args[1], _queue[args[0]]);
-      _queue = newQueue;
-      //Update UI
-      AudioServiceBackground.setQueue(_queue);
-      _broadcastState();
-    }
-    //Set index without affecting playback for loading
-    if (name == 'setIndex') {
-      this._queueIndex = args;
+        _queueIndex = 0;
+        AudioServiceBackground.setQueue(_queue);
+        AudioServiceBackground.setMediaItem(mediaItem);
+        await _player.stop();
+        await _loadQueue();
+        await _player.play();
+        break;
+
+      //Android audio callback
+      case 'screenAndroidAuto':
+        if (_androidAutoCallback != null)
+          _androidAutoCallback.complete(jsonDecode(args).map<MediaItem>((m) => MediaItem.fromJson(m)).toList());
+        break;
+      //Reorder tracks, args = [old, new]
+      case 'reorder':
+        await _audioSource.move(args[0], args[1]);
+        //Switch in queue
+        List<MediaItem> newQueue = List.from(_queue);
+        newQueue.removeAt(args[0]);
+        newQueue.insert(args[1], _queue[args[0]]);
+        _queue = newQueue;
+        //Update UI
+        AudioServiceBackground.setQueue(_queue);
+        _broadcastState();
+        break;
+      //Set index without affecting playback for loading
+      case 'setIndex':
+        this._queueIndex = args;
+        break;
+      //Start visualizer
+      case 'startVisualizer':
+        if (_visualizerSubscription != null) break;
+
+        _player.startVisualizer(
+          enableWaveform: false,
+          enableFft: true,
+          captureRate: 15000,
+          captureSize: 128
+        );
+        _visualizerSubscription = _player.visualizerFftStream.listen((event) {
+          //Calculate actual values
+          List<double> out = [];
+          for (int i=0; i<event.data.length/2; i++) {
+            int rfk = event.data[i*2].toSigned(8);
+            int ifk = event.data[i*2+1].toSigned(8);
+            out.add(log(hypot(rfk, ifk) + 1) / 5.2);
+          }
+          AudioServiceBackground.sendCustomEvent({"action": "visualizer", "data": out});
+        });
+        break;
+      //Stop visualizer
+      case 'stopVisualizer':
+        if (_visualizerSubscription != null) {
+          _visualizerSubscription.cancel();
+          _visualizerSubscription = null;
+        }
+        break;
     }
 
     return true;
@@ -717,6 +811,7 @@ class AudioPlayerTask extends BackgroundAudioTask {
     await _saveQueue();
     _player.stop();
     if (_eventSub != null) _eventSub.cancel();
+    if (_audioSessionSub != null) _audioSessionSub.cancel();
 
     await super.onStop();
   }
@@ -790,6 +885,9 @@ class AudioPlayerTask extends BackgroundAudioTask {
   //Add at end of queue
   @override
   Future onAddQueueItem(MediaItem mi) async {
+    if (_queue.indexWhere((m) => m.id == mi.id) != -1)
+      return;
+
     _queue.add(mi);
     await AudioServiceBackground.setQueue(_queue);
     AudioSource _newSource =  await _mediaItemToAudioSource(mi);

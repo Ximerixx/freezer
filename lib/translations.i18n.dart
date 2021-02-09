@@ -30,7 +30,9 @@ const supportedLocales = [
   const Locale('vi', 'VI'),
   const Locale('nl', 'NL'),
   const Locale('sl', 'SL'),
+  const Locale('zh', 'CN'),
   const Locale('fil', 'PH'),
+  const Locale('ast', 'ES'),
   const Locale('uwu', 'UWU')
 ];
 

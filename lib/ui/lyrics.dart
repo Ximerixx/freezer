@@ -5,6 +5,8 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:freezer/api/deezer.dart';
 import 'package:freezer/api/definitions.dart';
+import 'package:freezer/api/player.dart';
+import 'package:freezer/settings.dart';
 import 'package:freezer/ui/elements.dart';
 import 'package:freezer/translations.i18n.dart';
 import 'package:freezer/ui/error.dart';
@@ -62,6 +64,10 @@ class _LyricsScreenState extends State<LyricsScreen> {
   void initState() {
     _load();
 
+    //Enable visualizer
+    if (settings.lyricsVisualizer)
+      playerHelper.startVisualizer();
+
     Timer.periodic(Duration(milliseconds: 350), (timer) {
       _timer = timer;
       if (_loading) return;
@@ -82,7 +88,7 @@ class _LyricsScreenState extends State<LyricsScreen> {
     });
 
     //Track change = exit lyrics
-    AudioService.currentMediaItemStream.listen((event) {
+    _mediaItemSub = AudioService.currentMediaItemStream.listen((event) {
       if (event.id != widget.trackId)
         Navigator.of(context).pop();
     });
@@ -96,6 +102,9 @@ class _LyricsScreenState extends State<LyricsScreen> {
       _timer.cancel();
     if (_mediaItemSub != null)
       _mediaItemSub.cancel();
+    //Stop visualizer
+    if (settings.lyricsVisualizer)
+      playerHelper.stopVisualizer();
     super.dispose();
   }
 
@@ -104,48 +113,79 @@ class _LyricsScreenState extends State<LyricsScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: FreezerAppBar('Lyrics'.i18n),
-      body: ListView(
-        controller: _controller,
+      body: Stack(
         children: [
-          //Shouldn't really happen, empty lyrics have own text
-          if (_error)
-            ErrorScreen(),
-
-          //Loading
-          if (_loading)
-            Padding(
-              padding: EdgeInsets.all(8.0),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  CircularProgressIndicator()
-                ],
+          //Visualizer
+          if (settings.lyricsVisualizer)
+            Align(
+              alignment: Alignment.bottomCenter,
+              child: StreamBuilder(
+                stream: playerHelper.visualizerStream,
+                builder: (BuildContext context, AsyncSnapshot snapshot) {
+                  List<double> data = snapshot.data??[];
+                  double width = MediaQuery.of(context).size.width / data.length - 0.25;
+                  return Row(
+                    crossAxisAlignment: CrossAxisAlignment.end,
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: List.generate(data.length, (i) => AnimatedContainer(
+                      duration: Duration(milliseconds: 130),
+                      color: Theme.of(context).primaryColor,
+                      height: data[i] * 100,
+                      width: width,
+                    )),
+                  );
+                }
               ),
             ),
 
-          if (lyrics != null)
-            ...List.generate(lyrics.lyrics.length, (i) {
-              return Padding(
-                padding: EdgeInsets.symmetric(horizontal: 8.0),
-                child: Container(
-                  decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(8.0),
-                    color: (_currentIndex == i) ? Colors.grey.withOpacity(0.25) : Colors.transparent,
-                  ),
-                  height: height,
-                  child: Center(
-                    child: Text(
-                      lyrics.lyrics[i].text,
-                      textAlign: TextAlign.center,
-                      style: TextStyle(
-                        fontSize: 26.0,
-                        fontWeight: (_currentIndex == i) ? FontWeight.bold : FontWeight.normal
-                      ),
+          //Lyrics
+          Padding(
+            padding: EdgeInsets.fromLTRB(0, 0, 0, settings.lyricsVisualizer ? 100 : 0),
+            child: ListView(
+              controller: _controller,
+              children: [
+                //Shouldn't really happen, empty lyrics have own text
+                if (_error)
+                  ErrorScreen(),
+
+                //Loading
+                if (_loading)
+                  Padding(
+                    padding: EdgeInsets.all(8.0),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        CircularProgressIndicator()
+                      ],
                     ),
-                  )
-                )
-              );
-            }),
+                  ),
+
+                if (lyrics != null)
+                  ...List.generate(lyrics.lyrics.length, (i) {
+                    return Padding(
+                        padding: EdgeInsets.symmetric(horizontal: 8.0),
+                        child: Container(
+                            decoration: BoxDecoration(
+                              borderRadius: BorderRadius.circular(8.0),
+                              color: (_currentIndex == i) ? Colors.grey.withOpacity(0.25) : Colors.transparent,
+                            ),
+                            height: height,
+                            child: Center(
+                              child: Text(
+                                lyrics.lyrics[i].text,
+                                textAlign: TextAlign.center,
+                                style: TextStyle(
+                                    fontSize: 26.0,
+                                    fontWeight: (_currentIndex == i) ? FontWeight.bold : FontWeight.normal
+                                ),
+                              ),
+                            )
+                        )
+                    );
+                  }),
+              ],
+            ),
+          )
         ],
       )
     );

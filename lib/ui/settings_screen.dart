@@ -18,7 +18,6 @@ import 'package:freezer/ui/elements.dart';
 import 'package:freezer/ui/error.dart';
 import 'package:freezer/ui/home_screen.dart';
 import 'package:freezer/ui/updater.dart';
-import 'package:i18n_extension/i18n_widget.dart';
 import 'package:language_pickers/language_pickers.dart';
 import 'package:language_pickers/languages.dart';
 import 'package:package_info/package_info.dart';
@@ -50,6 +49,14 @@ class _SettingsScreenState extends State<SettingsScreen> {
     defaultLanguagesList.add({
       'name': 'Furry',
       'isoCode': 'uwu'
+    });
+    defaultLanguagesList.add({
+      'name': 'Asturian',
+      'isoCode': 'ast'
+    });
+    defaultLanguagesList.add({
+      'name': 'Chinese',
+      'isoCode': 'zh'
     });
     List<Map<String, String>> _l = supportedLocales.map<Map<String, String>>((l) {
       Map _lang = defaultLanguagesList.firstWhere((lang) => lang['isoCode'] == l.languageCode);
@@ -251,6 +258,17 @@ class _AppearanceSettingsState extends State<AppearanceSettings> {
             leading: Icon(Icons.android)
           ),
           ListTile(
+            title: Text('Font'.i18n),
+            leading: Icon(Icons.font_download),
+            subtitle: Text(settings.font),
+            onTap: () {
+              showDialog(
+                context: context,
+                builder: (context) => FontSelector(() => Navigator.of(context).pop())
+              );
+            },
+          ),
+          ListTile(
             title: Text('Player gradient background'.i18n),
             leading: Icon(Icons.colorize),
             trailing: Switch(
@@ -258,6 +276,33 @@ class _AppearanceSettingsState extends State<AppearanceSettings> {
               onChanged: (bool v) async {
                 setState(() => settings.colorGradientBackground = v);
                 await settings.save();
+              },
+            ),
+          ),
+          ListTile(
+            title: Text('Blur player background'.i18n),
+            subtitle: Text('Might have impact on performance'.i18n),
+            leading: Icon(Icons.blur_on),
+            trailing: Switch(
+              value: settings.blurPlayerBackground,
+              onChanged: (bool v) async {
+                setState(() => settings.blurPlayerBackground = v);
+                await settings.save();
+              },
+            ),
+          ),
+          ListTile(
+            title: Text('Visualizer'.i18n),
+            subtitle: Text('Show visualizers on lyrics page. WARNING: Requires microphone permission!'.i18n),
+            leading: Icon(Icons.equalizer),
+            trailing: Switch(
+              value: settings.lyricsVisualizer,
+              onChanged: (bool v) async {
+                if (await Permission.microphone.request().isGranted) {
+                  setState(() => settings.lyricsVisualizer = v);
+                  await settings.save();
+                  return;
+                }
               },
             ),
           ),
@@ -321,6 +366,77 @@ class _AppearanceSettingsState extends State<AppearanceSettings> {
     );
   }
 }
+
+class FontSelector extends StatefulWidget {
+  final Function callback;
+
+  FontSelector(this.callback, {Key key}): super(key: key);
+
+  @override
+  _FontSelectorState createState() => _FontSelectorState();
+}
+
+class _FontSelectorState extends State<FontSelector> {
+
+  String query = '';
+  List<String> get fonts {
+    return settings.fonts.where((f) => f.toLowerCase().contains(query)).toList();
+  }
+
+  //Font selected
+  void onTap(String font) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text('Warning'.i18n),
+        content: Text("This app isn't made for supporting many fonts, it can break layouts and overflow. Use at your own risk!".i18n),
+        actions: [
+          FlatButton(
+            onPressed: () async {
+              setState(() => settings.font = font);
+              await settings.save();
+              Navigator.of(context).pop();
+              widget.callback();
+              //Global setState
+              updateTheme();
+            },
+            child: Text('Apply'.i18n),
+          ),
+          FlatButton(
+            onPressed: () {
+              Navigator.of(context).pop();
+              widget.callback();
+            },
+            child: Text('Cancel'),
+          )
+        ],
+      )
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return SimpleDialog(
+      title: Text("Select font".i18n),
+      children: [
+        Padding(
+          padding: EdgeInsets.symmetric(horizontal: 8.0, vertical: 8.0),
+          child: TextField(
+            decoration: InputDecoration(
+              hintText: 'Search'.i18n
+            ),
+            onChanged: (q) => setState(() => query = q),
+          ),
+        ),
+        ...List.generate(fonts.length, (i) => SimpleDialogOption(
+          child: Text(fonts[i]),
+          onPressed: () => onTap(fonts[i]),
+        ))
+      ],
+    );
+  }
+}
+
 
 
 class QualitySettings extends StatefulWidget {
@@ -767,6 +883,13 @@ class _DownloadsSettingsState extends State<DownloadsSettings> {
           ),
           FreezerDivider(),
           ListTile(
+            title: Text('Tags'.i18n),
+            leading: Icon(Icons.label),
+            onTap: () => Navigator.of(context).push(MaterialPageRoute(
+              builder: (context) => TagSelectionScreen()
+            )),
+          ),
+          ListTile(
             title: Text('Create folders for artist'.i18n),
             trailing: Switch(
               value: settings.artistFolder,
@@ -917,6 +1040,62 @@ class _DownloadsSettingsState extends State<DownloadsSettings> {
   }
 }
 
+class TagOption {
+  String title;
+  String value;
+  TagOption(this.title, this.value);
+}
+
+class TagSelectionScreen extends StatefulWidget {
+  @override
+  _TagSelectionScreenState createState() => _TagSelectionScreenState();
+}
+
+class _TagSelectionScreenState extends State<TagSelectionScreen> {
+
+  List<TagOption> tags = [
+    TagOption("Title".i18n, 'title'),
+    TagOption("Album".i18n, 'album'),
+    TagOption('Artist'.i18n, 'artist'),
+    TagOption('Track number'.i18n, 'track'),
+    TagOption('Disc number'.i18n, 'disc'),
+    TagOption('Album artist'.i18n, 'albumArtist'),
+    TagOption('Date/Year'.i18n, 'date'),
+    TagOption('Label'.i18n, 'label'),
+    TagOption('ISRC'.i18n, 'isrc'),
+    TagOption('UPC'.i18n, 'upc'),
+    TagOption('Track total'.i18n, 'trackTotal'),
+    TagOption('BPM'.i18n, 'bpm'),
+    TagOption('Unsynchronized lyrics'.i18n, 'lyrics'),
+    TagOption('Genre'.i18n, 'genre'),
+    TagOption('Contributors'.i18n, 'contributors'),
+    TagOption('Album art'.i18n, 'art')
+  ];
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: FreezerAppBar('Tags'.i18n),
+      body: ListView(
+        children: List.generate(tags.length, (i) => ListTile(
+          title: Text(tags[i].title),
+          leading: Switch(
+            value: settings.tags.contains(tags[i].value),
+            onChanged: (v) async {
+              //Update
+              if (v) settings.tags.add(tags[i].value);
+              else settings.tags.remove(tags[i].value);
+              setState((){});
+              await settings.save();
+            },
+          ),
+        )),
+      ),
+    );
+  }
+}
+
+
 
 class GeneralSettings extends StatefulWidget {
   @override
@@ -981,6 +1160,18 @@ class _GeneralSettingsState extends State<GeneralSettings> {
                 msg: 'Copied'.i18n,
               );
             },
+          ),
+          ListTile(
+            title: Text('Enable equalizer'.i18n),
+            subtitle: Text('Might enable some equalizer apps to work. Requires restart of Freezer'.i18n),
+            leading: Icon(Icons.equalizer),
+            trailing: Switch(
+              value: settings.enableEqualizer,
+              onChanged: (v) async {
+                setState(() => settings.enableEqualizer = v);
+                settings.save();
+              },
+            ),
           ),
           ListTile(
             title: Text('LastFM'.i18n),
