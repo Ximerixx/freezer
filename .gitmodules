@@ -1,6 +1,6 @@
 [submodule "audio_service"]
 	path = audio_service
-	url = https://git.rip/freezer/audio_service
+	url = https://git.freezer.life/exttex/audio_service.git
 [submodule "just_audio"]
 	path = just_audio
-	url = https://git.rip/freezer/just_audio
+	url = https://git.freezer.life/exttex/just_audio.git

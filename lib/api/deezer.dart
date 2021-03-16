@@ -134,6 +134,16 @@ class DeezerAPI {
     }
   }
 
+  //Check if Deezer available in country
+  static Future<bool> chceckAvailability() async {
+      try {
+        http.Response res = await http.get("https://api.deezer.com/infos");
+        return jsonDecode(res.body)["open"];
+      } catch (e) {
+        return null;
+      }
+  }
+
   //Search
   Future<SearchResults> search(String query) async {
     Map<dynamic, dynamic> data = await callApi('deezer.pageSearch', params: {

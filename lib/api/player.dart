@@ -1,5 +1,3 @@
-import 'dart:math';
-
 import 'package:audio_service/audio_service.dart';
 import 'package:audio_session/audio_session.dart';
 import 'package:equalizer/equalizer.dart';
@@ -21,6 +19,8 @@ import '../settings.dart';
 import 'dart:io';
 import 'dart:async';
 import 'dart:convert';
+import 'dart:math';
+
 
 PlayerHelper playerHelper = PlayerHelper();
 
@@ -776,9 +776,9 @@ class AudioPlayerTask extends BackgroundAudioTask {
         _visualizerSubscription = _player.visualizerFftStream.listen((event) {
           //Calculate actual values
           List<double> out = [];
-          for (int i=0; i<event.data.length/2; i++) {
-            int rfk = event.data[i*2].toSigned(8);
-            int ifk = event.data[i*2+1].toSigned(8);
+          for (int i=0; i<event.length/2; i++) {
+            int rfk = event[i*2].toSigned(8);
+            int ifk = event[i*2+1].toSigned(8);
             out.add(log(hypot(rfk, ifk) + 1) / 5.2);
           }
           AudioServiceBackground.sendCustomEvent({"action": "visualizer", "data": out});

@@ -1,21 +1,14 @@
-import 'dart:io';
-
 import 'package:flutter/material.dart';
 import 'package:audio_service/audio_service.dart';
 import 'package:freezer/api/cache.dart';
 import 'package:json_annotation/json_annotation.dart';
 import 'package:intl/intl.dart';
 import 'package:path_provider/path_provider.dart';
-import 'package:pointycastle/api.dart';
-import 'package:pointycastle/block/aes_fast.dart';
-import 'package:pointycastle/block/modes/ecb.dart';
-import 'package:hex/hex.dart';
 import 'package:path/path.dart' as p;
 import 'package:freezer/translations.i18n.dart';
-import 'package:crypto/crypto.dart' as crypto;
 
-import 'dart:typed_data';
 import 'dart:convert';
+import 'dart:io';
 
 part 'definitions.g.dart';
 

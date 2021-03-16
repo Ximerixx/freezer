@@ -18,8 +18,6 @@ import 'package:freezer/ui/elements.dart';
 import 'package:freezer/ui/error.dart';
 import 'package:freezer/ui/home_screen.dart';
 import 'package:freezer/ui/updater.dart';
-import 'package:language_pickers/language_pickers.dart';
-import 'package:language_pickers/languages.dart';
 import 'package:package_info/package_info.dart';
 import 'package:path_provider_ex/path_provider_ex.dart';
 import 'package:permission_handler/permission_handler.dart';
@@ -39,35 +37,6 @@ class SettingsScreen extends StatefulWidget {
 }
 
 class _SettingsScreenState extends State<SettingsScreen> {
-
-  List<Map<String, String>> _languages() {
-    //Missing language
-    defaultLanguagesList.add({
-      'name': 'Filipino',
-      'isoCode': 'fil'
-    });
-    defaultLanguagesList.add({
-      'name': 'Furry',
-      'isoCode': 'uwu'
-    });
-    defaultLanguagesList.add({
-      'name': 'Asturian',
-      'isoCode': 'ast'
-    });
-    defaultLanguagesList.add({
-      'name': 'Chinese',
-      'isoCode': 'zh'
-    });
-    List<Map<String, String>> _l = supportedLocales.map<Map<String, String>>((l) {
-      Map _lang = defaultLanguagesList.firstWhere((lang) => lang['isoCode'] == l.languageCode);
-      return {
-        'name': _lang['name'],
-        'isoCode': _lang['isoCode'],
-        'locale': l.toString()
-      };
-    }).toList();
-    return _l;
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -121,13 +90,13 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 context: context,
                 builder: (context) => SimpleDialog(
                   title: Text('Select language'.i18n),
-                  children: List.generate(_languages().length, (int i) {
-                    Map l = _languages()[i];
+                  children: List.generate(languages.length, (int i) {
+                    Language l = languages[i];
                     return ListTile(
-                      title: Text(l['name']),
-                      subtitle: Text(l['locale']),
+                      title: Text(l.name),
+                      subtitle: Text("${l.locale}-${l.country}"),
                       onTap: () async {
-                        setState(() => settings.language = l['locale']);
+                        setState(() => settings.language = "${l.locale}_${l.country}");
                         await settings.save();
                         showDialog(
                             context: context,
@@ -578,6 +547,50 @@ class _QualityPickerState extends State<QualityPicker> {
   }
 }
 
+class ContentLanguage {
+  String code;
+  String name;
+  ContentLanguage(this.code, this.name);
+
+  static List<ContentLanguage> get all => [
+    ContentLanguage("cs", "Čeština"),
+    ContentLanguage("da", "Dansk"),
+    ContentLanguage("de", "Deutsch"),
+    ContentLanguage("en", "English"),
+    ContentLanguage("us", "English (us)"),
+    ContentLanguage("es", "Español"),
+    ContentLanguage("mx", "Español (latam)"),
+    ContentLanguage("fr", "Français"),
+    ContentLanguage("hr", "Hrvatski"),
+    ContentLanguage("id", "Indonesia"),
+    ContentLanguage("it", "Italiano"),
+    ContentLanguage("hu", "Magyar"),
+    ContentLanguage("ms", "Melayu"),
+    ContentLanguage("nl", "Nederlands"),
+    ContentLanguage("no", "Norsk"),
+    ContentLanguage("pl", "Polski"),
+    ContentLanguage("br", "Português (br)"),
+    ContentLanguage("pt", "Português (pt)"),
+    ContentLanguage("ro", "Română"),
+    ContentLanguage("sk", "Slovenčina"),
+    ContentLanguage("sl", "Slovenščina"),
+    ContentLanguage("sq", "Shqip"),
+    ContentLanguage("sr", "Srpski"),
+    ContentLanguage("fi", "Suomi"),
+    ContentLanguage("sv", "Svenska"),
+    ContentLanguage("tr", "Türkçe"),
+    ContentLanguage("bg", "Български"),
+    ContentLanguage("ru", "Pусский"),
+    ContentLanguage("uk", "Українська"),
+    ContentLanguage("he", "עִברִית"),
+    ContentLanguage("ar", "العربیة"),
+    ContentLanguage("cn", "中文"),
+    ContentLanguage("ja", "日本語"),
+    ContentLanguage("ko", "한국어"),
+    ContentLanguage("th", "ภาษาไทย"),
+  ];
+}
+
 class DeezerSettings extends StatefulWidget {
   @override
   _DeezerSettingsState createState() => _DeezerSettingsState();
@@ -597,17 +610,17 @@ class _DeezerSettingsState extends State<DeezerSettings> {
             onTap: () {
               showDialog(
                 context: context,
-                builder: (context) => LanguagePickerDialog(
-                  titlePadding: EdgeInsets.all(8.0),
-                  isSearchable: true,
+                builder: (context) => SimpleDialog(
                   title: Text('Select language'.i18n),
-                  languagesList: defaultLanguagesList.map<Map<String, String>>((l) => {
-                    'isoCode': l['isoCode'], 'name': l['name'] + ' (${l["isoCode"]})'
-                  }).toList(),
-                  onValuePicked: (Language language) {
-                    setState(() => settings.deezerLanguage = language.isoCode);
-                    settings.save();
-                  },
+                  children: List.generate(ContentLanguage.all.length, (i) => ListTile(
+                    title: Text(ContentLanguage.all[i].name),
+                    subtitle: Text(ContentLanguage.all[i].code),
+                    onTap: () async {
+                      setState(() => settings.deezerLanguage = ContentLanguage.all[i].code);
+                      await settings.save();
+                      Navigator.of(context).pop();
+                    },
+                  )),
                 )
               );
             },

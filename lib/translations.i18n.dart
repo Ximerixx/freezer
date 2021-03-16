@@ -3,41 +3,51 @@ import 'package:freezer/languages/crowdin.dart';
 import 'package:freezer/languages/en_us.dart';
 import 'package:i18n_extension/i18n_extension.dart';
 
-const supportedLocales = [
-  const Locale('en', 'US'),
-  const Locale('ar', 'AR'),
-  const Locale('pt', 'BR'),
-  const Locale('it', 'IT'),
-  const Locale('de', 'DE'),
-  const Locale('ru', 'RU'),
-  const Locale('es', 'ES'),
-  const Locale('hr', 'HR'),
-  const Locale('el', 'GR'),
-  const Locale('ko', 'KO'),
-  const Locale('fr', 'FR'),
-  const Locale('he', 'IL'),
-  const Locale('tr', 'TR'),
-  const Locale('ro', 'RO'),
-  const Locale('id', 'ID'),
-  const Locale('fa', 'IR'),
-  const Locale('pl', 'PL'),
-  const Locale('uk', 'UA'),
-  const Locale('hu', 'HU'),
-  const Locale('ur', 'PK'),
-  const Locale('hi', 'IN'),
-  const Locale('sk', 'SK'),
-  const Locale('cs', 'CZ'),
-  const Locale('vi', 'VI'),
-  const Locale('nl', 'NL'),
-  const Locale('sl', 'SL'),
-  const Locale('zh', 'CN'),
-  const Locale('fil', 'PH'),
-  const Locale('ast', 'ES'),
-  const Locale('uwu', 'UWU')
+List<Language> languages = [
+  Language('en', 'US', "English"),
+  Language('ar', 'AR', "Arabic"),
+  Language('pt', 'BR', "Brazil"),
+  Language('it', 'IT', "Italian"),
+  Language('de', 'DE', "German"),
+  Language('ru', 'RU', "Russian"),
+  Language('es', 'ES', "Spanish"),
+  Language('hr', 'HR', "Croatian"),
+  Language('el', 'GR', "Greek"),
+  Language('ko', 'KO', "Korean"),
+  Language('fr', 'FR', "Baguette"),
+  Language('he', 'IL', "Hebrew"),
+  Language('tr', 'TR', "Turkish"),
+  Language('ro', 'RO', "Romanian"),
+  Language('id', 'ID', "Indonesian"),
+  Language('fa', 'IR', "Persian"),
+  Language('pl', 'PL', "Polish"),
+  Language('uk', 'UA', "Ukrainian"),
+  Language('hu', 'HU', "Hungarian"),
+  Language('ur', 'PK', "Urdu"),
+  Language('hi', 'IN', "Hindi"),
+  Language('sk', 'SK', "Slovak"),
+  Language('cs', 'CZ', "Czech"),
+  Language('vi', 'VI', "Vietnamese"),
+  Language('nl', 'NL', "Dutch"),
+  Language('sl', 'SL', "Slovenian"),
+  Language('zh', 'CN', "Chinese"),
+  Language('fil', 'PH', "Filipino"),
+  Language('ast', 'ES', "Asturian"),
+  Language('uwu', 'UWU', "Furry")
 ];
+List<Locale> get supportedLocales => languages.map((l) => l.getLocale).toList();
 
 extension Localization on String {
   static var _t = Translations.byLocale("en_US") + language_en_us + crowdin;
 
   String get i18n => localize(this, _t);
+}
+
+class Language {
+  String name;
+  String locale;
+  String country;
+  Language(this.locale, this.country, this.name);
+
+  Locale get getLocale => Locale(this.locale, this.country);
 }

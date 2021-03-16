@@ -315,7 +315,7 @@ class _MainScreenState extends State<MainScreen> with SingleTickerProviderStateM
         final BuildContext primaryContext = primaryFocus?.context;
         Intent intent = shortcuts[LogicalKeySet(event.logicalKey)];
         if (intent != null) {
-          Actions.invoke(primaryContext, intent, nullOk: true);
+          Actions.invoke(primaryContext, intent);
         }
         // WA for "Search field -> navigator -> UP -> DOWN" case. Prevents focus hanging.
         FocusNode newFocus = FocusManager.instance.primaryFocus;

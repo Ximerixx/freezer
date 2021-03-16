@@ -338,6 +338,11 @@ const language_en_us = {
     "Unsynchronized lyrics": "Unsynchronized lyrics",
     "Genre": "Genre",
     "Contributors": "Contributors",
-    "Album art": "Album art"
+    "Album art": "Album art",
+
+    //0.6.10
+    "Deezer is unavailable in your country, Freezer might not work properly. Please use a VPN": "Deezer is unavailable in your country, Freezer might not work properly. Please use a VPN",
+    "Deezer is unavailable": "Deezer is unavailable",
+    "Continue": "Continue"
   }
 };

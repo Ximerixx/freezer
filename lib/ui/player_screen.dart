@@ -31,6 +31,9 @@ import 'dart:async';
 //Changing item in queue view and pressing back causes the pageView to skip song
 bool pageViewLock = false;
 
+//So can be updated when going back from lyrics
+Function updateColor;
+
 class PlayerScreen extends StatefulWidget {
   @override
   _PlayerScreenState createState() => _PlayerScreenState();
@@ -86,7 +89,8 @@ class _PlayerScreenState extends State<PlayerScreen> {
     _mediaItemSub = AudioService.currentMediaItemStream.listen((event) {
       _updateColor();
     });
-    
+
+    updateColor = this._updateColor;
     super.initState();
   }
 
@@ -361,10 +365,18 @@ class _PlayerScreenVerticalState extends State<PlayerScreenVertical> {
             children: <Widget>[
               IconButton(
                 icon: Icon(Icons.subtitles, size: ScreenUtil().setWidth(46)),
-                onPressed: () {
-                  Navigator.of(context).push(MaterialPageRoute(
+                onPressed: () async {
+                  //Fix bottom buttons
+                  SystemChrome.setSystemUIOverlayStyle(SystemUiOverlayStyle(
+                    systemNavigationBarColor: settings.themeData.bottomAppBarColor,
+                    statusBarColor: Colors.transparent
+                  ));
+
+                  await Navigator.of(context).push(MaterialPageRoute(
                     builder: (context) => LyricsScreen(trackId: AudioService.currentMediaItem.id)
                   ));
+
+                  updateColor();
                 },
               ),
               QualityInfoWidget(),
@@ -656,10 +668,18 @@ class PlayerScreenTopRow extends StatelessWidget {
           icon: Icon(Icons.menu),
           iconSize: this.iconSize??ScreenUtil().setSp(52),
           splashRadius: this.iconSize??ScreenUtil().setWidth(52),
-          onPressed: () {
-            Navigator.of(context).push(MaterialPageRoute(
+          onPressed: () async {
+            //Fix bottom buttons
+            SystemChrome.setSystemUIOverlayStyle(SystemUiOverlayStyle(
+                systemNavigationBarColor: settings.themeData.bottomAppBarColor,
+                statusBarColor: Colors.transparent
+            ));
+            //Navigate
+            await Navigator.of(context).push(MaterialPageRoute(
                 builder: (context) => QueueScreen()
             ));
+            //Fix colors
+            updateColor();
           },
         ),
       ],

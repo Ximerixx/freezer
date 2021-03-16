@@ -2,7 +2,17 @@
 freezerkey.jsk
 android/key.properties
 
+audio_service/.idea
+audio_service/.dart_tool
+
+android/local.properties
 just_audio/
+.gradle/
+android/.gradle
+android/.idea
+
+.flutter-plugins
+.flutter-plugins-dependencies
 
 # Miscellaneous
 *.class

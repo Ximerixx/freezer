@@ -46,6 +46,26 @@ class _LoginWidgetState extends State<LoginWidget> {
     }
   }
 
+  //Check if deezer available in current country
+  void _checkAvailability() async {
+    bool available = await DeezerAPI.chceckAvailability();
+    if (!(available??true)) {
+      showDialog(
+        context: context,
+        builder: (context) => AlertDialog(
+          title: Text("Deezer is unavailable".i18n),
+          content: Text("Deezer is unavailable in your country, Freezer might not work properly. Please use a VPN".i18n),
+          actions: [
+            TextButton(
+              child: Text('Continue'.i18n),
+              onPressed: () => Navigator.of(context).pop(),
+            )
+          ],
+        )
+      );
+    }
+  }
+
   @override
   void didUpdateWidget(LoginWidget oldWidget) {
     _start();
@@ -55,6 +75,7 @@ class _LoginWidgetState extends State<LoginWidget> {
   @override
   void initState() {
     _start();
+    _checkAvailability();
     super.initState();
   }
 
