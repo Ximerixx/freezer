@@ -1,5 +1,5 @@
-import 'dart:async';
-
+import 'package:sqflite/sqflite.dart';
+import 'package:sqflite/sql.dart';
 import 'package:disk_space/disk_space.dart';
 import 'package:filesize/filesize.dart';
 import 'package:flutter/material.dart';
@@ -15,9 +15,7 @@ import 'package:permission_handler/permission_handler.dart';
 import 'package:freezer/translations.i18n.dart';
 
 import 'dart:io';
-
-import 'package:sqflite/sqflite.dart';
-import 'package:sqflite/sql.dart';
+import 'dart:async';
 
 DownloadManager downloadManager = DownloadManager();
 

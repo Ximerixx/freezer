@@ -343,6 +343,11 @@ const language_en_us = {
     //0.6.10
     "Deezer is unavailable in your country, Freezer might not work properly. Please use a VPN": "Deezer is unavailable in your country, Freezer might not work properly. Please use a VPN",
     "Deezer is unavailable": "Deezer is unavailable",
-    "Continue": "Continue"
+    "Continue": "Continue",
+    "Email Login": "Email Login",
+    "Email": "Email",
+    "Missing email or password!": "Missing email or password!",
+    "Error logging in using email, please check your credentials.\nError:": "Error logging in using email, please check your credentials.\nError:",
+    "Error logging in!": "Error logging in!"
   }
 };

@@ -1,6 +1,7 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:fluttertoast/fluttertoast.dart';
 import 'package:freezer/api/deezer.dart';
 import 'package:freezer/api/player.dart';
 import 'package:flutter_inappwebview/flutter_inappwebview.dart';
@@ -186,6 +187,21 @@ class _LoginWidgetState extends State<LoginWidget> {
                 ),
               ),
               Container(height: 16.0,),
+              //Email login dialog
+              Padding(
+                padding: EdgeInsets.symmetric(horizontal: 32.0),
+                child: OutlineButton(
+                  child: Text(
+                    'Login using email'.i18n,
+                  ),
+                  onPressed: () {
+                    showDialog(
+                      context: context,
+                      builder: (context) => EmailLogin(_update)
+                    );
+                  },
+                )
+              ),
               Padding(
                 padding: EdgeInsets.symmetric(horizontal: 32.0),
                 child: OutlineButton(
@@ -308,6 +324,107 @@ class LoginBrowser extends StatelessWidget {
             ),
           ),
         ),
+      ],
+    );
+  }
+}
+
+class EmailLogin extends StatefulWidget {
+
+  Function callback;
+  EmailLogin(this.callback, {Key key}): super(key: key);
+
+  @override
+  _EmailLoginState createState() => _EmailLoginState();
+}
+
+class _EmailLoginState extends State<EmailLogin> {
+
+  String _email;
+  String _password;
+  bool _loading = false;
+
+  void _login() async {
+    setState(() => _loading = true);
+    //Try logging in
+    String arl;
+    String exception;
+    try {
+      arl = await DeezerAPI.getArlByEmail(_email, _password);
+    } catch (e, st) {
+      exception = e.toString();
+      print(e);
+      print(st);
+    }
+    setState(() => _loading = false);
+
+    //Success
+    if (arl != null) {
+      settings.arl = arl;
+      Navigator.of(context).pop();
+      widget.callback();
+      return;
+    }
+
+    //Error
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text("Error logging in!".i18n),
+        content: Text("Error logging in using email, please check your credentials.\nError: " + exception),
+        actions: [
+          TextButton(
+            child: Text('Dismiss'.i18n),
+            onPressed: () {
+              Navigator.of(context).pop();
+            },
+          )
+        ],
+      )
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AlertDialog(
+      title: Text('Email Login'.i18n),
+      content: Column(
+        mainAxisSize: MainAxisSize.min,
+        children:
+        _loading ? [
+          CircularProgressIndicator()
+        ]: [
+          TextField(
+            decoration: InputDecoration(
+              labelText: 'Email'.i18n
+            ),
+            onChanged: (s) => _email = s,
+          ),
+          Container(height: 8.0,),
+          TextField(
+            obscureText: true,
+            decoration: InputDecoration(
+              labelText: "Password".i18n
+            ),
+            onChanged: (s) => _password = s,
+          )
+        ],
+      ),
+      actions: [
+        if (!_loading)
+          TextButton(
+            child: Text('Login'),
+            onPressed: () async {
+              if (_email != null && _password != null)
+                await _login();
+              else
+                Fluttertoast.showToast(
+                  msg: "Missing email or password!".i18n,
+                  gravity: ToastGravity.BOTTOM,
+                  toastLength: Toast.LENGTH_SHORT
+                );
+            },
+          )
       ],
     );
   }

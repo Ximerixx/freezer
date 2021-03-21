@@ -1,3 +1,4 @@
+import 'package:crypto/crypto.dart';
 import 'package:freezer/api/definitions.dart';
 import 'package:freezer/api/spotify.dart';
 import 'package:freezer/settings.dart';
@@ -76,6 +77,32 @@ class DeezerAPI {
     }
     return _authorizing;
   }
+
+  //Login with email
+  static Future<String> getArlByEmail(String email, String password) async {
+    //Get MD5 of password
+    Digest digest = md5.convert(utf8.encode(password));
+    String md5password = '$digest';
+    //Get access token
+    String url = "https://tv.deezer.com/smarttv/8caf9315c1740316053348a24d25afc7/user_auth.php?login=$email&password=$md5password&device=panasonic&output=json";
+    http.Response response = await http.get(url);
+    String accessToken = jsonDecode(response.body)["access_token"];
+    //Get SID
+    url = "https://api.deezer.com/platform/generic/track/42069";
+    response = await http.get(url, headers: {"Authorization": "Bearer $accessToken"});
+    String sid;
+    for (String cookieHeader in response.headers['set-cookie'].split(';')) {
+      if (cookieHeader.startsWith('sid=')) {
+        sid = cookieHeader.split('=')[1];
+      }
+    }
+    if (sid == null) return null;
+    //Get ARL
+    url = "https://deezer.com/ajax/gw-light.php?api_version=1.0&api_token=null&input=3&method=user.getArl";
+    response = await http.get(url, headers: {"Cookie": "sid=$sid"});
+    return jsonDecode(response.body)["results"];
+  }
+
 
   //Authorize, bool = success
   Future<bool> rawAuthorize({Function onError}) async {
@@ -489,4 +516,3 @@ class DeezerAPI {
     return data['results']['EPISODES']['data'].map<ShowEpisode>((e) => ShowEpisode.fromPrivateJson(e)).toList();
   }
 }
-

@@ -27,6 +27,7 @@ dependencies:
   flutter_localizations:
     sdk: flutter
 
+  crypto: ^2.1.5
   http: ^0.12.2
   cookie_jar: ^1.0.1
   json_annotation: ^3.0.1
