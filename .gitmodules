@@ -3,4 +3,4 @@
 	url = https://git.freezer.life/exttex/audio_service.git
 [submodule "just_audio"]
 	path = just_audio
-	url = https://git.freezer.life/exttex/just_audio.git
+	url = https://git.freezer.life/exttex/just_audio

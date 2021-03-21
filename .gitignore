@@ -6,7 +6,8 @@ audio_service/.idea
 audio_service/.dart_tool
 
 android/local.properties
-just_audio/
+just_audio/.idea
+just_audio/.dart_tool
 .gradle/
 android/.gradle
 android/.idea
