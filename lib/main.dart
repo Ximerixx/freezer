@@ -5,6 +5,7 @@ import 'package:custom_navigator/custom_navigator.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_displaymode/flutter_displaymode.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:freezer/api/cache.dart';
 import 'package:freezer/api/definitions.dart';
@@ -174,6 +175,13 @@ class _MainScreenState extends State<MainScreen> with SingleTickerProviderStateM
   @override
   void initState() {
     navigatorKey = GlobalKey<NavigatorState>();
+
+    //Set display mode
+    if (settings.displayMode != null) {
+      FlutterDisplayMode.supported.then((modes) async {
+        FlutterDisplayMode.setMode(modes[settings.displayMode]);
+      });
+    }
 
     _startStreamingServer();
 

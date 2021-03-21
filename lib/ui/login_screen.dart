@@ -344,7 +344,7 @@ class _EmailLoginState extends State<EmailLogin> {
   String _password;
   bool _loading = false;
 
-  void _login() async {
+  Future _login() async {
     setState(() => _loading = true);
     //Try logging in
     String arl;

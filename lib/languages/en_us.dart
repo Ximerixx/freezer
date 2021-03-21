@@ -348,6 +348,9 @@ const language_en_us = {
     "Email": "Email",
     "Missing email or password!": "Missing email or password!",
     "Error logging in using email, please check your credentials.\nError:": "Error logging in using email, please check your credentials.\nError:",
-    "Error logging in!": "Error logging in!"
+    "Error logging in!": "Error logging in!",
+    "Change display mode": "Change display mode",
+    "Enable high refresh rates": "Enable high refresh rates",
+    "Display mode": "Display mode"
   }
 };

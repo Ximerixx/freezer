@@ -97,6 +97,8 @@ class Settings {
   String font;
   @JsonKey(defaultValue: false)
   bool lyricsVisualizer;
+  @JsonKey(defaultValue: null)
+  int displayMode;
 
   //Colors
   @JsonKey(toJson: _colorToJson, fromJson: _colorFromJson)

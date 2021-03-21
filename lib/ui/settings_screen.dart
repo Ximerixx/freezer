@@ -5,6 +5,7 @@ import 'package:filesize/filesize.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_displaymode/flutter_displaymode.dart';
 import 'package:flutter_material_color_picker/flutter_material_color_picker.dart';
 import 'package:fluttericon/font_awesome5_icons.dart';
 import 'package:fluttericon/web_symbols_icons.dart';
@@ -329,6 +330,32 @@ class _AppearanceSettingsState extends State<AppearanceSettings> {
               value: settings.useArtColor,
               onChanged: (v) => setState(() => settings.updateUseArtColor(v)),
             ),
+          ),
+          //Display mode
+          ListTile(
+            leading: Icon(Icons.screen_lock_portrait),
+            title: Text('Change display mode'.i18n),
+            subtitle: Text('Enable high refresh rates'.i18n),
+            onTap: () async {
+              List modes = await FlutterDisplayMode.supported;
+              showDialog(
+                context: context,
+                builder: (context) {
+                  return SimpleDialog(
+                    title: Text('Display mode'.i18n),
+                    children: List.generate(modes.length, (i) => SimpleDialogOption(
+                      child: Text(modes[i].toString()),
+                      onPressed: () async {
+                        settings.displayMode = i;
+                        await settings.save();
+                        await FlutterDisplayMode.setMode(modes[i]);
+                        Navigator.of(context).pop();
+                      },
+                    ))
+                  );
+                }
+              );
+            },
           )
         ],
       ),

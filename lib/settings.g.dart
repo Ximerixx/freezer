@@ -68,6 +68,7 @@ Settings _$SettingsFromJson(Map<String, dynamic> json) {
     ..blurPlayerBackground = json['blurPlayerBackground'] as bool ?? false
     ..font = json['font'] as String ?? 'Deezer'
     ..lyricsVisualizer = json['lyricsVisualizer'] as bool ?? false
+    ..displayMode = json['displayMode'] as int
     ..primaryColor = Settings._colorFromJson(json['primaryColor'] as int)
     ..useArtColor = json['useArtColor'] as bool ?? false
     ..deezerLanguage = json['deezerLanguage'] as String ?? 'en'
@@ -109,6 +110,7 @@ Map<String, dynamic> _$SettingsToJson(Settings instance) => <String, dynamic>{
       'blurPlayerBackground': instance.blurPlayerBackground,
       'font': instance.font,
       'lyricsVisualizer': instance.lyricsVisualizer,
+      'displayMode': instance.displayMode,
       'primaryColor': Settings._colorToJson(instance.primaryColor),
       'useArtColor': instance.useArtColor,
       'deezerLanguage': instance.deezerLanguage,

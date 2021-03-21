@@ -27,6 +27,7 @@ dependencies:
   flutter_localizations:
     sdk: flutter
 
+  flutter_displaymode: ^0.1.1
   crypto: ^2.1.5
   http: ^0.12.2
   cookie_jar: ^1.0.1
