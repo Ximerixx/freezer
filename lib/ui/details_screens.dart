@@ -21,7 +21,7 @@ import 'menu.dart';
 
 class AlbumDetails extends StatefulWidget {
 
-  Album album;
+  final Album album;
   AlbumDetails(this.album, {Key key}): super(key: key);
 
   @override
@@ -165,7 +165,7 @@ class _AlbumDetailsState extends State<AlbumDetails> {
                 mainAxisSize: MainAxisSize.max,
                 mainAxisAlignment: MainAxisAlignment.spaceAround,
                 children: <Widget>[
-                  FlatButton(
+                  TextButton(
                     child: Row(
                       children: <Widget>[
                         Icon((album.library??false)? Icons.favorite : Icons.favorite_border, size: 32),
@@ -196,7 +196,7 @@ class _AlbumDetailsState extends State<AlbumDetails> {
                     },
                   ),
                   MakeAlbumOffline(album: album),
-                  FlatButton(
+                  TextButton(
                     child: Row(
                       children: <Widget>[
                         Icon(Icons.file_download, size: 32.0,),
@@ -248,7 +248,7 @@ class _AlbumDetailsState extends State<AlbumDetails> {
 
 class MakeAlbumOffline extends StatefulWidget {
 
-  Album album;
+  final Album album;
   MakeAlbumOffline({Key key, this.album}): super(key: key);
 
   @override
@@ -399,7 +399,7 @@ class ArtistDetails extends StatelessWidget {
                   mainAxisSize: MainAxisSize.max,
                   mainAxisAlignment: MainAxisAlignment.spaceAround,
                   children: <Widget>[
-                    FlatButton(
+                    TextButton(
                       child: Row(
                         children: <Widget>[
                           Icon(Icons.favorite, size: 32),
@@ -417,7 +417,7 @@ class ArtistDetails extends StatelessWidget {
                       },
                     ),
                     if ((artist.radio??false))
-                      FlatButton(
+                      TextButton(
                         child: Row(
                           children: <Widget>[
                             Icon(Icons.radio, size: 32),
@@ -714,7 +714,7 @@ class _DiscographyScreenState extends State<DiscographyScreen> {
 
 class PlaylistDetails extends StatefulWidget {
 
-  Playlist playlist;
+  final Playlist playlist;
   PlaylistDetails(this.playlist, {Key key}): super(key: key);
 
   @override

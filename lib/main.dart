@@ -177,9 +177,10 @@ class _MainScreenState extends State<MainScreen> with SingleTickerProviderStateM
     navigatorKey = GlobalKey<NavigatorState>();
 
     //Set display mode
-    if (settings.displayMode != null) {
+    if (settings.displayMode != null && settings.displayMode >= 0) {
       FlutterDisplayMode.supported.then((modes) async {
-        FlutterDisplayMode.setMode(modes[settings.displayMode]);
+        if (modes.length - 1 >= settings.displayMode)
+          FlutterDisplayMode.setMode(modes[settings.displayMode]);
       });
     }
 
@@ -368,19 +369,25 @@ class _MainScreenState extends State<MainScreen> with SingleTickerProviderStateM
                             setState(() {
                               _selected = s;
                             });
+
+                            //Fix statusbar
+                            SystemChrome.setSystemUIOverlayStyle(SystemUiOverlayStyle(
+                                statusBarColor: Colors.transparent
+                            ));
                           },
                           selectedItemColor: Theme.of(context).primaryColor,
                           items: <BottomNavigationBarItem>[
                             BottomNavigationBarItem(
-                                icon: Icon(Icons.home),
-                                title: Text('Home'.i18n)),
+                              icon: Icon(Icons.home),
+                              label: 'Home'.i18n),
                             BottomNavigationBarItem(
                               icon: Icon(Icons.search),
-                              title: Text('Search'.i18n),
+                              label: 'Search'.i18n,
                             ),
                             BottomNavigationBarItem(
-                                icon: Icon(Icons.library_music),
-                                title: Text('Library'.i18n))
+                              icon: Icon(Icons.library_music),
+                              label: 'Library'.i18n
+                            )
                           ],
                         )
                       ],

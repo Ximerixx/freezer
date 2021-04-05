@@ -114,7 +114,7 @@ class _ZoomableImageState extends State<ZoomableImage> {
   @override
   Widget build(BuildContext context) {
     ctx = context;
-    return FlatButton(
+    return TextButton(
         child: CachedImage(
           url: widget.url,
           rounded: widget.rounded,

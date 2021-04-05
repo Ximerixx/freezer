@@ -13,7 +13,7 @@ import 'home_screen.dart';
 
 class LoginWidget extends StatefulWidget {
 
-  Function callback;
+  final Function callback;
   LoginWidget({this.callback, Key key}): super(key: key);
 
   @override
@@ -95,7 +95,7 @@ class _LoginWidgetState extends State<LoginWidget> {
             ],
           ),
           actions: <Widget>[
-            FlatButton(
+            TextButton(
               child: Text('Dismiss'.i18n),
               onPressed: () {
                 Navigator.of(context).pop();
@@ -169,14 +169,6 @@ class _LoginWidgetState extends State<LoginWidget> {
           padding: EdgeInsets.symmetric(horizontal: 8.0),
           child: ListView(
             children: <Widget>[
-              Container(height: 16.0,),
-              Text(
-                'Welcome to'.i18n,
-                textAlign: TextAlign.center,
-                style: TextStyle(
-                  fontSize: 16.0
-                ),
-              ),
               FreezerTitle(),
               Container(height: 8.0,),
               Text(
@@ -190,7 +182,7 @@ class _LoginWidgetState extends State<LoginWidget> {
               //Email login dialog
               Padding(
                 padding: EdgeInsets.symmetric(horizontal: 32.0),
-                child: OutlineButton(
+                child: OutlinedButton(
                   child: Text(
                     'Login using email'.i18n,
                   ),
@@ -204,7 +196,7 @@ class _LoginWidgetState extends State<LoginWidget> {
               ),
               Padding(
                 padding: EdgeInsets.symmetric(horizontal: 32.0),
-                child: OutlineButton(
+                child: OutlinedButton(
                   child: Text('Login using browser'.i18n),
                   onPressed: () {
                     Navigator.of(context).push(
@@ -215,7 +207,7 @@ class _LoginWidgetState extends State<LoginWidget> {
               ),
               Padding(
                 padding: EdgeInsets.symmetric(horizontal: 32.0),
-                child: OutlineButton(
+                child: OutlinedButton(
                   child: Text('Login using token'.i18n),
                   onPressed: () {
                     showDialog(
@@ -238,7 +230,7 @@ class _LoginWidgetState extends State<LoginWidget> {
                               ),
                             ),
                             actions: <Widget>[
-                              FlatButton(
+                              TextButton(
                                 child: Text('Save'.i18n),
                                 onPressed: () => goARL(null, _controller),
                               )
@@ -259,7 +251,7 @@ class _LoginWidgetState extends State<LoginWidget> {
               ),
               Padding(
                 padding: EdgeInsets.symmetric(horizontal: 32.0),
-                child: OutlineButton(
+                child: OutlinedButton(
                   child: Text('Open in browser'.i18n),
                   onPressed: () {
                     InAppBrowser.openWithSystemBrowser(url: 'https://deezer.com/register');
@@ -287,7 +279,7 @@ class _LoginWidgetState extends State<LoginWidget> {
 
 class LoginBrowser extends StatelessWidget {
 
-  Function updateParent;
+  final Function updateParent;
   LoginBrowser(this.updateParent);
 
   @override
@@ -331,7 +323,7 @@ class LoginBrowser extends StatelessWidget {
 
 class EmailLogin extends StatefulWidget {
 
-  Function callback;
+  final Function callback;
   EmailLogin(this.callback, {Key key}): super(key: key);
 
   @override

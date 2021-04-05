@@ -50,6 +50,7 @@ class FreezerAppBar extends StatelessWidget implements PreferredSizeWidget {
     return Theme(
       data: ThemeData(primaryColor: (Theme.of(context).brightness == Brightness.light)?Colors.white:Colors.black),
       child: AppBar(
+        brightness: Theme.of(context).brightness,
         elevation: 0.0,
         backgroundColor: Theme.of(context).scaffoldBackgroundColor,
         title: Text(

@@ -76,7 +76,9 @@ Settings _$SettingsFromJson(Map<String, dynamic> json) {
     ..logListen = json['logListen'] as bool ?? false
     ..proxyAddress = json['proxyAddress'] as String
     ..lastFMUsername = json['lastFMUsername'] as String
-    ..lastFMPassword = json['lastFMPassword'] as String;
+    ..lastFMPassword = json['lastFMPassword'] as String
+    ..spotifyClientId = json['spotifyClientId'] as String
+    ..spotifyClientSecret = json['spotifyClientSecret'] as String;
 }
 
 Map<String, dynamic> _$SettingsToJson(Settings instance) => <String, dynamic>{
@@ -119,6 +121,8 @@ Map<String, dynamic> _$SettingsToJson(Settings instance) => <String, dynamic>{
       'proxyAddress': instance.proxyAddress,
       'lastFMUsername': instance.lastFMUsername,
       'lastFMPassword': instance.lastFMPassword,
+      'spotifyClientId': instance.spotifyClientId,
+      'spotifyClientSecret': instance.spotifyClientSecret,
     };
 
 T _$enumDecode<T>(

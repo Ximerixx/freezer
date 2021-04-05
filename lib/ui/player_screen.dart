@@ -439,7 +439,7 @@ class _QualityInfoWidgetState extends State<QualityInfoWidget> {
 
   @override
   Widget build(BuildContext context) {
-    return FlatButton(
+    return TextButton(
       child: Text(value),
       onPressed: () {
         Navigator.of(context).push(MaterialPageRoute(builder: (context) => QualitySettings()));

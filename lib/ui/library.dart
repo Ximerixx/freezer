@@ -5,6 +5,7 @@ import 'package:fluttertoast/fluttertoast.dart';
 import 'package:freezer/api/cache.dart';
 import 'package:freezer/api/deezer.dart';
 import 'package:freezer/api/definitions.dart';
+import 'package:freezer/api/importer.dart';
 import 'package:freezer/api/player.dart';
 import 'package:freezer/settings.dart';
 import 'package:freezer/ui/details_screens.dart';
@@ -138,16 +139,44 @@ class LibraryScreen extends StatelessWidget {
             leading: LeadingIcon(Icons.import_export, color: Color(0xff2ba766)),
             subtitle: Text('Import playlists from Spotify'.i18n),
             onTap: () {
-              if (spotify.doneImporting != null) {
-                Navigator.of(context).push(
-                  MaterialPageRoute(builder: (context) => CurrentlyImportingScreen())
-                );
-                if (spotify.doneImporting) spotify.doneImporting = null;
+              //Show progress
+              if (importer.done || importer.busy) {
+                Navigator.of(context).push(MaterialPageRoute(
+                  builder: (context) => ImporterStatusScreen()
+                ));
                 return;
               }
 
-              Navigator.of(context).push(
-                MaterialPageRoute(builder: (context) => ImporterScreen())
+              //Pick importer dialog
+              showDialog(
+                context: context,
+                builder: (context) => SimpleDialog(
+                  title: Text('Importer'.i18n),
+                  children: [
+                    ListTile (
+                      leading: Icon(FontAwesome5.spotify),
+                      title: Text('Spotify v1'.i18n),
+                      subtitle: Text('Import Spotify playlists up to 100 tracks without any login.'.i18n),
+                      onTap: () {
+                        Navigator.of(context).pop();
+                        Navigator.of(context).push(MaterialPageRoute(
+                          builder: (context) => SpotifyImporterV1()
+                        ));
+                      },
+                    ),
+                    ListTile (
+                      leading: Icon(FontAwesome5.spotify),
+                      title: Text('Spotify v2'.i18n),
+                      subtitle: Text('Import any Spotify playlist, import from own Spotify library. Requires free account.'.i18n),
+                      onTap: () {
+                        Navigator.of(context).pop();
+                        Navigator.of(context).push(MaterialPageRoute(
+                          builder: (context) => SpotifyImporterV2()
+                        ));
+                      },
+                    )
+                  ],
+                )
               );
             },
           ),
@@ -444,7 +473,7 @@ class _LibraryTracksState extends State<LibraryTracks> {
                 mainAxisAlignment: MainAxisAlignment.spaceAround,
                 children: <Widget>[
                   MakePlaylistOffline(_playlist),
-                  FlatButton(
+                  TextButton(
                     child: Row(
                       children: <Widget>[
                         Icon(Icons.file_download, size: 32.0,),

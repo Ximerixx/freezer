@@ -106,7 +106,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                                 title: Text('Language'.i18n),
                                 content: Text('Language changed, please restart Freezer to apply!'.i18n),
                                 actions: [
-                                  FlatButton(
+                                  TextButton(
                                     child: Text('OK'),
                                     onPressed: () {
                                       Navigator.of(context).pop();
@@ -387,7 +387,7 @@ class _FontSelectorState extends State<FontSelector> {
         title: Text('Warning'.i18n),
         content: Text("This app isn't made for supporting many fonts, it can break layouts and overflow. Use at your own risk!".i18n),
         actions: [
-          FlatButton(
+          TextButton(
             onPressed: () async {
               setState(() => settings.font = font);
               await settings.save();
@@ -398,7 +398,7 @@ class _FontSelectorState extends State<FontSelector> {
             },
             child: Text('Apply'.i18n),
           ),
-          FlatButton(
+          TextButton(
             onPressed: () {
               Navigator.of(context).pop();
               widget.callback();
@@ -701,11 +701,11 @@ class _DeezerSettingsState extends State<DeezerSettings> {
 //                      ),
 //                    ),
 //                    actions: [
-//                      FlatButton(
+//                      TextButton(
 //                        child: Text('Cancel'.i18n),
 //                        onPressed: () => Navigator.of(context).pop(),
 //                      ),
-//                      FlatButton(
+//                      TextButton(
 //                        child: Text('Reset'.i18n),
 //                        onPressed: () async {
 //                          setState(() {
@@ -715,7 +715,7 @@ class _DeezerSettingsState extends State<DeezerSettings> {
 //                          Navigator.of(context).pop();
 //                        },
 //                      ),
-//                      FlatButton(
+//                      TextButton(
 //                        child: Text('Save'.i18n),
 //                        onPressed: () async {
 //                          setState(() {
@@ -739,8 +739,8 @@ class _DeezerSettingsState extends State<DeezerSettings> {
 
 class FilenameTemplateDialog extends StatefulWidget {
 
-  String initial;
-  Function onSave;
+  final String initial;
+  final Function onSave;
   FilenameTemplateDialog(this.initial, this.onSave, {Key key}): super(key: key);
 
   @override
@@ -782,22 +782,22 @@ class _FilenameTemplateDialogState extends State<FilenameTemplateDialog> {
         ],
       ),
       actions: [
-        FlatButton(
+        TextButton(
           child: Text('Cancel'.i18n),
           onPressed: () => Navigator.of(context).pop(),
         ),
-        FlatButton(
+        TextButton(
           child: Text('Reset'.i18n),
           onPressed: () {
             _controller.value = _controller.value.copyWith(text: '%artist% - %title%');
             _new = '%artist% - %title%';
           },
         ),
-        FlatButton(
+        TextButton(
           child: Text('Clear'.i18n),
           onPressed: () => _controller.clear(),
         ),
-        FlatButton(
+        TextButton(
           child: Text('Save'.i18n),
           onPressed: () async {
             widget.onSave(_new);
@@ -907,7 +907,7 @@ class _DownloadsSettingsState extends State<DownloadsSettings> {
                       title: Text('Warning'.i18n),
                       content: Text('Using too many concurrent downloads on older/weaker devices might cause crashes!'.i18n),
                       actions: [
-                        FlatButton(
+                        TextButton(
                           child: Text('Dismiss'.i18n),
                           onPressed: () => Navigator.of(context).pop(),
                         )
@@ -1251,18 +1251,18 @@ class _GeneralSettingsState extends State<GeneralSettings> {
 //                    content: Text('Due to plugin incompatibility, login using browser is unavailable without restart.'.i18n),
                     content: Text('Restart of app is required to properly log out!'.i18n),
                     actions: <Widget>[
-                      FlatButton(
+                      TextButton(
                         child: Text('Cancel'.i18n),
                         onPressed: () => Navigator.of(context).pop(),
                       ),
-//                      FlatButton(
+//                      TextButton(
 //                        child: Text('(ARL ONLY) Continue'.i18n),
 //                        onPressed: () async {
 //                          await logOut();
 //                          Navigator.of(context).pop();
 //                        },
 //                      ),
-                      FlatButton(
+                      TextButton(
                         child: Text('Log out & Exit'.i18n),
                         onPressed: () async {
                           try {AudioService.stop();} catch (e) {}
@@ -1329,11 +1329,11 @@ class _LastFMLoginState extends State<LastFMLogin> {
         ],
       ),
       actions: [
-        FlatButton(
+        TextButton(
           child: Text('Cancel'.i18n),
           onPressed: () => Navigator.of(context).pop(),
         ),
-        FlatButton(
+        TextButton(
           child: Text('Login'.i18n),
           onPressed: () async {
             LastFM last;
@@ -1577,7 +1577,7 @@ class _CreditsScreenState extends State<CreditsScreen> {
             subtitle: Text('To get latest releases'.i18n),
             leading: Icon(FontAwesome5.telegram, color: Color(0xFF27A2DF), size: 36.0),
             onTap: () {
-              launch('https://t.me/freezereleases');
+              launch('https://t.me/joinchat/Se4zLEBvjS1NCiY9');
             },
           ),
           ListTile(
@@ -1601,7 +1601,7 @@ class _CreditsScreenState extends State<CreditsScreen> {
             subtitle: Text('Source code, report issues there.'.i18n),
             leading: Icon(Icons.code, color: Colors.green, size: 36.0),
             onTap: () {
-              launch('https://git.rip/freezer/');
+              launch('https://git.freezer.life/exttex/freezer');
             },
           ),
           ListTile(

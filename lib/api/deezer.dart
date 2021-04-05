@@ -4,7 +4,6 @@ import 'package:freezer/api/spotify.dart';
 import 'package:freezer/settings.dart';
 import 'package:http/http.dart' as http;
 
-import 'dart:io';
 import 'dart:convert';
 import 'dart:async';
 
@@ -149,12 +148,12 @@ class DeezerAPI {
       try {
         //Tracks
         if (uri.pathSegments[0] == 'track') {
-          String id = await spotify.convertTrack(spotifyUri);
+          String id = await SpotifyScrapper.convertTrack(spotifyUri);
           return DeezerLinkResponse(type: DeezerLinkType.TRACK, id: id);
         }
         //Albums
         if (uri.pathSegments[0] == 'album') {
-          String id = await spotify.convertAlbum(spotifyUri);
+          String id = await SpotifyScrapper.convertAlbum(spotifyUri);
           return DeezerLinkResponse(type: DeezerLinkType.ALBUM, id: id);
         }
       } catch (e) {}

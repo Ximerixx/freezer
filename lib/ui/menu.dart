@@ -697,14 +697,14 @@ class _SleepTimerDialogState extends State<SleepTimerDialog> {
         ],
       ),
       actions: [
-        FlatButton(
+        TextButton(
           child: Text('Dismiss'.i18n),
           onPressed: () {
             Navigator.of(context).pop();
           },
         ),
         if (cache.sleepTimer != null)
-          FlatButton(
+          TextButton(
             child: Text('Cancel current timer'.i18n),
             onPressed: () {
               cache.sleepTimer.cancel();
@@ -714,7 +714,7 @@ class _SleepTimerDialogState extends State<SleepTimerDialog> {
             },
           ),
 
-        FlatButton(
+        TextButton(
           child: Text('Save'.i18n),
           onPressed: () {
             Duration duration = Duration(hours: hours, minutes: minutes);
@@ -891,11 +891,11 @@ class _CreatePlaylistDialogState extends State<CreatePlaylistDialog> {
         ],
       ),
       actions: <Widget>[
-        FlatButton(
+        TextButton(
           child: Text('Cancel'.i18n),
           onPressed: () => Navigator.of(context).pop(),
         ),
-        FlatButton(
+        TextButton(
           child: Text(edit ? 'Update'.i18n : 'Create'.i18n),
           onPressed: () async {
             if (edit) {

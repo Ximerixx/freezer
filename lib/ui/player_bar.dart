@@ -152,50 +152,71 @@ class PrevNextButton extends StatelessWidget {
 }
 
 
-
-class PlayPauseButton extends StatelessWidget {
+class PlayPauseButton extends StatefulWidget {
 
   final double size;
-  PlayPauseButton(this.size);
+  PlayPauseButton(this.size, {Key key}): super(key: key);
+
+  @override
+  _PlayPauseButtonState createState() => _PlayPauseButtonState();
+}
+
+class _PlayPauseButtonState extends State<PlayPauseButton> with SingleTickerProviderStateMixin {
+
+  AnimationController _controller;
+  Animation<double> _animation;
+
+  @override
+  void initState() {
+    _controller = AnimationController(vsync: this, duration: Duration(milliseconds: 200));
+    _animation = Tween<double>(begin: 0, end: 1).animate(CurvedAnimation(parent: _controller, curve: Curves.easeInOut));
+    super.initState();
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
-
     return StreamBuilder(
       stream: AudioService.playbackStateStream,
       builder: (context, snapshot) {
-        //Playing
-        if (AudioService.playbackState?.playing??false) {
-          return IconButton(
-              iconSize: this.size,
-              icon: Icon(Icons.pause),
-              onPressed: () => AudioService.pause()
-          );
-        }
+        //Animated icon by pato05
+        bool _playing = AudioService.playbackState?.playing ?? false;
+        if (_playing || AudioService.playbackState?.processingState == AudioProcessingState.ready ||
+            AudioService.playbackState?.processingState == AudioProcessingState.none) {
+          if (_playing)
+            _controller.forward();
+          else
+            _controller.reverse();
 
-        //Paused
-        if ((!(AudioService.playbackState?.playing??false) &&
-            AudioService.playbackState.processingState == AudioProcessingState.ready) ||
-            //None state (stopped)
-            AudioService.playbackState.processingState == AudioProcessingState.none) {
           return IconButton(
-              iconSize: this.size,
-              icon: Icon(Icons.play_arrow),
-              onPressed: () => AudioService.play()
+            splashRadius: widget.size,
+            icon: AnimatedIcon(
+              icon: AnimatedIcons.play_pause,
+              progress: _animation,
+            ),
+            iconSize: widget.size,
+            onPressed: _playing
+              ? () => AudioService.pause()
+              : () => AudioService.play()
           );
         }
 
         switch (AudioService.playbackState.processingState) {
-        //Stopped/Error
+          //Stopped/Error
           case AudioProcessingState.error:
           case AudioProcessingState.none:
           case AudioProcessingState.stopped:
-            return Container(width: this.size, height: this.size);
-        //Loading, connecting, rewinding...
+            return Container(width: widget.size, height: widget.size);
+          //Loading, connecting, rewinding...
           default:
             return Container(
-              width: this.size,
-              height: this.size,
+              width: widget.size,
+              height: widget.size,
               child: CircularProgressIndicator(),
             );
         }
@@ -203,3 +224,6 @@ class PlayPauseButton extends StatelessWidget {
     );
   }
 }
+
+
+

@@ -180,7 +180,7 @@ class HomepageSectionWidget extends StatelessWidget {
             //Has more items
             if (j == section.items.length) {
               if (section.hasMore ?? false) {
-                return FlatButton(
+                return TextButton(
                   child: Text(
                     'Show more'.i18n,
                     textAlign: TextAlign.center,

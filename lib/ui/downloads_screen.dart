@@ -239,11 +239,11 @@ class DownloadTile extends StatelessWidget {
             title: Text('Delete'.i18n),
             content: Text('Are you sure you want to delete this download?'.i18n),
             actions: [
-              FlatButton(
+              TextButton(
                 child: Text('Cancel'.i18n),
                 onPressed: () => Navigator.of(context).pop(),
               ),
-              FlatButton(
+              TextButton(
                 child: Text('Delete'.i18n),
                 onPressed: () async {
                   await downloadManager.removeDownload(download.id);

@@ -168,7 +168,7 @@ class _UpdaterScreenState extends State<UpdaterScreen> {
                 //Available download
                 if (_versionDownload != null)
                   Column(children: [
-                    RaisedButton(
+                    ElevatedButton(
                       child: Text('Download'.i18n + ' (${_versionDownload.version})'),
                       onPressed: _buttonEnabled ? () {
                         setState(() => _buttonEnabled = false);

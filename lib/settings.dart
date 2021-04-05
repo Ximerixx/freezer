@@ -127,6 +127,12 @@ class Settings {
   @JsonKey(defaultValue: null)
   String lastFMPassword;
 
+  //Spotify
+  @JsonKey(defaultValue: null)
+  String spotifyClientId;
+  @JsonKey(defaultValue: null)
+  String spotifyClientSecret;
+
 
   Settings({this.downloadPath, this.arl});
 
@@ -213,8 +219,9 @@ class Settings {
       case AudioQuality.MP3_128: return 1;
       case AudioQuality.MP3_320: return 3;
       case AudioQuality.FLAC: return 9;
+      //Deezer default
+      default: return 8;
     }
-    return 8; //default
   }
 
   //Check if is dark, can't use theme directly, because of system themes, and Theme.of(context).brightness broke
@@ -229,8 +236,22 @@ class Settings {
 
   static const deezerBg = Color(0xFF1F1A16);
   static const deezerBottom = Color(0xFF1b1714);
-  TextTheme get _textTheme => (font == 'Deezer') ? null : GoogleFonts.getTextTheme(font);
+  TextTheme get _textTheme => (font == 'Deezer')
+      ? null
+      : GoogleFonts.getTextTheme(font, this.isDark ? ThemeData.dark().textTheme : ThemeData.light().textTheme);
   String get _fontFamily => (font == 'Deezer') ? 'MabryPro' : null;
+
+  //Overrides for the non-deprecated buttons to look like the old ones
+  static final outlinedButtonTheme = OutlinedButtonThemeData(
+    style: ButtonStyle(
+      foregroundColor: MaterialStateProperty.all(Colors.white),
+    )
+  );
+  static final textButtonTheme = TextButtonThemeData(
+    style: ButtonStyle(
+      foregroundColor: MaterialStateProperty.all(Colors.white),
+    )
+  );
 
   Map<Themes, ThemeData> get _themeData => {
     Themes.Light: ThemeData(
@@ -242,6 +263,8 @@ class Settings {
       sliderTheme: _sliderTheme,
       toggleableActiveColor: primaryColor,
       bottomAppBarColor: Color(0xfff5f5f5),
+      outlinedButtonTheme: outlinedButtonTheme,
+      textButtonTheme: textButtonTheme
     ),
     Themes.Dark: ThemeData(
       textTheme: _textTheme,
@@ -251,6 +274,8 @@ class Settings {
       accentColor: primaryColor,
       sliderTheme: _sliderTheme,
       toggleableActiveColor: primaryColor,
+      outlinedButtonTheme: outlinedButtonTheme,
+      textButtonTheme: textButtonTheme
     ),
     Themes.Deezer: ThemeData(
       textTheme: _textTheme,
@@ -267,7 +292,9 @@ class Settings {
       bottomSheetTheme: BottomSheetThemeData(
         backgroundColor: deezerBottom
       ),
-      cardColor: deezerBg
+      cardColor: deezerBg,
+      outlinedButtonTheme: outlinedButtonTheme,
+      textButtonTheme: textButtonTheme
     ),
     Themes.Black: ThemeData(
       textTheme: _textTheme,
@@ -283,7 +310,9 @@ class Settings {
       toggleableActiveColor: primaryColor,
       bottomSheetTheme: BottomSheetThemeData(
         backgroundColor: Colors.black,
-      )
+      ),
+      outlinedButtonTheme: outlinedButtonTheme,
+      textButtonTheme: textButtonTheme
     )
   };
 
