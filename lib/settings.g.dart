@@ -78,7 +78,11 @@ Settings _$SettingsFromJson(Map<String, dynamic> json) {
     ..lastFMUsername = json['lastFMUsername'] as String
     ..lastFMPassword = json['lastFMPassword'] as String
     ..spotifyClientId = json['spotifyClientId'] as String
-    ..spotifyClientSecret = json['spotifyClientSecret'] as String;
+    ..spotifyClientSecret = json['spotifyClientSecret'] as String
+    ..spotifyCredentials = json['spotifyCredentials'] == null
+        ? null
+        : SpotifyCredentialsSave.fromJson(
+            json['spotifyCredentials'] as Map<String, dynamic>);
 }
 
 Map<String, dynamic> _$SettingsToJson(Settings instance) => <String, dynamic>{
@@ -123,6 +127,7 @@ Map<String, dynamic> _$SettingsToJson(Settings instance) => <String, dynamic>{
       'lastFMPassword': instance.lastFMPassword,
       'spotifyClientId': instance.spotifyClientId,
       'spotifyClientSecret': instance.spotifyClientSecret,
+      'spotifyCredentials': instance.spotifyCredentials,
     };
 
 T _$enumDecode<T>(
@@ -170,3 +175,24 @@ const _$ThemesEnumMap = {
   Themes.Deezer: 'Deezer',
   Themes.Black: 'Black',
 };
+
+SpotifyCredentialsSave _$SpotifyCredentialsSaveFromJson(
+    Map<String, dynamic> json) {
+  return SpotifyCredentialsSave(
+    accessToken: json['accessToken'] as String,
+    refreshToken: json['refreshToken'] as String,
+    scopes: (json['scopes'] as List)?.map((e) => e as String)?.toList(),
+    expiration: json['expiration'] == null
+        ? null
+        : DateTime.parse(json['expiration'] as String),
+  );
+}
+
+Map<String, dynamic> _$SpotifyCredentialsSaveToJson(
+        SpotifyCredentialsSave instance) =>
+    <String, dynamic>{
+      'accessToken': instance.accessToken,
+      'refreshToken': instance.refreshToken,
+      'scopes': instance.scopes,
+      'expiration': instance.expiration?.toIso8601String(),
+    };

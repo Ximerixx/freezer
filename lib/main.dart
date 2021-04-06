@@ -372,7 +372,7 @@ class _MainScreenState extends State<MainScreen> with SingleTickerProviderStateM
 
                             //Fix statusbar
                             SystemChrome.setSystemUIOverlayStyle(SystemUiOverlayStyle(
-                                statusBarColor: Colors.transparent
+                              statusBarColor: Colors.transparent,
                             ));
                           },
                           selectedItemColor: Theme.of(context).primaryColor,

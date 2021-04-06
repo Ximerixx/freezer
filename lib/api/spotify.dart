@@ -1,5 +1,6 @@
 import 'package:freezer/api/deezer.dart';
 import 'package:freezer/api/importer.dart';
+import 'package:freezer/settings.dart';
 import 'package:html/parser.dart';
 import 'package:html/dom.dart' as dom;
 import 'package:http/http.dart' as http;
@@ -141,6 +142,24 @@ class SpotifyAPIWrapper {
   SpotifyApi spotify;
   User me;
 
+  //Try authorize with saved credentials
+  Future<bool> trySaved() async {
+    print(settings.spotifyCredentials);
+    if (settings.spotifyClientId == null || settings.spotifyClientSecret == null || settings.spotifyCredentials == null) return false;
+    final credentials = SpotifyApiCredentials(
+      settings.spotifyClientId,
+      settings.spotifyClientSecret,
+      accessToken: settings.spotifyCredentials.accessToken,
+      refreshToken: settings.spotifyCredentials.refreshToken,
+      scopes: settings.spotifyCredentials.scopes,
+      expiration: settings.spotifyCredentials.expiration
+    );
+    spotify = SpotifyApi(credentials);
+    me = await spotify.me.get();
+    await _save();
+    return true;
+  }
+
   Future authorize(String clientId, String clientSecret) async {
     //Spotify
     SpotifyApiCredentials credentials = SpotifyApiCredentials(clientId, clientSecret);
@@ -171,6 +190,24 @@ class SpotifyAPIWrapper {
     //Create spotify
     spotify = SpotifyApi.fromAuthCodeGrant(grant, responseUri);
     me = await spotify.me.get();
+
+    //Save
+    await _save();
+  }
+
+  Future _save() async {
+    //Save credentials
+    final spotifyCredentials = await spotify.getCredentials();
+    final saveCredentials = SpotifyCredentialsSave(
+        accessToken: spotifyCredentials.accessToken,
+        refreshToken: spotifyCredentials.refreshToken,
+        scopes: spotifyCredentials.scopes,
+        expiration: spotifyCredentials.expiration
+    );
+    settings.spotifyClientSecret = spotifyCredentials.clientId;
+    settings.spotifyClientSecret = spotifyCredentials.clientSecret;
+    settings.spotifyCredentials = saveCredentials;
+    await settings.save();
   }
 
   //Cancel authorization

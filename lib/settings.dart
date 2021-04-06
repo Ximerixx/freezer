@@ -132,6 +132,8 @@ class Settings {
   String spotifyClientId;
   @JsonKey(defaultValue: null)
   String spotifyClientSecret;
+  @JsonKey(defaultValue: null)
+  SpotifyCredentialsSave spotifyCredentials;
 
 
   Settings({this.downloadPath, this.arl});
@@ -238,18 +240,18 @@ class Settings {
   static const deezerBottom = Color(0xFF1b1714);
   TextTheme get _textTheme => (font == 'Deezer')
       ? null
-      : GoogleFonts.getTextTheme(font, this.isDark ? ThemeData.dark().textTheme : ThemeData.light().textTheme);
+      : GoogleFonts.getTextTheme(font, isDark ? ThemeData.dark().textTheme : ThemeData.light().textTheme);
   String get _fontFamily => (font == 'Deezer') ? 'MabryPro' : null;
 
   //Overrides for the non-deprecated buttons to look like the old ones
-  static final outlinedButtonTheme = OutlinedButtonThemeData(
+  OutlinedButtonThemeData get outlinedButtonTheme => OutlinedButtonThemeData(
     style: ButtonStyle(
-      foregroundColor: MaterialStateProperty.all(Colors.white),
+      foregroundColor: MaterialStateProperty.all(isDark ? Colors.white : Colors.black),
     )
   );
-  static final textButtonTheme = TextButtonThemeData(
+  TextButtonThemeData get textButtonTheme => TextButtonThemeData(
     style: ButtonStyle(
-      foregroundColor: MaterialStateProperty.all(Colors.white),
+      foregroundColor: MaterialStateProperty.all(isDark ? Colors.white : Colors.black),
     )
   );
 
@@ -335,4 +337,18 @@ enum Themes {
   Dark,
   Deezer,
   Black
+}
+
+@JsonSerializable()
+class SpotifyCredentialsSave {
+  String accessToken;
+  String refreshToken;
+  List<String> scopes;
+  DateTime expiration;
+
+  SpotifyCredentialsSave({this.accessToken, this.refreshToken, this.scopes, this.expiration});
+
+  //JSON
+  factory SpotifyCredentialsSave.fromJson(Map<String, dynamic> json) => _$SpotifyCredentialsSaveFromJson(json);
+  Map<String, dynamic> toJson() => _$SpotifyCredentialsSaveToJson(this);
 }

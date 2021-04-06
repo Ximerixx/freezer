@@ -326,6 +326,18 @@ class _SpotifyImporterV2State extends State<SpotifyImporterV2> {
   void initState() {
     _clientId = settings.spotifyClientId;
     _clientSecret = settings.spotifyClientSecret;
+
+    //Try saved
+    spotify = SpotifyAPIWrapper();
+    spotify.trySaved().then((r) {
+      if (r) {
+        Navigator.of(context).pushReplacement(MaterialPageRoute(
+          builder: (context) => SpotifyImporterV2Main(spotify)
+        ));
+      }
+    });
+
+
     super.initState();
   }
 
