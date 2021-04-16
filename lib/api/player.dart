@@ -619,6 +619,8 @@ class AudioPlayerTask extends BackgroundAudioTask {
   @override
   Future onUpdateQueue(List<MediaItem> q) async {
     //just_audio
+    _shuffle = false;
+    _originalQueue = null;
     _player.stop();
     if (_audioSource != null) _audioSource.clear();
     //Filter duplicate IDs

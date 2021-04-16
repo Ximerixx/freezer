@@ -634,14 +634,19 @@ class HomePageSection {
     );
 
     String layout = json['layout'];
-    //No ads there
-    if (layout == 'ads') return null;
-    if (layout == 'horizontal-grid' || layout == 'grid') {
-      hps.layout = HomePageSectionLayout.ROW;
-    } else {
-      //Currently only row layout
-      return null;
+    switch (layout) {
+      case 'ads':
+        return null;
+      case 'horizontal-grid':
+        hps.layout = HomePageSectionLayout.ROW;
+        break;
+      case 'grid':
+        hps.layout = HomePageSectionLayout.GRID;
+        break;
+      default:
+        return null;
     }
+
     //Parse items
     for (var i in (json['items']??[])) {
       HomePageItem hpi = HomePageItem.fromPrivateJson(i);
@@ -747,7 +752,8 @@ enum HomePageItemType {
 }
 
 enum HomePageSectionLayout {
-  ROW
+  ROW,
+  GRID
 }
 
 enum RepeatType {

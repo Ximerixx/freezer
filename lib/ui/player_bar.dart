@@ -77,13 +77,18 @@ class PlayerBar extends StatelessWidget {
                     overflow: TextOverflow.clip,
                     maxLines: 1,
                   ),
-                  trailing: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: <Widget>[
-                      PrevNextButton(iconSize, prev: true, hidePrev: true,),
-                      PlayPauseButton(iconSize),
-                      PrevNextButton(iconSize)
-                    ],
+                  trailing: IconTheme(
+                    data: IconThemeData(
+                      color: settings.isDark ? Colors.white : Colors.grey[600]
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: <Widget>[
+                        PrevNextButton(iconSize, prev: true, hidePrev: true,),
+                        PlayPauseButton(iconSize),
+                        PrevNextButton(iconSize)
+                      ],
+                    ),
                   )
                 ),
               ),

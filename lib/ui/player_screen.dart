@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:audio_service/audio_service.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_screenutil/screenutil.dart';
+import 'package:fluttertoast/fluttertoast.dart';
 import 'package:freezer/api/cache.dart';
 import 'package:freezer/api/deezer.dart';
 import 'package:freezer/api/download.dart';
@@ -377,6 +378,18 @@ class _PlayerScreenVerticalState extends State<PlayerScreenVertical> {
                   ));
 
                   updateColor();
+                },
+              ),
+              IconButton(
+                icon: Icon(Icons.file_download),
+                onPressed: () async {
+                  Track t = Track.fromMediaItem(AudioService.currentMediaItem);
+                  if (await downloadManager.addOfflineTrack(t, private: false, context: context, isSingleton: true) != false)
+                    Fluttertoast.showToast(
+                      msg: 'Downloads added!'.i18n,
+                      gravity: ToastGravity.BOTTOM,
+                      toastLength: Toast.LENGTH_SHORT
+                    );
                 },
               ),
               QualityInfoWidget(),

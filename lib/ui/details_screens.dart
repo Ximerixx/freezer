@@ -286,6 +286,7 @@ class _MakeAlbumOfflineState extends State<MakeAlbumOffline> {
               return;
             }
             downloadManager.removeOfflineAlbum(widget.album.id);
+            Fluttertoast.showToast(msg: "Removed album from offline!".i18n, gravity: ToastGravity.BOTTOM, toastLength: Toast.LENGTH_SHORT);
             setState(() {
               _offline = false;
             });
@@ -1098,6 +1099,7 @@ class _MakePlaylistOfflineState extends State<MakePlaylistOffline> {
               return;
             }
             downloadManager.removeOfflinePlaylist(widget.playlist.id);
+            Fluttertoast.showToast(msg: "Playlist removed from offline!".i18n, gravity: ToastGravity.BOTTOM, toastLength: Toast.LENGTH_SHORT);
             setState(() {
               _offline = false;
             });

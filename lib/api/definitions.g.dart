@@ -368,6 +368,7 @@ Map<String, dynamic> _$HomePageSectionToJson(HomePageSection instance) =>
 
 const _$HomePageSectionLayoutEnumMap = {
   HomePageSectionLayout.ROW: 'ROW',
+  HomePageSectionLayout.GRID: 'GRID',
 };
 
 DeezerChannel _$DeezerChannelFromJson(Map<String, dynamic> json) {

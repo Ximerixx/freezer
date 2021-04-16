@@ -323,6 +323,7 @@ class MenuSheet {
         onTap: () async {
           if (isOffline) {
             await downloadManager.removeOfflineTracks([track]);
+            Fluttertoast.showToast(msg: "Track removed from offline!".i18n, gravity: ToastGravity.BOTTOM, toastLength: Toast.LENGTH_SHORT);
           } else {
             await downloadManager.addOfflineTrack(track, private: true, context: context);
           }

@@ -373,6 +373,11 @@ const language_en_us = {
     "Options": "Options",
     "Invalid/Unsupported URL": "Invalid/Unsupported URL",
     "Please wait...": "Please wait...",
-    "Login using email": "Login using email"
+    "Login using email": "Login using email",
+
+    //0.6.11, offline text OCD lol
+    "Track removed from offline!": "Track removed from offline!",
+    "Removed album from offline!": "Removed album from offline!",
+    "Playlist removed from offline!": "Playlist removed from offline!"
   }
 };

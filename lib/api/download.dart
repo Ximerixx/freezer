@@ -392,20 +392,23 @@ class DownloadManager {
     for (Track t in tracks) {
       //Check if library
       List rawTrack = await db.query('Tracks', where: 'id == ?', whereArgs: [t.id], columns: ['favorite']);
-      if (rawTrack.length > 0 && rawTrack[0]['favorite'] == 0) {
+      if (rawTrack.length > 0) {
         //Count occurrences in playlists and albums
         List albums = await db.rawQuery('SELECT (id) FROM Albums WHERE tracks LIKE "%${t.id}%"');
         List playlists = await db.rawQuery('SELECT (id) FROM Playlists WHERE tracks LIKE "%${t.id}%"');
-        if (albums.length + playlists.length == 0) {
+        if (albums.length + playlists.length == 0 && rawTrack[0]['favorite'] == 0) {
           //Safe to remove
           await db.delete('Tracks', where: 'id == ?', whereArgs: [t.id]);
-          //Remove file
-          try {
-            File(p.join(offlinePath, t.id)).delete();
-          } catch (e) {
-            print(e);
-          }
+        } else {
+          await db.update('Tracks', {'offline': 0}, where: 'id == ?', whereArgs: [t.id]);
         }
+      }
+
+      //Remove file
+      try {
+        File(p.join(offlinePath, t.id)).delete();
+      } catch (e) {
+        print(e);
       }
     }
   }

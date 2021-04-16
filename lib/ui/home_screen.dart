@@ -145,16 +145,23 @@ class _HomePageScreenState extends State<HomePageScreen> {
       return ErrorScreen();
     return Column(
         children: List.generate(_homePage.sections.length, (i) {
-          return HomepageSectionWidget(_homePage.sections[i]);
+          switch (_homePage.sections[i].layout) {
+            case HomePageSectionLayout.ROW:
+              return HomepageRowSection(_homePage.sections[i]);
+            case HomePageSectionLayout.GRID:
+              return HomePageGridSection(_homePage.sections[i]);
+            default:
+              return HomepageRowSection(_homePage.sections[i]);
+          }
         },
     ));
   }
 }
 
-class HomepageSectionWidget extends StatelessWidget {
+class HomepageRowSection extends StatelessWidget {
 
   final HomePageSection section;
-  HomepageSectionWidget(this.section);
+  HomepageRowSection(this.section);
 
   @override
   Widget build(BuildContext context) {
@@ -192,9 +199,9 @@ class HomepageSectionWidget extends StatelessWidget {
                     builder: (context) => Scaffold(
                       appBar: FreezerAppBar(section.title),
                       body: SingleChildScrollView(
-                          child: HomePageScreen(
-                            channel: DeezerChannel(target: section.pagePath)
-                          )
+                        child: HomePageScreen(
+                          channel: DeezerChannel(target: section.pagePath)
+                        )
                       ),
                     ),
                   )),
@@ -212,6 +219,41 @@ class HomepageSectionWidget extends StatelessWidget {
     );
   }
 }
+
+class HomePageGridSection extends StatelessWidget {
+
+  final HomePageSection section;
+  HomePageGridSection(this.section);
+
+  @override
+  Widget build(BuildContext context) {
+    return ListTile(
+      contentPadding: EdgeInsets.symmetric(horizontal: 4.0, vertical: 2.0),
+      title: Padding(
+        padding: EdgeInsets.symmetric(vertical: 4.0, horizontal: 6.0),
+        child: Text(
+          section.title??'',
+          textAlign: TextAlign.left,
+          maxLines: 2,
+          overflow: TextOverflow.ellipsis,
+          style: TextStyle(
+              fontSize: 20.0,
+              fontWeight: FontWeight.w900
+          ),
+        ),
+      ),
+      subtitle: Wrap(
+        alignment: WrapAlignment.spaceAround,
+        children: List.generate(section.items.length, (i) {
+
+          //Item
+          return HomePageItemWidget(section.items[i]);
+        }),
+      ),
+    );
+  }
+}
+
 
 
 
