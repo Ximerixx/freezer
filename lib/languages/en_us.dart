@@ -378,6 +378,35 @@ const language_en_us = {
     //0.6.11, offline text OCD lol
     "Track removed from offline!": "Track removed from offline!",
     "Removed album from offline!": "Removed album from offline!",
-    "Playlist removed from offline!": "Playlist removed from offline!"
+    "Playlist removed from offline!": "Playlist removed from offline!",
+
+    //0.6.11 - a11y by dangou
+    "Repeat": "Repeat",
+    "Repeat one": "Repeat one",
+    "Repeat off": "Repeat off",
+    "Love": "Love",
+    "Unlove": "Unlove",
+    "Dislike": "Dislike",
+    "Close": "Close",
+    "Sort playlist": "Sort playlist",
+    "Sort ascending": "Sort ascending",
+    "Sort descending": "Sort descending",
+    "Stop": "Stop",
+    "Start": "Start",
+    "Clear all": "Clear all",
+    "Play previous": "Play previous",
+    "Play": "Play",
+    "Pause": "Pause",
+    "Remove": "Remove",
+    "Seekbar": "Seekbar",
+    "Singles": "Singles",
+    "Featured": "Featured",
+    "Fans": "Fans",
+    "Duration": "Duration",
+    "Sort": "Sort",
+
+    //0.6.12
+    "Your ARL might be expired, try logging out and logging back in using new ARL or browser.": "Your ARL might be expired, try logging out and logging back in using new ARL or browser.",
+
   }
 };

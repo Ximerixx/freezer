@@ -74,7 +74,7 @@ class _DownloadsScreenState extends State<DownloadsScreen> {
          'Downloads'.i18n,
           actions: [
             IconButton(
-              icon: Icon(Icons.delete_sweep),
+              icon: Icon(Icons.delete_sweep, semanticLabel: "Clear all".i18n,),
               onPressed: () async {
                 await downloadManager.removeDownloads(DownloadState.ERROR);
                 await downloadManager.removeDownloads(DownloadState.DEEZER_ERROR);
@@ -84,7 +84,8 @@ class _DownloadsScreenState extends State<DownloadsScreen> {
             ),
             IconButton(
               icon:
-                  Icon(downloadManager.running ? Icons.stop : Icons.play_arrow),
+                  Icon(downloadManager.running ? Icons.stop : Icons.play_arrow,
+                  semanticLabel: downloadManager.running ? "Stop".i18n : "Start".i18n,),
               onPressed: () {
                 setState(() {
                   if (downloadManager.running)

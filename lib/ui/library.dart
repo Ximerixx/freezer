@@ -33,7 +33,7 @@ class LibraryAppBar extends StatelessWidget implements PreferredSizeWidget {
       'Library'.i18n,
       actions: <Widget>[
         IconButton(
-          icon: Icon(Icons.file_download),
+          icon: Icon(Icons.file_download, semanticLabel: "Download".i18n,),
           onPressed: () {
             Navigator.of(context).push(
               MaterialPageRoute(builder: (context) => DownloadsScreen())
@@ -41,7 +41,7 @@ class LibraryAppBar extends StatelessWidget implements PreferredSizeWidget {
           },
         ),
         IconButton(
-          icon: Icon(Icons.settings),
+          icon: Icon(Icons.settings, semanticLabel: "Settings".i18n,),
           onPressed: () {
             Navigator.of(context).push(
               MaterialPageRoute(builder: (context) => SettingsScreen())
@@ -420,13 +420,14 @@ class _LibraryTracksState extends State<LibraryTracks> {
         'Tracks'.i18n,
         actions: [
           IconButton(
-            icon: Icon(_sort.reverse ? FontAwesome5.sort_alpha_up : FontAwesome5.sort_alpha_down),
+            icon: Icon(_sort.reverse ? FontAwesome5.sort_alpha_up : FontAwesome5.sort_alpha_down,
+              semanticLabel: _sort.reverse ? "Sort descending".i18n : "Sort ascending".i18n,),
             onPressed: () async {
               await _reverse();
             }
           ),
           PopupMenuButton(
-            child: Icon(Icons.sort, size: 32.0),
+            child: Icon(Icons.sort, size: 32.0, semanticLabel: "Sort".i18n,),
             color: Theme.of(context).scaffoldBackgroundColor,
             onSelected: (SortType s) async {
               //Preload for sorting
@@ -631,7 +632,8 @@ class _LibraryAlbumsState extends State<LibraryAlbums> {
         'Albums'.i18n,
         actions: [
           IconButton(
-            icon: Icon(_sort.reverse ? FontAwesome5.sort_alpha_up : FontAwesome5.sort_alpha_down),
+            icon: Icon(_sort.reverse ? FontAwesome5.sort_alpha_up : FontAwesome5.sort_alpha_down,
+              semanticLabel: _sort.reverse ? "Sort descending".i18n : "Sort ascending".i18n,),
             onPressed: () => _reverse(),
           ),
           PopupMenuButton(
@@ -834,7 +836,8 @@ class _LibraryArtistsState extends State<LibraryArtists> {
         'Artists'.i18n,
         actions: [
           IconButton(
-            icon: Icon(_sort.reverse ? FontAwesome5.sort_alpha_up : FontAwesome5.sort_alpha_down),
+            icon: Icon(_sort.reverse ? FontAwesome5.sort_alpha_up : FontAwesome5.sort_alpha_down,
+              semanticLabel: _sort.reverse ? "Sort descending".i18n : "Sort ascending".i18n,),
             onPressed: () => _reverse(),
           ),
           PopupMenuButton(
@@ -995,7 +998,8 @@ class _LibraryPlaylistsState extends State<LibraryPlaylists> {
         'Playlists'.i18n,
         actions: [
           IconButton(
-            icon: Icon(_sort.reverse ? FontAwesome5.sort_alpha_up : FontAwesome5.sort_alpha_down),
+            icon: Icon(_sort.reverse ? FontAwesome5.sort_alpha_up : FontAwesome5.sort_alpha_down,
+              semanticLabel: _sort.reverse ? "Sort descending".i18n : "Sort ascending".i18n,),
             onPressed: () => _reverse(),
           ),
           PopupMenuButton(
@@ -1178,7 +1182,7 @@ class _HistoryScreenState extends State<HistoryScreen> {
         'History'.i18n,
         actions: [
           IconButton(
-            icon: Icon(Icons.delete_sweep),
+            icon: Icon(Icons.delete_sweep, semanticLabel: "Clear all".i18n,),
             onPressed: () {
               setState(() => cache.history = []);
               cache.save();

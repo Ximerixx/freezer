@@ -111,7 +111,7 @@ class _SearchScreenState extends State<SearchScreen> {
 
   Widget _removeHistoryItemWidget(int index) {
     return IconButton(
-      icon: Icon(Icons.close),
+      icon: Icon(Icons.close, semanticLabel: "Remove".i18n,),
       onPressed: () async {
         if (cache.searchHistory != null)
           cache.searchHistory.removeAt(index);
@@ -188,7 +188,7 @@ class _SearchScreenState extends State<SearchScreen> {
                               width: 40.0,
                               child: IconButton(
                                 splashRadius: 20.0,
-                                icon: Icon(Icons.clear),
+                                icon: Icon(Icons.clear, semanticLabel: "Clear".i18n,),
                                 onPressed: () {
                                   setState(() {
                                     _suggestions = [];
@@ -311,7 +311,7 @@ class _SearchScreenState extends State<SearchScreen> {
                     data,
                     onTap: () {
                       List<Track> queue = cache.searchHistory.where((h) => h.type == SearchHistoryItemType.TRACK).map<Track>((t) => t.data).toList();
-                      playerHelper.playFromTrackList(queue, queue.first.id, QueueSource(
+                      playerHelper.playFromTrackList(queue, data.id, QueueSource(
                         text: 'Search history'.i18n,
                         source: 'searchhistory',
                         id: 'searchhistory'
@@ -723,7 +723,7 @@ class SearchResultsScreen extends StatelessWidget {
                 return ShowEpisodeTile(
                   e,
                   trailing: IconButton(
-                    icon: Icon(Icons.more_vert),
+                    icon: Icon(Icons.more_vert, semanticLabel: "Options".i18n,),
                     onPressed: () {
                       MenuSheet m = MenuSheet(context);
                       m.defaultShowEpisodeMenu(e.show, e);
@@ -907,7 +907,7 @@ class EpisodeListScreen extends StatelessWidget {
           return ShowEpisodeTile(
             e,
             trailing: IconButton(
-              icon: Icon(Icons.more_vert),
+              icon: Icon(Icons.more_vert, semanticLabel: "Options".i18n,),
               onPressed: () {
                 MenuSheet m = MenuSheet(context);
                 m.defaultShowEpisodeMenu(e.show, e);

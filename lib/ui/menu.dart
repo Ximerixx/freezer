@@ -67,10 +67,14 @@ class MenuSheet {
               mainAxisSize: MainAxisSize.max,
               mainAxisAlignment: MainAxisAlignment.spaceEvenly,
               children: <Widget>[
-                CachedImage(
-                  url: track.albumArt.full,
-                  height: 128,
-                  width: 128,
+                Semantics(
+                  child: CachedImage(
+                    url: track.albumArt.full,
+                    height: 128,
+                    width: 128,
+                  ),
+                  label: "Album art".i18n,
+                  image: true,
                 ),
                 Container(
                   width: 240.0,

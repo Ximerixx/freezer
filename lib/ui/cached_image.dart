@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:palette_generator/palette_generator.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:photo_view/photo_view.dart';
+import 'package:freezer/translations.i18n.dart';
 
 ImagesDatabase imagesDatabase = ImagesDatabase();
 
@@ -115,11 +116,14 @@ class _ZoomableImageState extends State<ZoomableImage> {
   Widget build(BuildContext context) {
     ctx = context;
     return TextButton(
-        child: CachedImage(
-          url: widget.url,
-          rounded: widget.rounded,
-          width: widget.width,
-          fullThumb: true,
+        child: Semantics(
+          child: CachedImage(
+            url: widget.url,
+            rounded: widget.rounded,
+            width: widget.width,
+            fullThumb: true,
+          ),
+          label: "Album art".i18n,
         ),
         onPressed: () {
           Navigator.of(context).push(PageRouteBuilder(

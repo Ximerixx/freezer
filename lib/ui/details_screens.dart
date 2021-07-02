@@ -127,7 +127,7 @@ class _AlbumDetailsState extends State<AlbumDetails> {
                 children: <Widget>[
                   Row(
                     children: <Widget>[
-                      Icon(Icons.audiotrack, size: 32.0,),
+                      Icon(Icons.audiotrack, size: 32.0, semanticLabel: "Tracks".i18n,),
                       Container(width: 8.0, height: 42.0,), //Height to adjust card height
                       Text(
                         album.tracks.length.toString(),
@@ -137,7 +137,7 @@ class _AlbumDetailsState extends State<AlbumDetails> {
                   ),
                   Row(
                     children: <Widget>[
-                      Icon(Icons.timelapse, size: 32.0,),
+                      Icon(Icons.timelapse, size: 32.0, semanticLabel: "Duration".i18n,),
                       Container(width: 8.0,),
                       Text(
                         album.durationString,
@@ -147,7 +147,7 @@ class _AlbumDetailsState extends State<AlbumDetails> {
                   ),
                   Row(
                     children: <Widget>[
-                      Icon(Icons.people, size: 32.0,),
+                      Icon(Icons.people, size: 32.0, semanticLabel: "Fans".i18n),
                       Container(width: 8.0,),
                       Text(
                         album.fansString,
@@ -361,6 +361,7 @@ class ArtistDetails extends StatelessWidget {
                               Icon(
                                 Icons.people,
                                 size: 32.0,
+                                semanticLabel: "Fans".i18n,
                               ),
                               Container(
                                 width: 8,
@@ -377,7 +378,7 @@ class ArtistDetails extends StatelessWidget {
                           Row(
                             mainAxisSize: MainAxisSize.min,
                             children: <Widget>[
-                              Icon(Icons.album, size: 32.0),
+                              Icon(Icons.album, size: 32.0, semanticLabel: "Albums".i18n,),
                               Container(
                                 width: 8.0,
                               ),
@@ -666,9 +667,9 @@ class _DiscographyScreenState extends State<DiscographyScreen> {
             'Discography'.i18n,
             bottom: TabBar(
               tabs: [
-                Tab(icon: Icon(Icons.album)),
-                Tab(icon: Icon(Icons.audiotrack)),
-                Tab(icon: Icon(Icons.recent_actors))
+                Tab(icon: Icon(Icons.album, semanticLabel: "Albums".i18n,)),
+                Tab(icon: Icon(Icons.audiotrack, semanticLabel: "Singles".i18n)),
+                Tab(icon: Icon(Icons.recent_actors, semanticLabel: "Featured".i18n,))
               ],
             ),
             height: 100.0,
@@ -894,6 +895,7 @@ class _PlaylistDetailsState extends State<PlaylistDetails> {
                             Icon(
                               Icons.audiotrack,
                               size: 32.0,
+                              semanticLabel: "Tracks".i18n,
                             ),
                             Container(width: 8.0,),
                             Text((playlist.trackCount??playlist.tracks.length).toString(), style: TextStyle(fontSize: 16),)
@@ -905,6 +907,7 @@ class _PlaylistDetailsState extends State<PlaylistDetails> {
                             Icon(
                               Icons.timelapse,
                               size: 32.0,
+                              semanticLabel: "Duration".i18n,
                             ),
                             Container(width: 8.0,),
                             Text(playlist.durationString, style: TextStyle(fontSize: 16),)
@@ -943,7 +946,8 @@ class _PlaylistDetailsState extends State<PlaylistDetails> {
 
                   if (playlist.user.name != deezerAPI.userName)
                     IconButton(
-                      icon: Icon(playlist.library ? Icons.favorite : Icons.favorite_outline, size: 32),
+                      icon: Icon(playlist.library ? Icons.favorite : Icons.favorite_outline, size: 32,
+                      semanticLabel: playlist.library ? "Unlove".i18n : "Love".i18n,),
                       onPressed: () async {
                         //Add to library
                         if (!playlist.library) {
@@ -968,14 +972,14 @@ class _PlaylistDetailsState extends State<PlaylistDetails> {
                       },
                     ),
                   IconButton(
-                    icon: Icon(Icons.file_download, size: 32.0,),
+                    icon: Icon(Icons.file_download, size: 32.0, semanticLabel: "Download".i18n,),
                     onPressed: () async {
                       if (await downloadManager.addOfflinePlaylist(playlist, private: false, context: context) != false)
                         MenuSheet(context).showDownloadStartedToast();
                     },
                   ),
                   PopupMenuButton(
-                    child: Icon(Icons.sort, size: 32.0),
+                    child: Icon(Icons.sort, size: 32.0, semanticLabel: "Sort playlist".i18n,),
                     color: Theme.of(context).scaffoldBackgroundColor,
                     onSelected: (SortType s) async {
                       if (playlist.tracks.length < playlist.trackCount) {
@@ -1013,7 +1017,8 @@ class _PlaylistDetailsState extends State<PlaylistDetails> {
                     ],
                   ),
                   IconButton(
-                    icon: Icon(_sort.reverse ? FontAwesome5.sort_alpha_up : FontAwesome5.sort_alpha_down),
+                    icon: Icon(_sort.reverse ? FontAwesome5.sort_alpha_up : FontAwesome5.sort_alpha_down,
+                    semanticLabel: _sort.reverse ? "Sort descending".i18n : "Sort ascending".i18n,),
                     onPressed: () => _reverse(),
                   ),
                   Container(width: 4.0)
@@ -1230,7 +1235,7 @@ class _ShowScreenState extends State<ShowScreen> {
               return ShowEpisodeTile(
                 e,
                 trailing: IconButton(
-                  icon: Icon(Icons.more_vert),
+                  icon: Icon(Icons.more_vert, semanticLabel: "Options".i18n,),
                   onPressed: () {
                     MenuSheet m = MenuSheet(context);
                     m.defaultShowEpisodeMenu(_show, e);

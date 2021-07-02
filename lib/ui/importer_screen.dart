@@ -98,7 +98,7 @@ class _SpotifyImporterV1State extends State<SpotifyImporterV1> {
                   ),
                 ),
                 IconButton(
-                  icon: Icon(Icons.search),
+                  icon: Icon(Icons.search, semanticLabel: "Search".i18n,),
                   onPressed: () => _load(),
                 )
               ],

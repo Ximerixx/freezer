@@ -214,7 +214,13 @@ public class Deezer {
         original = original.replaceAll("%title%", sanitize(publicTrack.getString("title")));
         original = original.replaceAll("%album%", sanitize(publicTrack.getJSONObject("album").getString("title")));
         original = original.replaceAll("%artist%", sanitize(publicTrack.getJSONObject("artist").getString("name")));
-        original = original.replaceAll("%albumArtist%", sanitize(publicAlbum.getJSONObject("artist").getString("name")));
+        // Album might not be available
+        try {
+            original = original.replaceAll("%albumArtist%", sanitize(publicAlbum.getJSONObject("artist").getString("name")));
+        } catch (Exception e) {
+            original = original.replaceAll("%albumArtist%", sanitize(publicTrack.getJSONObject("artist").getString("name")));
+        }
+
         //Artists
         String artists = "";
         String feats = "";
@@ -275,15 +281,16 @@ public class Deezer {
             if (!artists.contains(artist))
                 artists += settings.artistSeparator + artist;
         }
+        boolean albumAvailable = !publicAlbum.has("error");
         if (settings.tags.artist) tag.addField(FieldKey.ARTIST, artists.substring(settings.artistSeparator.length()));
         if (settings.tags.track) tag.setField(FieldKey.TRACK, String.format("%02d", publicTrack.getInt("track_position")));
         if (settings.tags.disc) tag.setField(FieldKey.DISC_NO, Integer.toString(publicTrack.getInt("disk_number")));
-        if (settings.tags.albumArtist) tag.setField(FieldKey.ALBUM_ARTIST, publicAlbum.getJSONObject("artist").getString("name"));
+        if (settings.tags.albumArtist && albumAvailable) tag.setField(FieldKey.ALBUM_ARTIST, publicAlbum.getJSONObject("artist").getString("name"));
         if (settings.tags.date) tag.setField(FieldKey.YEAR, publicTrack.getString("release_date").substring(0, 4));
-        if (settings.tags.label) tag.setField(FieldKey.RECORD_LABEL, publicAlbum.getString("label"));
+        if (settings.tags.label && albumAvailable) tag.setField(FieldKey.RECORD_LABEL, publicAlbum.getString("label"));
         if (settings.tags.isrc) tag.setField(FieldKey.ISRC, publicTrack.getString("isrc"));
-        if (settings.tags.upc) tag.setField(FieldKey.BARCODE, publicAlbum.getString("upc"));
-        if (settings.tags.trackTotal) tag.setField(FieldKey.TRACK_TOTAL, Integer.toString(publicAlbum.getInt("nb_tracks")));
+        if (settings.tags.upc && albumAvailable) tag.setField(FieldKey.BARCODE, publicAlbum.getString("upc"));
+        if (settings.tags.trackTotal && albumAvailable) tag.setField(FieldKey.TRACK_TOTAL, Integer.toString(publicAlbum.getInt("nb_tracks")));
 
         //BPM
         if (publicTrack.has("bpm") && (int)publicTrack.getDouble("bpm") > 0)
@@ -301,14 +308,16 @@ public class Deezer {
 
         //Genres
         String genres = "";
-        for (int i=0; i<publicAlbum.getJSONObject("genres").getJSONArray("data").length(); i++) {
-            String genre = publicAlbum.getJSONObject("genres").getJSONArray("data").getJSONObject(0).getString("name");
-            if (!genres.contains(genre)) {
-                genres += ", " + genre;
+        if (albumAvailable) {
+            for (int i=0; i<publicAlbum.getJSONObject("genres").getJSONArray("data").length(); i++) {
+                String genre = publicAlbum.getJSONObject("genres").getJSONArray("data").getJSONObject(0).getString("name");
+                if (!genres.contains(genre)) {
+                    genres += ", " + genre;
+                }
             }
+            if (genres.length() > 2 && settings.tags.genre)
+                tag.setField(FieldKey.GENRE, genres.substring(2));
         }
-        if (genres.length() > 2 && settings.tags.genre)
-            tag.setField(FieldKey.GENRE, genres.substring(2));
 
         //Additional tags from private api
         if (settings.tags.contributors)

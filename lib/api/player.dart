@@ -32,7 +32,6 @@ class PlayerHelper {
   QueueSource queueSource;
   LoopMode repeatType = LoopMode.off;
   Timer _timer;
-  Scrobblenaut scrobblenaut;
   int audioSession;
   int _prevAudioSession;
   bool equalizerOpen = false;
@@ -53,6 +52,7 @@ class PlayerHelper {
           //After audio_service is loaded, load queue, set quality
           await settings.updateAudioServiceQuality();
           await AudioService.customAction('load');
+          await authorizeLastFM();
           break;
         case 'onRestore':
           //Load queueSource from isolate
@@ -126,15 +126,6 @@ class PlayerHelper {
         if (settings.logListen) {
           deezerAPI.logListen(AudioService.currentMediaItem.id);
         }
-
-        //LastFM
-        if (scrobblenaut != null) {
-          await scrobblenaut.track.scrobble(
-            track: AudioService.currentMediaItem.title,
-            artist: AudioService.currentMediaItem.artist,
-            album: AudioService.currentMediaItem.album,
-          );
-        }
       }
 
     });
@@ -163,15 +154,7 @@ class PlayerHelper {
 
   Future authorizeLastFM() async {
     if (settings.lastFMUsername == null || settings.lastFMPassword == null) return;
-    try {
-      LastFM lastFM = await LastFM.authenticateWithPasswordHash(
-        apiKey: 'b6ab5ae967bcd8b10b23f68f42493829',
-        apiSecret: '861b0dff9a8a574bec747f9dab8b82bf',
-        username: settings.lastFMUsername,
-        passwordHash: settings.lastFMPassword
-      );
-      scrobblenaut = Scrobblenaut(lastFM: lastFM);
-    } catch (e) {}
+    await AudioService.customAction("authorizeLastFM", [settings.lastFMUsername, settings.lastFMPassword]);
   }
 
   Future toggleShuffle() async {
@@ -390,6 +373,10 @@ class AudioPlayerTask extends BackgroundAudioTask {
   LoopMode _loopMode = LoopMode.off;
 
   Completer _androidAutoCallback;
+  Scrobblenaut _scrobblenaut;
+  bool _scrobblenautReady = false;
+  // Last logged track id
+  String _loggedTrackId;
 
   MediaItem get mediaItem => _queue[_queueIndex];
 
@@ -473,12 +460,22 @@ class AudioPlayerTask extends BackgroundAudioTask {
   }
 
   @override
-  Future onPlay() {
+  Future onPlay() async {
     _player.play();
     //Restore position on play
     if (_lastPosition != null) {
       onSeekTo(_lastPosition);
       _lastPosition = null;
+    }
+
+    //LastFM
+    if (_scrobblenautReady && mediaItem.id != _loggedTrackId) {
+      _loggedTrackId = mediaItem.id;
+      await _scrobblenaut.track.scrobble(
+        track: mediaItem.title,
+        artist: mediaItem.artist,
+        album: mediaItem.album,
+      );
     }
   }
 
@@ -515,6 +512,7 @@ class AudioPlayerTask extends BackgroundAudioTask {
 
   @override
   Future<void> onSkipToNext() async {
+    _lastPosition = null;
     if (_queueIndex == _queue.length-1) return;
     //Update buffering state
     _skipState = AudioProcessingState.skippingToNext;
@@ -618,6 +616,7 @@ class AudioPlayerTask extends BackgroundAudioTask {
   //Replace current queue
   @override
   Future onUpdateQueue(List<MediaItem> q) async {
+    _lastPosition = null;
     //just_audio
     _shuffle = false;
     _originalQueue = null;
@@ -792,6 +791,25 @@ class AudioPlayerTask extends BackgroundAudioTask {
           _visualizerSubscription.cancel();
           _visualizerSubscription = null;
         }
+        break;
+      //Authorize lastfm
+      case 'authorizeLastFM':
+        String username = args[0];
+        String password = args[1];
+        try {
+          LastFM lastFM = await LastFM.authenticateWithPasswordHash(
+              apiKey: 'b6ab5ae967bcd8b10b23f68f42493829',
+              apiSecret: '861b0dff9a8a574bec747f9dab8b82bf',
+              username: username,
+              passwordHash: password
+          );
+          _scrobblenaut = Scrobblenaut(lastFM: lastFM);
+          _scrobblenautReady = true;
+        } catch (e) { print(e); }
+        break;
+      case 'disableLastFM':
+        _scrobblenaut = null;
+        _scrobblenautReady = false;
         break;
     }
 

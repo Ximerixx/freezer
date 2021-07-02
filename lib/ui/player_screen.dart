@@ -263,7 +263,8 @@ class _PlayerScreenHorizontalState extends State<PlayerScreenHorizontal> {
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: <Widget>[
                         IconButton(
-                          icon: Icon(Icons.subtitles, size: ScreenUtil().setWidth(32)),
+                          icon: Icon(Icons.subtitles, size: ScreenUtil().setWidth(32),
+                            semanticLabel: "Lyrics".i18n,),
                           onPressed: () {
                             Navigator.of(context).push(MaterialPageRoute(
                               builder: (context) => LyricsScreen(trackId: AudioService.currentMediaItem.id)
@@ -365,7 +366,8 @@ class _PlayerScreenVerticalState extends State<PlayerScreenVertical> {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: <Widget>[
               IconButton(
-                icon: Icon(Icons.subtitles, size: ScreenUtil().setWidth(46)),
+                icon: Icon(Icons.subtitles, size: ScreenUtil().setWidth(46),
+                semanticLabel: "Lyrics".i18n,),
                 onPressed: () async {
                   //Fix bottom buttons
                   SystemChrome.setSystemUIOverlayStyle(SystemUiOverlayStyle(
@@ -381,7 +383,7 @@ class _PlayerScreenVerticalState extends State<PlayerScreenVertical> {
                 },
               ),
               IconButton(
-                icon: Icon(Icons.file_download),
+                icon: Icon(Icons.file_download, semanticLabel: "Download".i18n,),
                 onPressed: () async {
                   Track t = Track.fromMediaItem(AudioService.currentMediaItem);
                   if (await downloadManager.addOfflineTrack(t, private: false, context: context, isSingleton: true) != false)
@@ -466,7 +468,8 @@ class PlayerMenuButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return IconButton(
-      icon: Icon(Icons.more_vert, size: ScreenUtil().setWidth(46)),
+      icon: Icon(Icons.more_vert, size: ScreenUtil().setWidth(46),
+        semanticLabel: "Options".i18n,),
       onPressed: () {
         Track t = Track.fromMediaItem(AudioService.currentMediaItem);
         MenuSheet m = MenuSheet(context, navigateCallback: () {
@@ -502,19 +505,22 @@ class _RepeatButtonState extends State<RepeatButton> {
       case LoopMode.off:
         return Icon(
             Icons.repeat,
-            size: widget.iconSize
+            size: widget.iconSize,
+            semanticLabel: "Repeat off".i18n,
         );
       case LoopMode.all:
         return Icon(
             Icons.repeat,
             color: Theme.of(context).primaryColor,
-            size: widget.iconSize
+            size: widget.iconSize,
+            semanticLabel: "Repeat".i18n,
         );
       case LoopMode.one:
         return Icon(
           Icons.repeat_one,
           color: Theme.of(context).primaryColor,
-          size: widget.iconSize
+          size: widget.iconSize,
+          semanticLabel: "Repeat one".i18n,
         );
     }
   }
@@ -546,9 +552,9 @@ class _PlaybackControlsState extends State<PlaybackControls> {
 
   Icon get libraryIcon {
     if (cache.checkTrackFavorite(Track.fromMediaItem(AudioService.currentMediaItem))) {
-      return Icon(Icons.favorite, size: widget.iconSize * 0.64);
+      return Icon(Icons.favorite, size: widget.iconSize * 0.64, semanticLabel: "Unlove".i18n,);
     }
-    return Icon(Icons.favorite_border, size: widget.iconSize * 0.64);
+    return Icon(Icons.favorite_border, size: widget.iconSize * 0.64, semanticLabel: "Love".i18n,);
   }
 
   @override
@@ -560,7 +566,7 @@ class _PlaybackControlsState extends State<PlaybackControls> {
         mainAxisSize: MainAxisSize.max,
         children: [
           IconButton(
-              icon: Icon(Icons.sentiment_very_dissatisfied, size:  ScreenUtil().setWidth(46)),
+              icon: Icon(Icons.sentiment_very_dissatisfied, size:  ScreenUtil().setWidth(46), semanticLabel: "Dislike".i18n,),
               onPressed: () async {
                 await deezerAPI.dislikeTrack(AudioService.currentMediaItem.id);
                 if (playerHelper.queueIndex < (AudioService.queue??[]).length - 1) {
@@ -678,7 +684,7 @@ class PlayerScreenTopRow extends StatelessWidget {
           ),
         ),
         IconButton(
-          icon: Icon(Icons.menu),
+          icon: Icon(Icons.menu, semanticLabel: "Queue".i18n,),
           iconSize: this.iconSize??ScreenUtil().setSp(52),
           splashRadius: this.iconSize??ScreenUtil().setWidth(52),
           onPressed: () async {
@@ -823,6 +829,7 @@ class _QueueScreenState extends State<QueueScreen> {
             IconButton(
               icon: Icon(
                 Icons.shuffle,
+                semanticLabel: "Shuffle".i18n,
               ),
               onPressed: () async {
                 await playerHelper.toggleShuffle();
@@ -848,7 +855,7 @@ class _QueueScreenState extends State<QueueScreen> {
               },
               key: Key(i.toString()),
               trailing: IconButton(
-                icon: Icon(Icons.close),
+                icon: Icon(Icons.close, semanticLabel: "Close".i18n,),
                 onPressed: () async {
                   await AudioService.removeQueueItem(t.toMediaItem());
                   setState(() {});

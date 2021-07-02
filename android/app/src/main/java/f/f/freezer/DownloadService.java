@@ -478,7 +478,7 @@ public class DownloadService extends Service {
                 File coverFile = new File(outFile.getPath().substring(0, outFile.getPath().lastIndexOf('.')) + ".jpg");
 
                 try {
-                    URL url = new URL("http://e-cdn-images.deezer.com/images/cover/" + albumJson.getString("md5_image") + "/" + Integer.toString(settings.albumArtResolution) + "x" + Integer.toString(settings.albumArtResolution) + "-000000-80-0-0.jpg");
+                    URL url = new URL("http://e-cdn-images.deezer.com/images/cover/" + trackJson.getString("md5_image") + "/" + Integer.toString(settings.albumArtResolution) + "x" + Integer.toString(settings.albumArtResolution) + "-000000-80-0-0.jpg");
                     HttpURLConnection connection = (HttpURLConnection) url.openConnection();
                     //Set headers
                     connection.setRequestMethod("GET");

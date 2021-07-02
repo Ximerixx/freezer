@@ -1,15 +1,11 @@
-import 'dart:async';
-
-import 'package:freezer/api/deezer.dart';
 import 'package:freezer/api/definitions.dart';
-import 'package:freezer/ui/details_screens.dart';
-import 'package:freezer/ui/library.dart';
 import 'package:json_annotation/json_annotation.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:path/path.dart' as p;
 
 import 'dart:io';
 import 'dart:convert';
+import 'dart:async';
 
 part 'cache.g.dart';
 
@@ -67,6 +63,12 @@ class Cache {
   void addToSearchHistory(dynamic item) async {
     if (searchHistory == null)
       searchHistory = [];
+
+    // Remove duplicate
+    int i = searchHistory.indexWhere((e) => e.data.id == item.id);
+    if (i != -1) {
+      searchHistory.removeAt(i);
+    }
 
     if (item is Track)
       searchHistory.add(SearchHistoryItem(item, SearchHistoryItemType.TRACK));

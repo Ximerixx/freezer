@@ -1226,8 +1226,8 @@ class _GeneralSettingsState extends State<GeneralSettings> {
               if (settings.lastFMPassword != null && settings.lastFMUsername != null) {
                 settings.lastFMUsername = null;
                 settings.lastFMPassword = null;
-                playerHelper.scrobblenaut = null;
                 await settings.save();
+                await AudioService.customAction("disableLastFM");
                 setState(() {});
                 Fluttertoast.showToast(msg: 'Logged out!'.i18n);
                 return;
@@ -1352,7 +1352,7 @@ class _LastFMLoginState extends State<LastFMLogin> {
             settings.lastFMUsername = last.username;
             settings.lastFMPassword = last.passwordHash;
             await settings.save();
-            playerHelper.scrobblenaut = Scrobblenaut(lastFM: last);
+            await playerHelper.authorizeLastFM();
             Navigator.of(context).pop();
           },
         ),
@@ -1396,7 +1396,7 @@ class _DirectoryPickerState extends State<DirectoryPicker> {
         'Pick-a-Path'.i18n,
         actions: <Widget>[
           IconButton(
-            icon: Icon(Icons.sd_card),
+            icon: Icon(Icons.sd_card, semanticLabel: 'Select storage'.i18n,),
             onPressed: () {
               String path = '';
               //Chose storage

@@ -2,6 +2,7 @@ import 'package:audio_service/audio_service.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:freezer/settings.dart';
+import 'package:freezer/translations.i18n.dart';
 
 import '../api/player.dart';
 import 'cached_image.dart';
@@ -122,13 +123,13 @@ class PrevNextButton extends StatelessWidget {
         if (!prev) {
           if (playerHelper.queueIndex == (AudioService.queue??[]).length - 1) {
             return IconButton(
-              icon: Icon(Icons.skip_next),
+              icon: Icon(Icons.skip_next, semanticLabel: "Play next".i18n,),
               iconSize: size,
               onPressed: null,
             );
           }
           return IconButton(
-            icon: Icon(Icons.skip_next),
+            icon: Icon(Icons.skip_next, semanticLabel: "Play next".i18n,),
             iconSize: size,
             onPressed: () => AudioService.skipToNext(),
           );
@@ -139,13 +140,13 @@ class PrevNextButton extends StatelessWidget {
               return Container(height: 0, width: 0,);
             }
             return IconButton(
-              icon: Icon(Icons.skip_previous),
+              icon: Icon(Icons.skip_previous, semanticLabel: "Play previous".i18n,),
               iconSize: size,
               onPressed: null,
             );
           }
           return IconButton(
-            icon: Icon(Icons.skip_previous),
+            icon: Icon(Icons.skip_previous, semanticLabel: "Play previous".i18n,),
             iconSize: size,
             onPressed: () => AudioService.skipToPrevious(),
           );
@@ -203,6 +204,7 @@ class _PlayPauseButtonState extends State<PlayPauseButton> with SingleTickerProv
             icon: AnimatedIcon(
               icon: AnimatedIcons.play_pause,
               progress: _animation,
+              semanticLabel: _playing ? "Pause".i18n : "Play".i18n,
             ),
             iconSize: widget.size,
             onPressed: _playing
