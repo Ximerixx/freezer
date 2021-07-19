@@ -435,6 +435,19 @@ public class DownloadService extends Service {
 
             //Post processing
 
+            //Decrypt
+            try {
+                File decFile = new File(tmpFile.getPath() + ".DEC");
+                deezer.decryptFile(download.trackId, tmpFile.getPath(), decFile.getPath());
+                tmpFile.delete();
+                tmpFile = decFile;
+            } catch (Exception e) {
+                logger.error("Decryption error: " + e.toString(), download);
+                e.printStackTrace();
+                //Shouldn't ever fail
+            }
+
+
             //If exists (duplicate download in DB), don't overwrite.
             if (outFile.exists()) {
                 download.state = Download.DownloadState.DONE;

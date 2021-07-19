@@ -43,9 +43,14 @@ public class Deezer {
 
     //Initialize for logging
     void init(DownloadLog logger, String arl) {
+        //Load native
+        System.loadLibrary("decryptor-jni");
+
         this.logger = logger;
         this.arl = arl;
     }
+
+    public native void decryptFile(String trackId, String inputFilename, String outputFilename);
 
     //Authorize GWLight API
     public void authorize() {
@@ -187,7 +192,8 @@ public class Deezer {
                 step3.append(bytesToHex(cipher.doFinal(b)).toLowerCase());
             }
             //Join to URL
-            return "https://e-cdns-proxy-" + md5origin.charAt(0) + ".dzcdn.net/api/1/" + step3.toString();
+            String url = "https://e-cdns-proxy-" + md5origin.charAt(0) + ".dzcdn.net/mobile/1/" + step3.toString();
+            return url;
 
         } catch (Exception e) {
             e.printStackTrace();
@@ -448,6 +454,42 @@ public class Deezer {
 
         if (counter == 0) throw new Exception("Empty Lyrics!");
         return output;
+    }
+
+    //Track decryption key
+    static byte[] getKey(String id) {
+        String secret = "g4el58wc0zvf9na1";
+        try {
+            MessageDigest md5 = MessageDigest.getInstance("MD5");
+            md5.update(id.getBytes());
+            byte[] md5id = md5.digest();
+            String idmd5 = bytesToHex(md5id).toLowerCase();
+            String key = "";
+            for(int i=0; i<16; i++) {
+                int s0 = idmd5.charAt(i);
+                int s1 = idmd5.charAt(i+16);
+                int s2 = secret.charAt(i);
+                key += (char)(s0^s1^s2);
+            }
+            return key.getBytes();
+        } catch (Exception e) {
+            Log.e("E", e.toString());
+            return new byte[0];
+        }
+    }
+
+    //Decrypt 2048b of data
+    static byte[] decryptChunk(byte[] key, byte[] data) {
+        try {
+            byte[] IV = {00, 01, 02, 03, 04, 05, 06, 07};
+            SecretKeySpec Skey = new SecretKeySpec(key, "Blowfish");
+            Cipher cipher = Cipher.getInstance("Blowfish/CBC/NoPadding");
+            cipher.init(Cipher.DECRYPT_MODE, Skey, new javax.crypto.spec.IvParameterSpec(IV));
+            return cipher.doFinal(data);
+        }catch (Exception e) {
+            Log.e("D", e.toString());
+            return new byte[0];
+        }
     }
 
     static class QualityInfo {

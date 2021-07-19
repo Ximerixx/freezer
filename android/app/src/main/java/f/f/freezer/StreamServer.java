@@ -191,9 +191,11 @@ public class StreamServer {
                 return newFixedLengthResponse(Response.Status.NOT_FOUND, MIME_PLAINTEXT, "Fallback failed!");
             }
 
-            //Passthru
+            //Calculate Deezer offsets
+            int deezerStart = startBytes - (startBytes % 2048);
+            int dropBytes = startBytes % 2048;
+            //Start download
             String sURL = Deezer.getTrackUrl(qualityInfo.trackId, qualityInfo.md5origin, qualityInfo.mediaVersion, qualityInfo.quality);
-
             try {
                 URL url = new URL(sURL);
                 HttpsURLConnection connection = (HttpsURLConnection) url.openConnection();
@@ -203,36 +205,81 @@ public class StreamServer {
                 connection.setRequestProperty("User-Agent", "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/79.0.3945.130 Safari/537.36");
                 connection.setRequestProperty("Accept-Language", "*");
                 connection.setRequestProperty("Accept", "*/*");
-                connection.setRequestProperty("Range", "bytes=" + Integer.toString(startBytes) + "-");
+                connection.setRequestProperty("Range", "bytes=" + Integer.toString(deezerStart) + "-" + ((end == -1) ? "" : Integer.toString(end)));
                 connection.connect();
-                //Return response
-                Response response = newFixedLengthResponse(
-                    isRanged ? Response.Status.PARTIAL_CONTENT : Response.Status.OK,
-                    (qualityInfo.quality == 9) ? "audio/flac" : "audio/mpeg",
-                    connection.getInputStream(),
-                    connection.getContentLength()
+
+                //Get decryption key
+                final byte[] key = Deezer.getKey(qualityInfo.trackId);
+
+                //Write response headers
+                Response outResponse = newFixedLengthResponse(
+                        isRanged ? Response.Status.PARTIAL_CONTENT : Response.Status.OK,
+                        (qualityInfo.quality == 9) ? "audio/flac" : "audio/mpeg",
+                        new BufferedInputStream(new FilterInputStream(connection.getInputStream()) {
+
+                            int counter = deezerStart / 2048;
+                            int drop = dropBytes;
+
+                            //Decryption stream
+                            @Override
+                            public int read(byte[] b, int off, int len) throws IOException {
+                                //Read 2048b or EOF
+                                byte[] buffer = new byte[2048];
+                                int read = 0;
+                                int totalRead = 0;
+                                while (read != -1 && totalRead != 2048) {
+                                    read = in.read(buffer, totalRead, 2048 - totalRead);
+                                    if (read != -1)
+                                        totalRead += read;
+                                }
+                                if (totalRead == 0)
+                                    return -1;
+
+                                //Not full chunk return unencrypted
+                                if (totalRead != 2048) {
+                                    System.arraycopy(buffer, 0, b, off, totalRead);
+                                    return totalRead;
+                                }
+                                //Decrypt
+                                if ((counter % 3) == 0) {
+                                    buffer = Deezer.decryptChunk(key, buffer);
+                                }
+                                //Drop bytes from rounding to 2048
+                                if (drop > 0) {
+                                    int output = 2048 - drop;
+                                    System.arraycopy(buffer, drop, b, off, output);
+                                    drop = 0;
+                                    counter++;
+                                    return output;
+                                }
+                                //Copy
+                                System.arraycopy(buffer, 0, b, off, 2048);
+                                counter++;
+                                return 2048;
+                            }
+                        }, 2048),
+                        connection.getContentLength() - dropBytes
                 );
-                response.addHeader("Accept-Ranges", "bytes");
                 //Ranged header
                 if (isRanged) {
-                    String range = "bytes " + Integer.toString(startBytes) + "-" + Integer.toString((end == -1) ? (connection.getContentLength() + startBytes) - 1 : end);
-                    range += "/" + Integer.toString(connection.getContentLength() + startBytes);
-                    response.addHeader("Content-Range", range);
+                    String range = "bytes " + Integer.toString(startBytes) + "-" + Integer.toString((end == -1) ? (connection.getContentLength() + deezerStart) - 1 : end);
+                    range += "/" + Integer.toString(connection.getContentLength() + deezerStart);
+                    outResponse.addHeader("Content-Range", range);
                 }
+                outResponse.addHeader("Accept-Ranges", "bytes");
+
                 //Save stream info, use original track id
                 streams.put(session.getParameters().get("id").get(0), new StreamInfo(
-                    ((qualityInfo.quality == 9) ? "FLAC" : "MP3"),
-                    startBytes + connection.getContentLength(),
-                    "Stream"
+                        ((qualityInfo.quality == 9) ? "FLAC" : "MP3"),
+                        deezerStart + connection.getContentLength(),
+                        "Stream"
                 ));
-                return response;
+
+                return outResponse;
             } catch (Exception e) {
                 e.printStackTrace();
-//                return newFixedLengthResponse(Response.Status.INTERNAL_ERROR, MIME_PLAINTEXT, e.toString());
             }
-
-            //Return 404, the player should handle it better i guess
-            return newFixedLengthResponse(Response.Status.NOT_FOUND, MIME_PLAINTEXT, "Failed getting data!");
+            return newFixedLengthResponse(Response.Status.INTERNAL_ERROR, MIME_PLAINTEXT, "Failed getting data!");
         }
     }
 }

@@ -39,6 +39,8 @@ android/local.properties
 # is commented out by default.
 #.vscode/
 
+android/app/.cxx
+
 # Flutter/Dart/Pub related
 **/doc/api/
 .dart_tool/
