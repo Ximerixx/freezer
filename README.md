@@ -16,7 +16,7 @@ Install flutter SDK: https://flutter.dev/docs/get-started/install
 
 Download source:
 ```
-git clone https://git.rip/freezer/freezer
+git clone https://git.freezer.life/exttex/freezer
 git submodule init 
 git submodule update
 ```

@@ -3,6 +3,7 @@ import json
 
 lang_crowdin = {
     'ar': 'ar_ar',
+    'bg': 'bul_bg',
     'ast': 'ast_es',
     'de': 'de_de',
     'el': 'el_gr',
