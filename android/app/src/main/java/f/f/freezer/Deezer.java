@@ -1,6 +1,7 @@
 package f.f.freezer;
 
 import android.util.Log;
+import android.util.Pair;
 
 import org.jaudiotagger.audio.AudioFile;
 import org.jaudiotagger.audio.AudioFileIO;
@@ -36,6 +37,7 @@ public class Deezer {
     String token;
     String arl;
     String sid;
+    String accessToken;
     boolean authorized = false;
     boolean authorizing = false;
 
@@ -63,7 +65,96 @@ public class Deezer {
                 logger.warn("Error authorizing to Deezer API! " + e.toString());
             }
         }
+        //TV API
+        if (accessToken == null) {
+            try {
+                authorizeTVAPI();
+            } catch (Exception e) {
+                this.accessToken = null;
+                e.printStackTrace();
+                logger.warn("Error authorizing TV API - FLAC might not be available! " + e.toString());
+            }
+        }
+
         authorizing = false;
+    }
+
+    //Make POST request
+    private String POST(String _url, String data, String cookie) throws Exception {
+        URL url = new URL(_url);
+        HttpsURLConnection connection = (HttpsURLConnection) url.openConnection();
+        connection.setConnectTimeout(20000);
+        connection.setDoOutput(true);
+        connection.setRequestMethod("POST");
+        connection.setRequestProperty("User-Agent", "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/79.0.3945.130 Safari/537.36");
+        connection.setRequestProperty("Accept-Language", "*");
+        connection.setRequestProperty("Content-Type", "application/json");
+        connection.setRequestProperty("Accept", "*/*");
+        connection.setRequestProperty("Content-Length", Integer.toString(data.getBytes(StandardCharsets.UTF_8).length));
+        if (cookie != null) {
+            connection.setRequestProperty("Cookie", cookie);
+        }
+
+        //Write body
+        DataOutputStream wr = new DataOutputStream(connection.getOutputStream());
+        wr.writeBytes(data);
+        wr.close();
+        //Get response
+        String output = "";
+        Scanner scanner = new Scanner(connection.getInputStream());
+        while (scanner.hasNext()) {
+            output += scanner.nextLine();
+        }
+        scanner.close();
+        connection.disconnect();
+
+        return output;
+    }
+
+    private String GET(String _url) throws Exception {
+        URL url = new URL(_url);
+        HttpsURLConnection connection = (HttpsURLConnection) url.openConnection();
+        connection.setConnectTimeout(20000);
+        connection.setRequestMethod("GET");
+        connection.setRequestProperty("User-Agent", "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/79.0.3945.130 Safari/537.36");
+        connection.setRequestProperty("Accept-Language", "*");
+        connection.setRequestProperty("Accept", "*/*");
+        //Get response
+        String output = "";
+        Scanner scanner = new Scanner(connection.getInputStream());
+        while (scanner.hasNext()) {
+            output += scanner.nextLine();
+        }
+        scanner.close();
+        connection.disconnect();
+
+        return output;
+    }
+
+    //Authorize TV API for generating URLs
+    public void authorizeTVAPI() throws Exception {
+        JSONObject json = new JSONObject(POST(
+                "https://distribution-api.deezer.com/device/token",
+                "{\"brand_name\":\"Hisense\",\"device_id\":\"7239e4071d8992c955ad\",\"model_name\":\"HE50A6109FUWTS\",\"country_code\":\"FRA\"}",
+                null
+        ));
+        String deviceToken = json.getString("device_token");
+        // Get unauthorized token
+        json = new JSONObject(GET("https://connect.deezer.com/oauth/access_token.php?grant_type=client_credentials&client_id=447462&client_secret=a83bf7f38ad2f137e444727cfc3775cf&output=json"));
+        String accessToken  = json.getString("access_token");
+        // Get smart login code
+        json = new JSONObject(POST(
+                "https://connect.deezer.com/2.0/smartlogin/device?access_token=" + accessToken + "&device_token=" + deviceToken,
+                "", null
+        ));
+        String smartLoginCode = json.getJSONObject("data").getString("smartLoginCode");
+        // Get the fuck that is
+        callGWAPI("deezer.associateSmartLoginCodeWithUser", "{\"SMARTLOGIN_CODE\": \"" + smartLoginCode + "\"}");
+        // Get authorized access tonk
+        json = new JSONObject(GET("https://connect.deezer.com/2.0/smartlogin/" + smartLoginCode + "?access_token=" + accessToken));
+        accessToken = json.getJSONObject("data").getString("accessToken");
+        this.accessToken = accessToken;
+        Log.d("DDDD", "Authorized TV: " + this.accessToken);
     }
 
     public JSONObject callGWAPI(String method, String params) throws Exception {
@@ -73,36 +164,11 @@ public class Deezer {
             callGWAPI("deezer.getUserData", "{}");
         }
 
-        //Call
-        URL url = new URL("https://www.deezer.com/ajax/gw-light.php?method=" + method + "&input=3&api_version=1.0&api_token=" + token);
-        HttpsURLConnection connection = (HttpsURLConnection) url.openConnection();
-        connection.setConnectTimeout(20000);
-        connection.setDoOutput(true);
-        connection.setRequestMethod("POST");
-        connection.setRequestProperty("User-Agent", "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/79.0.3945.130 Safari/537.36");
-        connection.setRequestProperty("Accept-Language", "*");
-        connection.setRequestProperty("Content-Type", "application/json");
-        connection.setRequestProperty("Accept", "*/*");
-        connection.setRequestProperty("Content-Length", Integer.toString(params.getBytes(StandardCharsets.UTF_8).length));
-        String cookies = "arl=" + arl + "; sid=" + sid;
-        connection.setRequestProperty("Cookie", cookies);
-
-        //Write body
-        DataOutputStream wr = new DataOutputStream(connection.getOutputStream());
-        wr.writeBytes(params);
-        wr.close();
-        //Get response
-        String data = "";
-        Scanner scanner = new Scanner(connection.getInputStream());
-        while (scanner.hasNext()) {
-            data += scanner.nextLine();
-        }
-
-        //End
-        try {
-            connection.disconnect();
-            scanner.close();
-        } catch (Exception e) {}
+        String data = POST(
+                "https://www.deezer.com/ajax/gw-light.php?method=" + method + "&input=3&api_version=1.0&api_token=" + token,
+                params,
+                "arl=" + arl + "; sid=" + sid
+        );
 
         //Parse JSON
         JSONObject out = new JSONObject(data);
@@ -110,16 +176,7 @@ public class Deezer {
         //Save token
         if ((token == null || token.equals("null")) && method.equals("deezer.getUserData")) {
             token = out.getJSONObject("results").getString("checkForm");
-            //SID
-            try {
-                String newSid = null;
-                for (String cookie : connection.getHeaderFields().get("Set-Cookie")) {
-                    if (cookie.startsWith("sid=")) {
-                        newSid = cookie.split(";")[0].split("=")[1];
-                    }
-                }
-                this.sid = newSid;
-            } catch (Exception ignored) {}
+            sid = out.getJSONObject("results").getString("SESSION_ID");
         }
 
         return out;
@@ -153,7 +210,7 @@ public class Deezer {
     }
 
     //Generate track download URL
-    public static String getTrackUrl(String trackId, String md5origin, String mediaVersion, int quality) {
+    public static String generateTrackUrl(String trackId, String md5origin, String mediaVersion, int quality) {
         try {
             int magic = 164;
 
@@ -199,6 +256,39 @@ public class Deezer {
             e.printStackTrace();
         }
         return null;
+    }
+
+    // Returns URL and wether encrypted
+    public Pair<String, Boolean> getTrackUrl(String trackId, String md5origin, String mediaVersion, int quality) {
+        // TV API URL Gen
+        if (this.accessToken != null && quality == 9) {
+            try {
+                URL url = new URL("https://api.deezer.com/platform/gcast/track/" + trackId + "/streamUrls");
+                HttpsURLConnection connection = (HttpsURLConnection) url.openConnection();
+                connection.setConnectTimeout(20000);
+                connection.setRequestMethod("GET");
+                connection.setRequestProperty("User-Agent", "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/79.0.3945.130 Safari/537.36");
+                connection.setRequestProperty("Accept-Language", "*");
+                connection.setRequestProperty("Accept", "*/*");
+                connection.setRequestProperty("Authorization", "Bearer " + this.accessToken);
+                //Get response
+                String output = "";
+                Scanner scanner = new Scanner(connection.getInputStream());
+                while (scanner.hasNext()) {
+                    output += scanner.nextLine();
+                }
+                scanner.close();
+                connection.disconnect();
+
+                JSONObject json = new JSONObject(output).getJSONObject("data").getJSONObject("attributes");
+                return new Pair<String, Boolean>(json.getString("url_flac"), false);
+            } catch (Exception e) {
+                e.printStackTrace();
+                logger.warn("Failed generating ATV URL!");
+            }
+        }
+        // Normal url gen
+        return new Pair<String, Boolean>(Deezer.generateTrackUrl(trackId, md5origin, mediaVersion, quality), true);
     }
 
     public static String bytesToHex(byte[] bytes) {
@@ -499,6 +589,7 @@ public class Deezer {
         String trackId;
         int initialQuality;
         DownloadLog logger;
+        boolean encrypted;
 
         QualityInfo(int quality, String trackId, String md5origin, String mediaVersion, DownloadLog logger) {
             this.quality = quality;
@@ -509,16 +600,16 @@ public class Deezer {
             this.logger = logger;
         }
 
-        boolean fallback(Deezer deezer) {
+        String fallback(Deezer deezer) {
             //Quality fallback
             try {
-                qualityFallback();
+                String url = qualityFallback(deezer);
                 //No quality
                 if (quality == -1)
                     throw new Exception("No quality to fallback to!");
 
                 //Success
-                return true;
+                return url;
             } catch (Exception e) {
                 logger.warn("Quality fallback failed! ID: " + trackId + " " + e.toString());
                 quality = initialQuality;
@@ -562,12 +653,15 @@ public class Deezer {
                 logger.error("ISRC Fallback failed, track unavailable! ID: " + trackId + " " + e.toString());
             }
 
-            return false;
+            return null;
         }
 
-        private void qualityFallback() throws Exception {
+        private String qualityFallback(Deezer deezer) throws Exception {
+            Pair<String,Boolean> urlGen = deezer.getTrackUrl(trackId, md5origin, mediaVersion, quality);
+            this.encrypted = urlGen.second;
+
             //Create HEAD requests to check if exists
-            URL url = new URL(getTrackUrl(trackId, md5origin, mediaVersion, quality));
+            URL url = new URL(urlGen.first);
             HttpsURLConnection connection = (HttpsURLConnection) url.openConnection();
             connection.setRequestMethod("HEAD");
             connection.setRequestProperty("User-Agent", "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/79.0.3945.130 Safari/537.36");
@@ -580,12 +674,13 @@ public class Deezer {
                 //-1 if no quality available
                 if (quality == 1) {
                     quality = -1;
-                    return;
+                    return null;
                 }
                 if (quality == 3) quality = 1;
                 if (quality == 9) quality = 3;
-                qualityFallback();
+                return qualityFallback(deezer);
             }
+            return urlGen.first;
         }
 
     }

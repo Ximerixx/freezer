@@ -28,6 +28,7 @@ public class StreamServer {
     //Shared log & API
     private DownloadLog logger;
     private Deezer deezer;
+    private boolean authorized = false;
 
     StreamServer(String arl, String offlinePath) {
         //Initialize shared variables
@@ -174,6 +175,12 @@ public class StreamServer {
         }
 
         private Response deezerStream(IHTTPSession session, int startBytes, int end, boolean isRanged) {
+            // Authorize
+            if (!authorized) {
+                deezer.authorize();
+                authorized = true;
+            }
+
             //Get QP into Quality Info
             Deezer.QualityInfo qualityInfo = new Deezer.QualityInfo(
                     Integer.parseInt(session.getParameters().get("q").get(0)),
@@ -183,19 +190,23 @@ public class StreamServer {
                     logger
             );
             //Fallback
+            String sURL;
             try {
-                boolean res = qualityInfo.fallback(deezer);
-                if (!res)
+                sURL = qualityInfo.fallback(deezer);
+                if (sURL == null)
                     throw new Exception("No more to fallback!");
             } catch (Exception e) {
                 return newFixedLengthResponse(Response.Status.NOT_FOUND, MIME_PLAINTEXT, "Fallback failed!");
             }
 
             //Calculate Deezer offsets
-            int deezerStart = startBytes - (startBytes % 2048);
+            int _deezerStart = startBytes;
+            if (qualityInfo.encrypted)
+                _deezerStart -= startBytes % 2048;
+            final int deezerStart = _deezerStart;
             int dropBytes = startBytes % 2048;
+
             //Start download
-            String sURL = Deezer.getTrackUrl(qualityInfo.trackId, qualityInfo.md5origin, qualityInfo.mediaVersion, qualityInfo.quality);
             try {
                 URL url = new URL(sURL);
                 HttpsURLConnection connection = (HttpsURLConnection) url.openConnection();
@@ -208,58 +219,70 @@ public class StreamServer {
                 connection.setRequestProperty("Range", "bytes=" + Integer.toString(deezerStart) + "-" + ((end == -1) ? "" : Integer.toString(end)));
                 connection.connect();
 
-                //Get decryption key
-                final byte[] key = Deezer.getKey(qualityInfo.trackId);
+                Response outResponse;
+                // Encrypted response
+                if (qualityInfo.encrypted) {
+                    //Get decryption key
+                    final byte[] key = Deezer.getKey(qualityInfo.trackId);
 
-                //Write response headers
-                Response outResponse = newFixedLengthResponse(
+                    outResponse = newFixedLengthResponse(
+                            isRanged ? Response.Status.PARTIAL_CONTENT : Response.Status.OK,
+                            (qualityInfo.quality == 9) ? "audio/flac" : "audio/mpeg",
+                            new BufferedInputStream(new FilterInputStream(connection.getInputStream()) {
+
+                                int counter = deezerStart / 2048;
+                                int drop = dropBytes;
+
+                                //Decryption stream
+                                @Override
+                                public int read(byte[] b, int off, int len) throws IOException {
+                                    //Read 2048b or EOF
+                                    byte[] buffer = new byte[2048];
+                                    int read = 0;
+                                    int totalRead = 0;
+                                    while (read != -1 && totalRead != 2048) {
+                                        read = in.read(buffer, totalRead, 2048 - totalRead);
+                                        if (read != -1)
+                                            totalRead += read;
+                                    }
+                                    if (totalRead == 0)
+                                        return -1;
+
+                                    //Not full chunk return unencrypted
+                                    if (totalRead != 2048) {
+                                        System.arraycopy(buffer, 0, b, off, totalRead);
+                                        return totalRead;
+                                    }
+                                    //Decrypt
+                                    if ((counter % 3) == 0) {
+                                        buffer = Deezer.decryptChunk(key, buffer);
+                                    }
+                                    //Drop bytes from rounding to 2048
+                                    if (drop > 0) {
+                                        int output = 2048 - drop;
+                                        System.arraycopy(buffer, drop, b, off, output);
+                                        drop = 0;
+                                        counter++;
+                                        return output;
+                                    }
+                                    //Copy
+                                    System.arraycopy(buffer, 0, b, off, 2048);
+                                    counter++;
+                                    return 2048;
+                                }
+                            }, 2048),
+                            connection.getContentLength() - dropBytes
+                    );
+                } else {
+                    // Decrypted
+                    outResponse = newFixedLengthResponse(
                         isRanged ? Response.Status.PARTIAL_CONTENT : Response.Status.OK,
                         (qualityInfo.quality == 9) ? "audio/flac" : "audio/mpeg",
-                        new BufferedInputStream(new FilterInputStream(connection.getInputStream()) {
+                        connection.getInputStream(),
+                        connection.getContentLength()
+                    );
+                }
 
-                            int counter = deezerStart / 2048;
-                            int drop = dropBytes;
-
-                            //Decryption stream
-                            @Override
-                            public int read(byte[] b, int off, int len) throws IOException {
-                                //Read 2048b or EOF
-                                byte[] buffer = new byte[2048];
-                                int read = 0;
-                                int totalRead = 0;
-                                while (read != -1 && totalRead != 2048) {
-                                    read = in.read(buffer, totalRead, 2048 - totalRead);
-                                    if (read != -1)
-                                        totalRead += read;
-                                }
-                                if (totalRead == 0)
-                                    return -1;
-
-                                //Not full chunk return unencrypted
-                                if (totalRead != 2048) {
-                                    System.arraycopy(buffer, 0, b, off, totalRead);
-                                    return totalRead;
-                                }
-                                //Decrypt
-                                if ((counter % 3) == 0) {
-                                    buffer = Deezer.decryptChunk(key, buffer);
-                                }
-                                //Drop bytes from rounding to 2048
-                                if (drop > 0) {
-                                    int output = 2048 - drop;
-                                    System.arraycopy(buffer, drop, b, off, output);
-                                    drop = 0;
-                                    counter++;
-                                    return output;
-                                }
-                                //Copy
-                                System.arraycopy(buffer, 0, b, off, 2048);
-                                counter++;
-                                return 2048;
-                            }
-                        }, 2048),
-                        connection.getContentLength() - dropBytes
-                );
                 //Ranged header
                 if (isRanged) {
                     String range = "bytes " + Integer.toString(startBytes) + "-" + Integer.toString((end == -1) ? (connection.getContentLength() + deezerStart) - 1 : end);

@@ -17,6 +17,7 @@ import android.os.Message;
 import android.os.Messenger;
 import android.os.RemoteException;
 import android.util.Log;
+import android.util.Pair;
 
 import androidx.core.app.NotificationCompat;
 import androidx.core.app.NotificationManagerCompat;
@@ -318,10 +319,11 @@ public class DownloadService extends Service {
 
             //Fallback
             Deezer.QualityInfo qualityInfo = new Deezer.QualityInfo(this.download.quality, this.download.trackId, this.download.md5origin, this.download.mediaVersion, logger);
+            String sURL = null;
             if (!download.isUserUploaded()) {
                 try {
-                    boolean res = qualityInfo.fallback(deezer);
-                    if (!res)
+                    sURL = qualityInfo.fallback(deezer);
+                    if (sURL == null)
                         throw new Exception("No more to fallback!");
 
                     download.quality = qualityInfo.quality;
@@ -378,7 +380,6 @@ public class DownloadService extends Service {
             }
 
             //Download
-            String sURL = Deezer.getTrackUrl(qualityInfo.trackId, qualityInfo.md5origin, qualityInfo.mediaVersion, qualityInfo.quality);
             try {
                 URL url = new URL(sURL);
                 HttpsURLConnection connection = (HttpsURLConnection) url.openConnection();
@@ -436,15 +437,17 @@ public class DownloadService extends Service {
             //Post processing
 
             //Decrypt
-            try {
-                File decFile = new File(tmpFile.getPath() + ".DEC");
-                deezer.decryptFile(download.trackId, tmpFile.getPath(), decFile.getPath());
-                tmpFile.delete();
-                tmpFile = decFile;
-            } catch (Exception e) {
-                logger.error("Decryption error: " + e.toString(), download);
-                e.printStackTrace();
-                //Shouldn't ever fail
+            if (qualityInfo.encrypted) {
+                try {
+                    File decFile = new File(tmpFile.getPath() + ".DEC");
+                    deezer.decryptFile(download.trackId, tmpFile.getPath(), decFile.getPath());
+                    tmpFile.delete();
+                    tmpFile = decFile;
+                } catch (Exception e) {
+                    logger.error("Decryption error: " + e.toString(), download);
+                    e.printStackTrace();
+                    //Shouldn't ever fail
+                }
             }
 
 
